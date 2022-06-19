@@ -312,10 +312,6 @@ class GameServer extends Thread{
 	public GameServer(int port,int mode,int code){
 		this.nextId=0;
 		this.host=0;
-		this.map=(short)1102;
-		this.map+=(short)(Math.random()*8);
-		if(Math.random()<0.2)
-			this.map=(short)1112;
 		try{
 			this.port=port;
 			this.server = new ServerSocket(port);
@@ -326,26 +322,50 @@ class GameServer extends Thread{
 		playerThreads = new ArrayList<GameServerThread>();
 		this.mode=mode;
 		this.code=code;
+		if(this.mode==2){
+			this.map=(short)1102;
+			this.map+=(short)(Math.random()*8);
+			if(Math.random()<0.2)
+				this.map=(short)1112;
+		}else{
+			this.map=(new short[]{1008,1018,1067,1009,1054,1043,1016,1101,1110})[(int)(Math.random()*9)];
+		}
 		this.init=false;
 		this.alive=true;
+	}
+	public void boost(){
+		if(playerThreads.size()>3)
+			return;
+		for(GameServerThread g:playerThreads)
+			if(g.started)
+				return;
+		GameServerThread bot = new GameServerThread(null,this,this.nextId,this.host);
+		this.nextId++;
+		playerThreads.add(bot);
+		newPlayer(bot.id);
+		new Thread(bot).start();
+	}
+	public void unboost(){
+		int i=0;
+		for(i=0;i<this.playerThreads.size();i++)
+			if(playerThreads.get(i).bot){
+				this.dropPlayer(playerThreads.get(i).id);
+				i--;
+			}
 	}
 	@Override
 	public void run(){
 		while (this.alive) {
-			for(int i=0;i<playerThreads.size();i++)
-				if(!playerThreads.get(i).alive){
-					playerThreads.remove(playerThreads.get(i));
-					i--;
-				}
-			if(init&&playerThreads.size()==0){
-				this.alive=false;
-				try{
-				this.server.close();
-				}catch(Exception e){}
-				S4Server.games.remove(code);
-				return;
-			}
+			
 			Socket client = null;
+			int ready=0;
+			for(GameServerThread g:playerThreads){
+				if(g.built&&g.started&&!g.ingame)ready++;
+			}if(ready==playerThreads.size()){
+				this.writeAll(new byte[]{(byte)-11,(byte)0,(byte)0,(byte)0,(byte)0},0,5);
+				for(GameServerThread g:playerThreads)
+					g.ingame=true;
+			}
 			try {
 				client = server.accept();
 				this.init=true;
@@ -373,30 +393,115 @@ class GameServer extends Thread{
 			g.map=this.map;
 		this.writeAll(pl,0,5);
 	}
-	public void writeAll(byte[] data,int off, int length) throws IOException{
+	public void writeFrom(byte id,byte[] data){
+		for(GameServerThread h:playerThreads)
+			if(h.id!=id){
+				try{
+					h.output.write(data);
+					h.output.flush();
+				}catch(IOException e){
+					continue;
+				}
+			}
+	}public void writeFrom(byte id,byte[] data,int offset,int length){
+		for(GameServerThread h:playerThreads)
+			if(h.id!=id){
+				try{
+					h.output.write(data,offset,length);
+					h.output.flush();
+				}catch(IOException e){
+					continue;
+				}
+			}
+	}	
+	public void writeAll(byte[] data,int off, int length){
 		for(GameServerThread g:playerThreads){
-			System.out.println(data.length);
-			g.output.write(data,off,length);
-			g.output.flush();
+			try{
+				System.out.println(data.length);
+				g.output.write(data,off,length);
+				g.output.flush();
+			}catch(IOException e){
+				continue;
+			}
 		}
-	}public void newPlayer(byte id){
+	}
+	public void newPlayer(byte id){
 		for(GameServerThread g:playerThreads){
 			try{
 				if(g.id==id){
 					for(GameServerThread h:playerThreads)
 						if(h.id!=id){
-							g.output.write(h.playerData());
+							g.output.write(h.playerData((byte)-1));
 							g.output.flush();
 						}
 				}else	
 					for(GameServerThread h:playerThreads)
 						if(h.id==id){
-							g.output.write(h.playerData());
+							g.output.write(h.playerData((byte)-1));
 							g.output.flush();
 						}
-			}catch(IOException e){
+			}
+			
+			catch(IOException e){
 				continue;
 			}
+		}
+		for(GameServerThread g:playerThreads)
+			fullLoad(g.id);
+	}
+	public void loadingState(byte id, byte[] buffer){
+		//System.out.println("HYDR");
+		byte[] pl = new byte[11];
+		pl[0]=(byte)-2;
+		pl[4]=(byte)(0x06);
+		pl[5]=(byte)7;
+		pl[6]=id;
+		pl[7]=buffer[10];
+		pl[8]=buffer[11];
+		pl[9]=buffer[12];
+		pl[10]=buffer[13];
+		this.writeFrom(id,pl);
+				
+	}
+	public void fullLoad(byte id){
+		byte[] pl = new byte[11];
+		pl[0]=(byte)-2;
+		pl[4]=(byte)(0x06);
+		pl[5]=(byte)7;
+		pl[6]=id;
+		pl[7]=(byte)0x3f;
+		pl[8]=(byte)0x80;
+		this.writeFrom(id,pl);
+	}
+	public void dropPlayer(byte id){
+		playerThreads.removeIf(x->(x.id==id));
+		int first=-1;
+		for(int i=0;i<playerThreads.size();i++){
+			if(!playerThreads.get(i).bot&&playerThreads.get(i).alive)
+				first=i;
+		}
+		if(first==-1){
+			this.alive=false;
+			try{
+				this.server.close();
+			}catch(Exception e){}
+			S4Server.games.remove(code);
+			return;
+		}
+		if(this.host==id){
+			//change host
+			byte[] pl2 = new byte[]{(byte)-7,id,playerThreads.get(first).id};
+			this.host=playerThreads.get(first).id;
+			this.writeAll(pl2,0,3);
+		}byte[] pl = new byte[]{(byte)-6,id};
+		this.writeAll(pl,0,2);
+		
+	}
+	public void start(){
+		this.writeAll(new byte[]{(byte)-16},0,1);
+		for(GameServerThread g:playerThreads){
+			g.started=true;
+			g.pingSinceBuild=0;
 		}
 	}
 }
@@ -410,16 +515,31 @@ class GameServerThread extends Thread{
 	public GameServer parent;
 	public byte id;
 	public byte host;
-	public byte[] playerData(){
+	public boolean loaded;
+	public boolean started;
+	public boolean built;
+	public boolean ingame;
+	public int pingSinceLoad;
+	private long lastPinged;
+	public int pingSinceBuild;
+	public boolean bot;
+	//the ending byte is clearly amount loaded
+	public byte[] playerData(byte opcode){
 		int len = this.player.data.length;
-		byte[] pl = new byte[len+5];
+		if(opcode==-1)
+			len++;
+		byte[] pl;
+		pl = new byte[len+5];
+		if(this.bot){
+			pl[len+4]=(byte)100;
+		}
 		try{
 			pl[0]=(byte)-2;
 			pl[1]=(byte)(len>>24);
 			pl[2]=(byte)((len>>16)&0xff);
 			pl[3]=(byte)((len>>8)&0xff);
 			pl[4]=(byte)((len)&0xff);
-			pl[5]=(byte)4;
+			pl[5]=(byte)-1;
 			pl[6]=this.id;
 			short nameLen = (short)((((short)this.player.data[0]&0xff)<<8)|((short)this.player.data[1]&0xff));
 			
@@ -430,7 +550,7 @@ class GameServerThread extends Thread{
 			pl[10+nameLen]=(byte)((this.player.level>>8)&0xff);
 			System.out.println("pl%%%"+this.player.level);
 			pl[11+nameLen]=(byte)(this.player.level&0xff);
-		for(int i=12+nameLen;i<pl.length;i++)
+		for(int i=12+nameLen;i<this.player.data.length+5;i++)
 			pl[i]=this.player.data[i-5];
 		}catch(Exception e){
 			e.printStackTrace();
@@ -468,24 +588,44 @@ class GameServerThread extends Thread{
 		return pl;
 		
 	}
+	
+	
 	public GameServerThread(Socket client, GameServer parent, byte id, byte host){
 		this.parent = parent;
 		this.map=parent.map;
 		this.alive=true;
 		this.init=false;
 		this.player=null;
+		this.loaded=false;
+		this.started=false;
+		this.built=false;
+		this.ingame=false;
+		this.bot=false;
+		this.lastPinged=0;
+		this.pingSinceLoad=0;
+		this.pingSinceBuild=0;
 		this.id=id;
 		this.host=host;
 		this.client = client;
 		try{
-		this.output = client.getOutputStream();}catch(Exception e){e.printStackTrace();}
+			this.output = client.getOutputStream();
+		}catch(Exception e){
+			this.bot=true;
+			this.output = new NullOutputStream();
+			this.player = new Player((short)100,new int[]{});
+			this.player.setData(S4Server.bot);
+		}
 	}
+	
 	@Override
 	public void run() {
 		try {
 			this.alive=true;
-			this.client.setSoTimeout(1000);
-			InputStream input = this.client.getInputStream();
+			InputStream input=null;
+			if(!this.bot){
+				this.client.setSoTimeout(1000);
+				input = this.client.getInputStream();
+			}
 			int size=1024;
 			int timeouts=0;
 			byte[] buffer;
@@ -522,13 +662,41 @@ class GameServerThread extends Thread{
 					output.flush();
 				}
 			while(this.alive){
+				if(this.bot){
+					Thread.sleep(1000);
+					if(this.started){
+						parent.dropPlayer(this.id);
+						this.alive=false;
+						break;
+					}
+					continue;
+				}
+				int max=1024;
+				int actualSize=0;
 				buffer=new byte[1024];
 				try {
 					l4=input.read(buffer,0,1024);
+					actualSize+=l4;
 				} catch (java.net.SocketTimeoutException ste) {
 					//
 				}
-				if (l4>0) {
+				if(l4==max){
+					this.client.setSoTimeout(1);
+					try {
+						
+						while(l4>0){
+							max+=l4;
+							buffer = Arrays.copyOf(buffer,max);
+							l4=input.read(buffer,max-1024,1024);
+							actualSize+=l4;
+						}
+					} catch (java.net.SocketTimeoutException seee) {
+						
+					}
+					this.client.setSoTimeout(1000);
+				}
+				if (actualSize>0) {
+					timeouts=0;
 					System.out.println("incoming: "+(buffer[0]));
 					if(buffer[0]==(byte)0&&buffer[1]==(byte)202){
 						int length = (((int)buffer[10]&0xff)<<24)|(((int)buffer[11]&0xff)<<16)|(((int)buffer[12]&0xff)<<8)|((int)buffer[13]&0xff);
@@ -537,15 +705,40 @@ class GameServerThread extends Thread{
 						for(i=0;i<length;i++)
 							header[i]=(((int)buffer[14+2*i]&0xff)<<8)|((int)buffer[15+2*i]&0xff);
 						this.player=new Player(buffer[9],header);
-						this.player.setData(Arrays.copyOfRange(buffer,14+2*i,l4));
+						this.player.setData(Arrays.copyOfRange(buffer,14+2*i,actualSize));
 						this.parent.newPlayer(this.id);
 						
-						
+						if(this.parent.code==254486284){
+							this.parent.boost();
+						}if(this.parent.code==193514003){
+							this.parent.boost();
+						}if(this.parent.code==400){
+							this.parent.boost();
+							this.parent.boost();
+							this.parent.boost();
+						}
 						
 					}
 					else if(buffer[0]==(byte)(-14)){
 						this.map=(short)((((short)buffer[1]&0xff)<<8)|((short)buffer[2]&0xff));
 						parent.setMap(this.map);
+					}else if(buffer[0]==(byte)(-9)){
+						if((new Date()).getTime()-lastPinged>1000){
+							this.pingSinceLoad++;
+							this.pingSinceBuild++;
+							lastPinged=(new Date()).getTime();
+						}
+						if(!this.started&&!this.loaded&&this.pingSinceLoad>10){
+							this.loaded=true;
+							parent.fullLoad(this.id);
+						}if(!this.built&&!this.ingame&&this.started&&this.pingSinceBuild>20){
+							this.built=true;
+							parent.fullLoad(this.id);
+						}
+					}
+					else if(buffer[0]==(byte)(-10)&&!loaded){
+						this.pingSinceLoad=0;
+						parent.loadingState(this.id,buffer);
 					}else if(buffer[0]==(byte)(-3)){
 						byte[] pl = new byte[5];
 						pl[0]=((byte)(-3));
@@ -556,6 +749,46 @@ class GameServerThread extends Thread{
 						pl[4]=((byte)((time)&0xff));
 						output.write(pl,0,5);
 						output.flush();
+					}else if(buffer[0]==(byte)(-2)){
+						byte[] pl = new byte[actualSize-1];
+						int len = actualSize-6;
+						pl[0]=(byte)-2;
+						pl[1]=(byte)(len>>24);
+						pl[2]=(byte)((len>>16)&0xff);
+						pl[3]=(byte)((len>>8)&0xff);
+						pl[4]=(byte)((len)&0xff);
+						pl[5]=(byte)buffer[6];
+						pl[6]=this.id;
+						if(buffer[6]==(byte)0x07){
+							parent.fullLoad(this.id);
+							this.built=true;
+						}
+						else{
+							if((byte)(buffer[8]>>4&0xff)==(byte)0x0c){
+								parent.writeFrom(this.id,buffer,0,actualSize);
+							}
+							else if(actualSize>25){
+								String msg=new String(Arrays.copyOfRange(buffer,24,actualSize),StandardCharsets.UTF_8);
+								//System.out.println("MSG:"+msg);
+								if(msg.startsWith("!boost")){
+									parent.boost();
+								}if(msg.startsWith("!unboost")){
+									parent.unboost();
+								}
+								for(int i=8;i<actualSize;i++)
+									pl[i-1]=buffer[i];
+								parent.writeFrom(this.id,pl,0,actualSize-1);
+							}else{
+								for(int i=8;i<actualSize;i++)
+									pl[i-1]=buffer[i];
+								parent.writeFrom(this.id,pl,0,actualSize-1);
+							}
+						}
+					}else if(buffer[0]==(byte)(-17)){
+						parent.start();
+					}else if(buffer[0]==(byte)(-15)&&!built){
+						this.pingSinceBuild=0;
+						parent.loadingState(this.id,buffer);
 					}
 					
 				}else{
@@ -565,38 +798,47 @@ class GameServerThread extends Thread{
 					//	timeouts-=2;
 					timeouts++;
 					
-					if(timeouts>10){
+					if(timeouts>120){
 						this.alive=false;
 						output.close();
 						input.close();
 						this.client.close();
-						return;
 					}
 				}
 			}
 		}catch(Exception ioe_){
+			this.alive=false;
 			try{
-				this.alive=false;
 				output.close();
 				this.client.close();
 				ioe_.printStackTrace();
-				return;	
 			}catch(Exception e){
 				e.printStackTrace();
 			}return;
 		}
+		this.parent.dropPlayer(this.id);
 	}
 }
-
+class NullOutputStream extends OutputStream {
+  @Override
+  public void write(int b) throws IOException {
+  }
+}
 //class for main method
 public class S4Server {
 	
 	//
+	public static byte[] bot;
 	public static volatile ConcurrentHashMap<InetAddress,Integer> ipThreads;
 	public static volatile ConcurrentHashMap<Integer,GameServer> games;
 	public static volatile ConcurrentHashMap<Integer,ArrayList<String>> history;
 	public static volatile String log="";
 	public static void main(String[] args) {
+		try{
+			bot=Files.readAllBytes(Paths.get("bot.bin"));
+		}catch(Exception e){
+			bot=new byte[]{};
+		}
 		games = new ConcurrentHashMap<Integer,GameServer>();
 		//checks if a port is specified
 		if (args.length == 0) {
