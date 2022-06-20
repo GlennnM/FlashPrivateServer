@@ -18,7 +18,7 @@ INSTALLATION GUIDE<br>
 Building from Source<br>
   </h1>
 <br>
-Compile the java file for the game you wish to host and run it with any java compiler(10+ might be needed).<br>
+Compile the java file for the game you wish to host and run it with any java compiler(10+ might be needed); all the classes are included.<br>
 Command line arguments(BTD Battles): 4480<br>
 Command line arguments(SAS4): 8124<br>
 You can now play locally with one of the "localhost" SWFs. <br>
