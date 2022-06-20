@@ -12,10 +12,12 @@ Currently SAS4 and BTD Battles are being hosted. The guide to play on these serv
 When playing on these servers, some quality of life/easter egg features are added, but mostly they will play exactly as you would expect the game to play on Ninja Kiwi's servers, and any data or achievements from these games will register in your actual NK profile.<br>
 <h1>
 INSTALLATION GUIDE<br></h1>
- 1. Install <a href = https://www.fiddler.com>Fiddler</a> and open it.
- 2. On the menu bar, select Tools->Options->HTTPS:
-  <img src = https://user-images.githubusercontent.com/77253453/174670742-faf229c2-3673-467a-85a0-04f4f1414fbc.png>
-  
+ 1. Install <a href = https://www.telerik.com/fiddler>Fiddler</a> and open it.<br>
+ 2. On the menu bar, select Tools->Options.
+  <img src = https://user-images.githubusercontent.com/77253453/174670742-faf229c2-3673-467a-85a0-04f4f1414fbc.png><br>
+ 3. Select the "HTTPS" tab. Enable Decrypt HTTPS traffic. Choose "from non-browsers only", since decrypting HTTPS from your browser can cause issues on many sites<br>(but consider trying "from all processes" if you have issues later and/or want to play in a browser)
+ 4. ![image](https://user-images.githubusercontent.com/77253453/174671525-88d40c45-a6e9-4cdc-b72b-c36996e2ca79.png)
+
 ...<br>
 <h1>
 Building from Source<br>
