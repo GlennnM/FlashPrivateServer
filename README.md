@@ -40,7 +40,7 @@ and the following in the bottom text box:<br>
 https://cdn.jsdelivr.net/gh/GlennnM/NKFlashServers/BattlesFlash/btdbattles-dat.swf<br>
 Click "Save".<br>
 Here is an example of what your screen should look like, if you added both games:<br>
-<img src=https://user-images.githubusercontent.com/77253453/174676318-8b5522ee-78c4-45d2-abd2-2e726674a55b.png>
+<img src = https://user-images.githubusercontent.com/77253453/174679510-29f708a7-6578-443b-ac1b-362c394e74b9.png>
 
 7. Close all NK Archive windows and games. Hold the windows key and press R(Win+R) and paste the following:<br>
 <u>%appdata%/Ninja Kiwi Archive/Cache</u><br>
