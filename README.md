@@ -11,10 +11,10 @@ This project fully recreates these servers, built from scratch with Java TCP soc
 Currently SAS4 and BTD Battles are being hosted. The guide to play on these servers is also available in our discord and on youtube.<br>
 When playing on these servers, some quality of life/easter egg features are added, but mostly they will play exactly as you would expect the game to play on Ninja Kiwi's servers, and any data or achievements from these games will register in your actual NK profile.<br>
 <h1>
-INSTALLATION GUIDE<br>
+INSTALLATION GUIDE<br></h1>
  1. Install <a href = https://www.fiddler.com>Fiddler</a> and open it.
  2. 
-  </h1>
+  
 ...<br>
 <h1>
 Building from Source<br>
