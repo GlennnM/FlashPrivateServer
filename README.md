@@ -12,13 +12,44 @@ Currently SAS4 and BTD Battles are being hosted. The guide to play on these serv
 When playing on these servers, some quality of life/easter egg features are added, but mostly they will play exactly as you would expect the game to play on Ninja Kiwi's servers, and any data or achievements from these games will register in your actual NK profile.<br>
 <h1>
 INSTALLATION GUIDE<br></h1>
- 1. Install <a href = https://www.telerik.com/fiddler>Fiddler</a> and open it.<br>
+<b>First time setup:</b><br>
+ 1. Install <a href = https://www.telerik.com/download/fiddler>Fiddler Classic</a> and open it.<br>
  2. On the menu bar, select Tools->Options.
   <img src = https://user-images.githubusercontent.com/77253453/174670742-faf229c2-3673-467a-85a0-04f4f1414fbc.png><br>
- 3. Select the "HTTPS" tab. Enable Decrypt HTTPS traffic. Choose "from non-browsers only", since decrypting HTTPS from your browser can cause issues on many sites<br>(but consider trying "from all processes" if you have issues later and/or want to play in a browser)
- 4. <img src = https://user-images.githubusercontent.com/77253453/174671525-88d40c45-a6e9-4cdc-b72b-c36996e2ca79.png>
+ 3. Select the "HTTPS" tab. Enable Decrypt HTTPS traffic. Choose "from non-browsers only", since decrypting HTTPS from your browser can cause issues on many sites<br>(but consider trying "from all processes" if you have issues later and/or want to play in a browser)<br>
+ <img src = https://user-images.githubusercontent.com/77253453/174671525-88d40c45-a6e9-4cdc-b72b-c36996e2ca79.png>
+<br>
+4. Click "OK" to close the options menu, then click the "AutoResponder" button on the right side of the interface.<br>
+5. Check "Enable Rules" and "Unmatched requests passthrough", then click "Add Rule".<br>
+<img src = https://user-images.githubusercontent.com/77253453/174673035-4d78c2dd-6cce-4c12-9421-497c565243d8.png><br>
+<br>
+6. Follow the instructions below depending on which game(s) you want to play, then proceed to step 7:<br>
+<b>SAS4</b><br>
+Paste the following line into the top text box:<br>
+regex:^http(s|)://assets.nkstatic.com/Games/gameswfs/sas4/sas4.swf<br>
+and the following in the bottom text box:<br>
+https://github.com/GlennnM/NKFlashServers/raw/main/SAS4/sas4.swf<br>
+Click "Save".
+<img src = https://user-images.githubusercontent.com/77253453/174674145-5803dc9e-0eb7-4be2-a7fd-21649fcf8d96.png>
 
-...<br>
+<b>BTD Battles</b><br>
+
+
+7. Close all NK Archive windows and games. Hold the windows key and press R(Win+R) and paste the following:
+%appdata%/Ninja Kiwi Archive/Cache
+then press Run.
+<img src = https://user-images.githubusercontent.com/77253453/174675149-f9107ddd-d9b0-4592-bff0-57db6c5b67ac.png>
+
+8. Clear out this folder by clicking on any of the files that appear, press ctrl+A(Select all), then Shift+Delete(Permanently delete).<br> This will ensure the game updates to use the server, instead of using an old cached version.<br>
+<img src = https://user-images.githubusercontent.com/77253453/174674847-2357b7d9-bdca-4378-9db8-b5af0d94e7cf.png>
+<br>
+9. Start the Ninja Kiwi Archive and then the game you wish to play!<br> To verify you are connected to the server, just join any lobby. If you don't see a blank screen(sas4) or "Connecting to server..." forever(battles) it worked!
+<br>
+<b>
+Second time - after setup
+</b>
+Just ensure you have fiddler open before starting the game. <br>Your fiddler configurations will be saved so no need to change them again, but if you accidentally start it without fiddler open just start fiddler and repeat steps 7-9.<br>
+<h2>Enjoy!!!</h2><br>
 <h1>
 Building from Source<br>
   </h1>
