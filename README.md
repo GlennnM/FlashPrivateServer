@@ -33,13 +33,20 @@ Click "Save".
 <img src = https://user-images.githubusercontent.com/77253453/174674145-5803dc9e-0eb7-4be2-a7fd-21649fcf8d96.png>
 
 <b>BTD Battles</b><br>
+Click add rule again if you already added SAS4 - playing multiple is fine.<br>
+Paste the following line into the top text box:<br>
+regex:^http(s|)://assets.ninjakiwi.com/Games/gameswfs/btdbattles-dat.swf<br>
+and the following in the bottom text box:<br>
+https://github.com/GlennnM/NKFlashServers/raw/main/BattlesFlash/btdbattles-dat.swf<br>
+Click "Save".<br>
+Here is an example of what your screen should look like, if you added both games:<br>
+<img src=https://user-images.githubusercontent.com/77253453/174676318-8b5522ee-78c4-45d2-abd2-2e726674a55b.png>
 
-
-7. Close all NK Archive windows and games. Hold the windows key and press R(Win+R) and paste the following:
-%appdata%/Ninja Kiwi Archive/Cache
-then press Run.
+7. Close all NK Archive windows and games. Hold the windows key and press R(Win+R) and paste the following:<br>
+<ul>%appdata%/Ninja Kiwi Archive/Cache</ul><br>
+then press Run.<br>
 <img src = https://user-images.githubusercontent.com/77253453/174675149-f9107ddd-d9b0-4592-bff0-57db6c5b67ac.png>
-
+<br>
 8. Clear out this folder by clicking on any of the files that appear, press ctrl+A(Select all), then Shift+Delete(Permanently delete).<br> This will ensure the game updates to use the server, instead of using an old cached version.<br>
 <img src = https://user-images.githubusercontent.com/77253453/174674847-2357b7d9-bdca-4378-9db8-b5af0d94e7cf.png>
 <br>
