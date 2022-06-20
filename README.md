@@ -12,7 +12,7 @@ Currently SAS4 and BTD Battles are being hosted. The guide to play on these serv
 When playing on these servers, some quality of life/easter egg features are added, but mostly they will play exactly as you would expect the game to play on Ninja Kiwi's servers, and any data or achievements from these games will register in your actual NK profile.<br>
 <h1>
 INSTALLATION GUIDE<br></h1>
-<b>First time setup:</b><br>
+<h2>First time setup:</h2><br>
  1. Install <a href = https://www.telerik.com/download/fiddler>Fiddler Classic</a> and open it.<br>
  2. On the menu bar, select Tools->Options.
   <img src = https://user-images.githubusercontent.com/77253453/174670742-faf229c2-3673-467a-85a0-04f4f1414fbc.png><br>
@@ -52,11 +52,11 @@ then press Run.<br>
 <br>
 9. Start the Ninja Kiwi Archive and then the game you wish to play!<br> To verify you are connected to the server, just join any lobby. If you don't see a blank screen(sas4) or "Connecting to server..." forever(battles) it worked!
 <br>
-<b>
+<h2>
 Second time - after setup<br>
-</b>
+</h2>
 Just ensure you have fiddler open before starting the game. <br>Your fiddler configurations will be saved so no need to change them again, but if you accidentally start it without fiddler open just start fiddler and repeat steps 7-9.<br>
-<h2>Enjoy!!!</h2><br>
+<b>Enjoy!!!</b><br>
 <h1>
 Building from Source<br>
   </h1>
