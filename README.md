@@ -12,13 +12,16 @@ Currently SAS4 and BTD Battles are being hosted. The guide to play on these serv
 When playing on these servers, some quality of life/easter egg features are added, but mostly they will play exactly as you would expect the game to play on Ninja Kiwi's servers, and any data or achievements from these games will register in your actual NK profile.<br>
 <h1>
 INSTALLATION GUIDE<br>
+ 1. Install <a href = https://www.fiddler.com>Fiddler</a> and open it.
+ 2. 
   </h1>
 ...<br>
 <h1>
 Building from Source<br>
   </h1>
 <br>
-Compile the java file for the game you wish to host and run it with any java compiler(10+ might be needed); all the classes are included.<br>
+Compile the java file f![image](https://user-images.githubusercontent.com/77253453/174670742-faf229c2-3673-467a-85a0-04f4f1414fbc.png)
+or the game you wish to host and run it with any java compiler(10+ might be needed); all the classes are included.<br>
 Command line arguments(BTD Battles): 4480<br>
 Command line arguments(SAS4): 8124<br>
 You can now play locally with one of the "localhost" SWFs. <br>
