@@ -26,9 +26,9 @@ INSTALLATION GUIDE<br></h1>
 6. Follow the instructions below depending on which game(s) you want to play, then proceed to step 7:<br>
 <b>SAS4</b><br>
 Paste the following line into the top text box:<br>
-regex:^http(s|)://assets.nkstatic.com/Games/gameswfs/sas4/sas4.swf<br>
+<u>regex:^http(s|)://assets.nkstatic.com/Games/gameswfs/sas4/sas4.swf</u><br>
 and the following in the bottom text box:<br>
-https://github.com/GlennnM/NKFlashServers/raw/main/SAS4/sas4.swf<br>
+<u>https://github.com/GlennnM/NKFlashServers/raw/main/SAS4/sas4.swf</u><br>
 Click "Save".
 <img src = https://user-images.githubusercontent.com/77253453/174674145-5803dc9e-0eb7-4be2-a7fd-21649fcf8d96.png>
 
@@ -43,7 +43,7 @@ Here is an example of what your screen should look like, if you added both games
 <img src=https://user-images.githubusercontent.com/77253453/174676318-8b5522ee-78c4-45d2-abd2-2e726674a55b.png>
 
 7. Close all NK Archive windows and games. Hold the windows key and press R(Win+R) and paste the following:<br>
-<ul>%appdata%/Ninja Kiwi Archive/Cache</ul><br>
+<u>%appdata%/Ninja Kiwi Archive/Cache</u><br>
 then press Run.<br>
 <img src = https://user-images.githubusercontent.com/77253453/174675149-f9107ddd-d9b0-4592-bff0-57db6c5b67ac.png>
 <br>
