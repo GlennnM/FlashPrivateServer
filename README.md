@@ -44,7 +44,7 @@ Here is an example of what your screen should look like, if you added both games
 
 7. Close all NK Archive windows and games. Hold the windows key and press R(Win+R) and paste the following:<br>
 <u>%appdata%/Ninja Kiwi Archive/Cache</u><br>
-then press Run.<br>
+then press OK.<br>
 <img src = https://user-images.githubusercontent.com/77253453/174675149-f9107ddd-d9b0-4592-bff0-57db6c5b67ac.png>
 <br>
 8. Clear out this folder by clicking on any of the files that appear, press ctrl+A(Select all), then Shift+Delete(Permanently delete).<br> This will ensure the game updates to use the server, instead of using an old cached version.<br>
