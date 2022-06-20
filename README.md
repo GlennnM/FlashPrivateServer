@@ -28,7 +28,7 @@ INSTALLATION GUIDE<br></h1>
 Paste the following line into the top text box:<br>
 <u>regex:^http(s|)://assets.nkstatic.com/Games/gameswfs/sas4/sas4.swf</u><br>
 and the following in the bottom text box:<br>
-<u>https://github.com/GlennnM/NKFlashServers/raw/main/SAS4/sas4.swf</u><br>
+<u>https://cdn.jsdelivr.net/gh/GlennnM/NKFlashServers/SAS4/sas4.swf</u><br>
 Click "Save".
 <img src = https://user-images.githubusercontent.com/77253453/174674145-5803dc9e-0eb7-4be2-a7fd-21649fcf8d96.png>
 
@@ -37,7 +37,7 @@ Click add rule again if you already added SAS4 - playing multiple is fine.<br>
 Paste the following line into the top text box:<br>
 regex:^http(s|)://assets.ninjakiwi.com/Games/gameswfs/btdbattles-dat.swf<br>
 and the following in the bottom text box:<br>
-https://github.com/GlennnM/NKFlashServers/raw/main/BattlesFlash/btdbattles-dat.swf<br>
+https://cdn.jsdelivr.net/gh/GlennnM/NKFlashServers/BattlesFlash/btdbattles-dat.swf<br>
 Click "Save".<br>
 Here is an example of what your screen should look like, if you added both games:<br>
 <img src=https://user-images.githubusercontent.com/77253453/174676318-8b5522ee-78c4-45d2-abd2-2e726674a55b.png>
