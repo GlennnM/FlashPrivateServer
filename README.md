@@ -16,7 +16,7 @@ INSTALLATION GUIDE<br></h1>
  1. Install <a href = https://www.telerik.com/download/fiddler>Fiddler Classic</a> and open it.<br>
  2. On the menu bar, select Tools->Options.
   <img src = https://user-images.githubusercontent.com/77253453/174670742-faf229c2-3673-467a-85a0-04f4f1414fbc.png><br>
- 3. Select the "HTTPS" tab. Enable Decrypt HTTPS traffic. Choose "from non-browsers only", since decrypting HTTPS from your browser can cause issues on many sites<br>(but consider trying "from all processes" if you have issues later and/or want to play in a browser)<br>
+ 3. Select the "HTTPS" tab. Enable Decrypt HTTPS traffic. Choose "from non-browsers only", since decrypting HTTPS from your browser can cause issues on many sites<br>(but consider trying "from all processes" if you have issues later and/or want to play in a browser)<br>Also install whatever certificates it asks you to(a few confirmation dialogs should appear).<br>
  <img src = https://user-images.githubusercontent.com/77253453/174671525-88d40c45-a6e9-4cdc-b72b-c36996e2ca79.png>
 <br>
 4. Click "OK" to close the options menu, then click the "AutoResponder" button on the right side of the interface.<br>
