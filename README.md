@@ -53,7 +53,7 @@ then press Run.<br>
 9. Start the Ninja Kiwi Archive and then the game you wish to play!<br> To verify you are connected to the server, just join any lobby. If you don't see a blank screen(sas4) or "Connecting to server..." forever(battles) it worked!
 <br>
 <b>
-Second time - after setup
+Second time - after setup<br>
 </b>
 Just ensure you have fiddler open before starting the game. <br>Your fiddler configurations will be saved so no need to change them again, but if you accidentally start it without fiddler open just start fiddler and repeat steps 7-9.<br>
 <h2>Enjoy!!!</h2><br>
