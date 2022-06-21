@@ -53,12 +53,12 @@ then press OK.<br>
 <img src = https://user-images.githubusercontent.com/77253453/174674847-2357b7d9-bdca-4378-9db8-b5af0d94e7cf.png>
 <br>
 9. Start the Ninja Kiwi Archive and then the game you wish to play!<br> To verify you are connected to the server, just join any lobby. If you don't see a blank screen(sas4) or "Connecting to server..." forever(battles) it worked!<br>
-Step 3 help/workaround:
+<i>Step 3 help/workaround(ignore if it worked):</i>
 <br>If you see this error:<br>
 <img src = https://cdn.discordapp.com/attachments/988564906351669268/988593108860162058/unknown.png>
 <br>
 <details><summary>
-follow these steps:<br>
+follow these steps if you saw the error above:<br>
  </summary>
 1. Open Fiddler, go to Tools -> Options -> HTTPS -> Actions -> Export Root Certificate to Desktop<br>
 2. Double click the certificate<br>
