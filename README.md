@@ -28,18 +28,18 @@ HOW TO PLAY<br></h1>
 6. Follow the instructions below depending on which game(s) you want to play, then proceed to step 7:<br>
 <b>SAS4</b><br>
 Paste the following line into the top text box:<br>
-`regex:^http(s|)://assets.nkstatic.com/Games/gameswfs/sas4/sas4.swf`<br>
+<code>regex:^http(s|)://assets.nkstatic.com/Games/gameswfs/sas4/sas4.swf</code><br>
 and the following in the bottom text box:<br>
-`https://cdn.jsdelivr.net/gh/GlennnM/NKFlashServers/SAS4/sas4.swf`<br>
+<code>https://cdn.jsdelivr.net/gh/GlennnM/NKFlashServers/SAS4/sas4.swf</code><br>
 Click "Save".
 <img src =https://user-images.githubusercontent.com/77253453/174720990-cb685426-e353-4aad-af80-155e6c2765de.png>
 
 <b>BTD Battles</b><br>
 Click add rule again if you already added SAS4 - playing multiple is fine.<br>
 Paste the following line into the top text box:<br>
-`regex:^http(s|)://assets.ninjakiwi.com/Games/gameswfs/btdbattles-dat.swf`<br>
+<code>regex:^http(s|)://assets.ninjakiwi.com/Games/gameswfs/btdbattles-dat.swf</code><br>
 and the following in the bottom text box:<br>
-`https://cdn.jsdelivr.net/gh/GlennnM/NKFlashServers/BattlesFlash/btdbattles-dat.swf`<br>
+<code>https://cdn.jsdelivr.net/gh/GlennnM/NKFlashServers/BattlesFlash/btdbattles-dat.swf</code><br>
 Click "Save".<br>
 Here is an example of what your screen should look like, if you added both games:<br>
 <img src = https://user-images.githubusercontent.com/77253453/174679510-29f708a7-6578-443b-ac1b-362c394e74b9.png>
