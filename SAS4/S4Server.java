@@ -16,7 +16,7 @@ import java.net.ServerSocket;
 
 /**
  * @TODO /done /done /done no boosting in vs(or vs compatible boosting?)
- *		 custom boost level
+ *		 custom boost level, seed to !help
  *       feature: custom map for event. -> hard :( also cycle events properly(date->event)
  *		 rely on loading states instead of scuffed thing, experiment with routing 6 packet to self or something
  *       /done /done
@@ -106,6 +106,8 @@ class ServerThread extends Thread {
 						new Thread(g).start();
 					}
 					byte[] ip = "154.53.49.118".getBytes(StandardCharsets.UTF_8);
+					
+					//byte[] ip = "154.53.49.118".getBytes(StandardCharsets.UTF_8);
 					byte[] pl = new byte[10 + ip.length];
 					pl[0] = (byte) (ip.length >> 8);
 					pl[1] = (byte) (ip.length & 0xff);
@@ -117,7 +119,7 @@ class ServerThread extends Thread {
 					pl[i + 3] = (byte) (port & 0xff);
 					pl[i + 4] = (byte) (mode >> 8);
 					pl[i + 5] = (byte) (mode & 0xff);
-					pl[i + 6] = (byte) (code >> 24);
+					pl[i + 6] = (byte) ((code >> 24) & 0xff);
 					pl[i + 7] = (byte) ((code >> 16) & 0xff);
 					pl[i + 8] = (byte) ((code >> 8) & 0xff);
 					pl[i + 9] = (byte) ((code) & 0xff);
@@ -293,6 +295,10 @@ class Player {
 		this.data = data;
 
 	}
+	public void setLevel(byte level){
+		this.level=level;
+		
+	}
 }
 
 class GameServer extends Thread {
@@ -383,7 +389,22 @@ class GameServer extends Thread {
 		this.init = false;
 		this.alive = true;
 	}
-
+	public void memory() {
+		int mb = 1024 * 1024;
+		// get Runtime instance
+		Runtime instance = Runtime.getRuntime();
+		String usage = "";
+		// available memory
+		usage+=("Games: " +S4Server.games.size());
+		usage+=(", Threads: " +Thread.activeCount()+"\n");
+		// used memory
+		usage+=("Used Memory: "
+				+ (instance.totalMemory() - instance.freeMemory()) / mb+" MB, ");
+		// Maximum available memory
+		usage+="Allocated: " + instance.totalMemory() / mb+" MB";
+		usage+=("\nMax Memory: " + instance.maxMemory() / mb+" MB\n");
+		chat(usage);
+	}
 	public void chat(String s) {
 		byte first=(byte)-1;
 		byte[] msg;
@@ -414,19 +435,19 @@ class GameServer extends Thread {
 
 	// Add a bot, if possible.
 	// Bots will leave as soon as building starts.
-	public void boost() {
-		if (playerThreads.size() > 3||this.started) {
+	public void boost(byte level) {
+		if (level>101||playerThreads.size() > 3||this.started) {
 			chat("Unable to boost.");
 			return;
 		}
 		GameServerThread bot = new GameServerThread(null, this, this.nextId, this.host);
+		bot.player.setLevel(level);
 		this.nextId++;
 		playerThreads.add(bot);
 		newPlayer(bot.id);
 		chat("Added 1 bot!");
 		new Thread(bot).start();
 	}
-
 	// Remove a bot.
 	public void unboost() {
 		int i = 0;
@@ -437,7 +458,7 @@ class GameServer extends Thread {
 				i--;
 				return;
 			}
-		chat("No bots to remove");
+		//chat("No bots to remove");
 	}
 	// Accept connections and route them to GameServerThreads.
 	// Also use the loop for checks(start game=-11 packet when all built)
@@ -452,7 +473,7 @@ class GameServer extends Thread {
 					if (autostart) {
 						this.minLvl--;
 						this.maxLvl++;
-						if (!this.started && this.elapsedTime >= this.startTime) {
+						if (this.allLoaded()&&!this.started && this.elapsedTime >= this.startTime) {
 							this.start();
 							this.startTime = -1;
 							this.elapsedTime = 0;
@@ -551,7 +572,7 @@ class GameServer extends Thread {
 	// existing players of them.
 	// See playerData() for protocol information.
 	public void newPlayer(byte id) {
-		if (autostart) {
+		if (autostart&&!this.started) {
 			if (playerThreads.size() == 2) {
 				this.startTime = (this.mode == 5) ? 15 : 30;
 				this.elapsedTime = 0;
@@ -598,15 +619,14 @@ class GameServer extends Thread {
 				continue;
 			}
 		}
-		for (GameServerThread g : playerThreads) {
+		//for (GameServerThread g : playerThreads) {
 			
-			fullLoad(g.id);
-		}
+			//fullLoad(id);
+		//}
 	}
 
 	// float value containing loading or building % for some player(0.0-1.0).
 	public void loadingState(byte id, byte[] buffer) {
-		// System.out.println("HYDR");
 		byte[] pl = new byte[11];
 		pl[0] = (byte) -2;
 		pl[4] = (byte) (0x06);
@@ -675,6 +695,11 @@ class GameServer extends Thread {
 			g.started = true;
 			g.pingSinceBuild = 0;
 		}
+	}public boolean allLoaded(){
+		for(GameServerThread g:playerThreads)
+			if(!g.loaded)
+				return false;
+		return true;
 	}
 }
 
@@ -699,6 +724,8 @@ class GameServerThread extends Thread {
 	public int pingSinceBuild;
 	public boolean bot;
 	public int actualCode;
+	public float load;
+	public float build;
 	/**
 	 * -2 packet with operation -1 as interpreted in o14519; reflects most of the
 	 * data from the (0x00ca) packet containing player data. Appended to this is a
@@ -716,7 +743,8 @@ class GameServerThread extends Thread {
 		pl = new byte[len + 5];
 		if (this.bot) {
 			pl[len + 4] = (byte) 100;
-		}
+		}else
+			pl[len + 4] = (byte) (this.load*100);
 		try {
 			pl[0] = (byte) -2;
 			pl[1] = (byte) (len >> 24);
@@ -794,6 +822,8 @@ class GameServerThread extends Thread {
 		this.built = false;
 		this.ingame = false;
 		this.bot = false;
+		this.load=0.0f;
+		this.build=0.0f;
 		this.lastPinged = 0;
 		this.pingSinceLoad = 0;
 		this.pingSinceBuild = 0;
@@ -831,15 +861,15 @@ class GameServerThread extends Thread {
 			 * auto boost codes(zzz, boost, 400)
 			 */
 			if (this.parent.actualCode == 254486284) {
-				this.parent.boost();
+				this.parent.boost((byte)100);
 			}
 			if (this.parent.actualCode == 193514003) {
-				this.parent.boost();
+				this.parent.boost((byte)100);
 			}
-			if (this.parent.actualCode == 400) {
-				this.parent.boost();
-				this.parent.boost();
-				this.parent.boost();
+			if (this.parent.actualCode == 400||Math.abs(this.parent.actualCode-2089076591)<20) {
+				this.parent.boost((byte)100);
+				this.parent.boost((byte)100);
+				this.parent.boost((byte)100);
 			}
 
 		} else if (buffer[0] == (byte) (-14)) {
@@ -851,17 +881,24 @@ class GameServerThread extends Thread {
 				this.pingSinceBuild++;
 				lastPinged = (new Date()).getTime();
 			}
-			if (!this.started && !this.loaded && this.pingSinceLoad > 10) {
+			if (!this.started && !this.loaded && this.pingSinceLoad > 20) {
 				this.loaded = true;
+				this.load=1.0f;
 				parent.fullLoad(this.id);
 			}
-			if (!this.built && !this.ingame && this.started && this.pingSinceBuild > 20) {
+			if (!this.built && !this.ingame && this.started && this.pingSinceBuild > 40) {
 				this.built = true;
+				this.load=1.0f;
 				parent.fullLoad(this.id);
 			}
-		} else if (buffer[0] == (byte) (-10) && !loaded) {
+		} else if (buffer[0] == (byte) (-10)) {
 			this.pingSinceLoad = 0;
-			parent.loadingState(this.id, buffer);
+			this.load = Float.intBitsToFloat( buffer[10] ^ buffer[11]<<8 ^ buffer[12]<<16 ^ buffer[13]<<24 );
+			if(Math.abs(1f-this.load)<0.0001){
+				parent.fullLoad(this.id);
+				this.loaded=true;
+			}else 
+				parent.loadingState(this.id, buffer);
 		} else if (buffer[0] == (byte) (-3)) {
 			byte[] pl = new byte[5];
 			pl[0] = ((byte) (-3));
@@ -900,10 +937,19 @@ class GameServerThread extends Thread {
 				// pl[6]=this.id;
 				pl[6] = this.id;
 				if (actualSize > 25) {
-					String msg = new String(Arrays.copyOfRange(buffer, 24, actualSize), StandardCharsets.UTF_8);
+					String msg = "";
+					byte chat_length=0;
+					try{
+						chat_length = buffer[23];
+						msg = new String(Arrays.copyOfRange(buffer, 24, 24+chat_length), StandardCharsets.UTF_8);
+					}catch(Exception e){
+						
+					}
 					// System.out.println("MSG:"+msg);
 					if (msg.startsWith("!boost")) {
-						parent.boost();
+						if(msg.indexOf(" ")==-1)
+							parent.boost((byte)100);
+						else parent.boost(Byte.parseByte(msg.substring(msg.indexOf(" ")+1)));
 					}
 					if (msg.startsWith("!unboost")) {
 						parent.unboost();
@@ -912,17 +958,20 @@ class GameServerThread extends Thread {
 						parent.chat("https://github.com/GlennnM/NKFlashServers");
 					}
 					if (msg.startsWith("!help")) {
-						parent.chat("Flash Private Server by Glenn M#9606.\nCommands:\n!boost !unboost !source\nSpecial private match codes:\nboost, 400");
+						parent.chat("Flash Private Server by Glenn M#9606.\nCommands:\n!boost <lvl>, !unboost, !source, !seed, !stats\nSpecial private match codes:\nboost, 400");
 					}
 					if (msg.startsWith("!seed")) {
 						parent.chat("Current seed: "+parent.seed);
+					}
+					if (msg.startsWith("!stats")) {
+						parent.memory();
 					}
 				}
 			}
 			if (buffer[6] == (byte) 0x07) {
 				parent.fullLoad(this.id);
 				this.built = true;
-			} else {
+			}// else {
 				// if((byte)(buffer[8]>>4&0xff)==(byte)0x0c){
 				// parent.writeFrom(this.id,buffer,0,actualSize);
 				// }else{
@@ -936,13 +985,18 @@ class GameServerThread extends Thread {
 				parent.writeFrom(this.id, pl, 0, pl.length);
 				// }
 				// }
-			}
-		} else if (!parent.autostart && buffer[0] == (byte) (-17)) {
-
-			parent.start();
-		} else if (buffer[0] == (byte) (-15) && !built) {
+			//}
+		} else if (!parent.autostart && buffer[0] == (byte) (-17) && !parent.started) {
+			
+				parent.start();
+		} else if (this.started&&buffer[0] == (byte) (-15) && !built) {
 			this.pingSinceBuild = 0;
-			parent.loadingState(this.id, buffer);
+			this.build=Float.intBitsToFloat( buffer[10] ^ buffer[11]<<8 ^ buffer[12]<<16 ^ buffer[13]<<24 );
+			if(Math.abs(1f-this.build)<0.0001){
+				parent.fullLoad(this.id);
+				this.built=true;
+			}else 
+				parent.loadingState(this.id, buffer);
 		}
 	}
 
