@@ -83,7 +83,7 @@ so basically: if you are about to make a sensitive transaction on public wifi, t
 Building from Source<br>
   </h1>
 <br>
-Compile the java file or the game you wish to host and run it with any java compiler(10+ might be needed); all the classes are included.<br>
+Compile and run the java file for the game you wish to host with any java compiler(10+ might be needed); all the classes are included.<br>
 Command line arguments(BTD Battles): 4480<br>
 Command line arguments(SAS4): 8124<br>
 You can now play locally with one of the "localhost" SWFs. <br>
