@@ -57,7 +57,9 @@ Step 3 help/workaround:
 <br>If you see this error:<br>
 <img src = https://cdn.discordapp.com/attachments/988564906351669268/988593108860162058/unknown.png>
 <br>
+<details><summary>
 follow these steps:<br>
+ </summary>
 1. Open Fiddler, go to Tools -> Options -> HTTPS -> Actions -> Export Root Certificate to Desktop<br>
 2. Double click the certificate<br>
 3. Select if you want to install the certificate in the user store or the machine one<br>
@@ -65,6 +67,7 @@ follow these steps:<br>
 5. Click on "Browse..." and select "Trusted Root Certification Authorities"<br>
 6. Click Next and Finish<br>
 7. New dialog with "The import was successful" message should appear<br>
+ </details>
 <br>
 <h2>
 Second time - after setup<br>
