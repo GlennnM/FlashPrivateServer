@@ -74,6 +74,11 @@ Second time - after setup<br>
 </h2>
 Just ensure you have fiddler open before starting the game. <br>Your fiddler configurations will be saved so no need to change them again, but if you accidentally start it without fiddler open just start fiddler and repeat steps 7-9.<br>
 <b>Enjoy!!!</b><br>
+<details><summary>some info about security</summary>
+yes i am asking you to click trust on something that says "do not trust". This message is correct in that there are security risks in running fiddler with HTTPS decryption on, which is why we restrict it to non browser applications. basically, anyone who controls a device between your computer and the internet would be able to decrypt your traffic from those applications.
+
+so basically: if you are about to make a sensitive transaction on public wifi, turn off https decryption, and also click the padlock next to url to make sure you aren't on a connection that is "verified by DO_NOT_TRUST"
+ </details>
 <h1>
 Building from Source<br>
   </h1>
@@ -84,8 +89,4 @@ Command line arguments(SAS4): 8124<br>
 You can now play locally with one of the "localhost" SWFs. <br>
 If you want to host it yourself you will need to change the IP and make a new swf(instructions not provided here, but it is fairly simple)<br>
 <br>
-<details><summary>some info about security</summary>
-yes i am asking you to click trust on something that says "do not trust". This message is correct in that there are security risks in running fiddler with HTTPS decryption on, which is why we restrict it to non browser applications. basically, anyone who controls a device between your computer and the internet would be able to decrypt your traffic from those applications.
 
-so basically: if you are about to make a sensitive transaction on public wifi, turn off https decryption, and also click the padlock next to url to make sure you aren't on a connection that is "verified by DO_NOT_TRUST"
- </details>
