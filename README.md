@@ -32,7 +32,7 @@ Paste the following line into the top text box:<br>
 and the following in the bottom text box:<br>
 <u>https://cdn.jsdelivr.net/gh/GlennnM/NKFlashServers/SAS4/sas4.swf</u><br>
 Click "Save".
-<img src = https://user-images.githubusercontent.com/77253453/174674145-5803dc9e-0eb7-4be2-a7fd-21649fcf8d96.png>
+<img src =https://user-images.githubusercontent.com/77253453/174720990-cb685426-e353-4aad-af80-155e6c2765de.png>
 
 <b>BTD Battles</b><br>
 Click add rule again if you already added SAS4 - playing multiple is fine.<br>
