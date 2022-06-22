@@ -20,7 +20,7 @@ HOW TO PLAY<br></h1>
 
 4. Make sure it runs correctly; it should say "Mod installation successful!!".<br>
 That's it! Next time you start BTD Battles or SAS4 on the archive they will be modded to link to the private server, allowing you to play.<br><b>Enjoy!!</b><br>
-<br>Since the games are fairly inactive, you can play "solo" multiplayer with the following methods:
+<br>Since the games are fairly inactive, you can play "solo" multiplayer with the following methods:<br>
 -join code 400 in SAS4 to play a boosted game with bots(works in any mode)<br>
 -<a href = https://github.com/Kinnay/Bloons-Terminator>bots</a> for battles flash(can be reworked into challenge bots, similar to professor evil on mobile)<br>
 <h1>
