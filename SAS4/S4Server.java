@@ -15,10 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.net.ServerSocket;
 
 /**
- * @TODO /done /done /done no boosting in vs(or vs compatible boosting?)
- *		 custom boost level, seed to !help
+ * @TODO no boosting in vs(or vs compatible boosting?)
+ *		 /done /done
  *       feature: custom map for event. -> hard :( also cycle events properly(date->event)
- *		 rely on loading states instead of scuffed thing, experiment with routing 6 packet to self or something
+ *		/done experiment with routing 9 packet to self or something
  *       /done /done
  */
 class ServerThread extends Thread {
@@ -1177,7 +1177,6 @@ public class S4Server {
 	public static byte[] bot;
 	public static volatile ConcurrentHashMap<InetAddress, Integer> ipThreads;
 	public static volatile ConcurrentHashMap<String, GameServer> games;
-	public static volatile ConcurrentHashMap<Integer, ArrayList<String>> history;
 	public static volatile String log = "";
 	public static volatile int nextPort = 8118;
 	public static long window = 0;
