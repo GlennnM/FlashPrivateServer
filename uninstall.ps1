@@ -1,5 +1,9 @@
 ﻿"Checking for Ninja Kiwi Archive..."
-$Folder = $env:APPDATA+'/Ninja Kiwi Archive/Cache'
+if ($IsWindows -or $ENV:OS) {
+    $cache = $env:APPDATA+'/Ninja Kiwi Archive/Cache'
+} else {
+   $cache = $HOME+'/Library/Application Support/Ninja Kiwi Archive/Cache'
+}
 if (Test-Path -Path $Folder) {
     "Flash Private Server Installer by glenn m"
     "All mods will be uninstalled."
@@ -8,7 +12,7 @@ if (Test-Path -Path $Folder) {
     $N = (New-Object Net.WebClient)
     "Clearing archive cache..."
     try{
-        Remove-Item $env:APPDATA'/Ninja Kiwi Archive/Cache/*' 
+        Remove-Item $cache'/*' -Recurse
         "Archive cache cleared!"
     }catch{
         $Q = Read-Host "Clearing cache failed, exiting."
