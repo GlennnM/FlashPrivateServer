@@ -14,11 +14,11 @@ When playing on these servers, some quality of life/easter egg features are adde
 HOW TO PLAY<br></h1>
 <br>
 1. Ensure you have Ninja Kiwi Archive installed(from ninja kiwi website or Steam)<br>
-2. Download FlashServer.ps1 from this page<a href = https://github.com/GlennnM/NKFlashServers/releases/tag/v1.0>(click)</a><br>
+2. Download FlashServer.ps1 from this page<a href = https://github.com/GlennnM/NKFlashServers/releases/tag/v1.1>(click)</a><br>
 3. Open the folder you downloaded it to, close all NK Archive windows(INCLUDING THE LAUNCHER), right click and click "Run with PowerShell".<br>
 <img src = https://user-images.githubusercontent.com/77253453/174930851-e4e85f61-5b8d-415c-ba27-a7497d3e557a.png></img>
 
-4. Make sure it runs correctly; it should say "Mod installation successful!!".<br>
+4. Make sure it runs correctly; it should say "Mod installation successful!!".<br><br>This should work on mac as well now (you will need to install powershell first)<br>
 That's it! Next time you start BTD Battles or SAS4 on the archive they will be modded to link to the private server, allowing you to play.<br><b>Enjoy!!</b><br>
 <br>Since the games are fairly inactive, you can play "solo" multiplayer with the following methods:<br>
 -join code 400 in SAS4 to play a boosted game with bots(works in any mode)<br>
