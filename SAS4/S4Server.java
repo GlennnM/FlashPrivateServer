@@ -5,6 +5,7 @@ import java.net.Socket;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.Charset;
@@ -15,10 +16,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.net.ServerSocket;
 
 /**
- * @TODO no boosting in vs(or vs compatible boosting?)
+ * @TODO /done
  *		 /done /done
  *       feature: custom map for event. -> hard :( also cycle events properly(date->event)
- *		/done experiment with routing 9 packet to self or something
+ *		/done /nvm
  *       /done /done
  */
 class ServerThread extends Thread {
@@ -309,7 +310,7 @@ class GameServer extends Thread {
 	 */
 	public ServerSocket server;
 	public int port;
-	public boolean alive = true;
+	public volatile boolean alive = true;
 	public ArrayList<GameServerThread> playerThreads;
 	public int mode;
 	public int code;
@@ -332,7 +333,15 @@ class GameServer extends Thread {
 		return (!this.started) && (this.playerThreads != null) && (this.playerThreads.size() < 4) && (lvl <= maxLvl)
 				&& (lvl >= minLvl);
 	}
-
+	public void flushAll(){
+		for(GameServerThread g:playerThreads){
+			try{
+			g.flushAll();
+			}catch(Exception e){
+			e.printStackTrace();
+			}
+		}
+	}
 	public GameServer(int port, int mode, int code, short auto, int actualCode) {
 		playerThreads = new ArrayList<GameServerThread>();
 		this.nextId = 0;
@@ -426,7 +435,7 @@ class GameServer extends Thread {
 			}
 			try{
 				g.output.write(msg,0,msg.length);
-				g.output.flush();
+				//g.output.flush();
 			}catch(IOException e){continue;}
 		}
 		
@@ -435,17 +444,17 @@ class GameServer extends Thread {
 
 	// Add a bot, if possible.
 	// Bots will leave as soon as building starts.
-	public void boost(byte level) {
+	public void boost(byte level,boolean vs) {
 		if (level>101||playerThreads.size() > 3||this.started) {
 			chat("Unable to boost.");
 			return;
 		}
-		GameServerThread bot = new GameServerThread(null, this, this.nextId, this.host);
+		GameServerThread bot = new GameServerThread(null, this, this.nextId, this.host, vs);
 		bot.player.setLevel(level);
 		this.nextId++;
 		playerThreads.add(bot);
 		newPlayer(bot.id);
-		chat("Added 1 bot!");
+		chat(vs?("Added 1 VS bot!"):("Added 1 bot!"));
 		new Thread(bot).start();
 	}
 	// Remove a bot.
@@ -460,7 +469,7 @@ class GameServer extends Thread {
 			}
 		//chat("No bots to remove");
 	}
-	// Accept connections and route them to GameServerThreads.
+	// Accept connections and route f to GameServerThreads.
 	// Also use the loop for checks(start game=-11 packet when all built)
 	@Override
 	public void run() {
@@ -484,7 +493,7 @@ class GameServer extends Thread {
 			Socket client = null;
 			int ready = 0;
 			for (GameServerThread g : playerThreads) {
-				if (g.built && g.started && !g.ingame)
+				if ((g.built && g.started && !g.ingame)||g.vs)
 					ready++;
 			}
 			if (ready == playerThreads.size()) {
@@ -497,13 +506,16 @@ class GameServer extends Thread {
 				pl[4] = ((byte) ((time) & 0xff));// time
 				this.writeAll(pl, 0, 5);
 				chat("All players built(hopefully)\nStarting game!");
-				for (GameServerThread g : playerThreads)
+				long hydar = (new Date()).getTime();
+				for (GameServerThread g : playerThreads){
 					g.ingame = true;
+					g.ingameSince=hydar;
+				}
 			}
 			try {
 				client = server.accept();
 				this.init = true;
-				GameServerThread connection = new GameServerThread(client, this, this.nextId, this.host);
+				GameServerThread connection = new GameServerThread(client, this, this.nextId, this.host, false);
 				this.nextId++;
 				playerThreads.add(connection);
 				new Thread(connection).start();
@@ -535,7 +547,7 @@ class GameServer extends Thread {
 			if (h.id != id) {
 				try {
 					h.output.write(data);
-					h.output.flush();
+					//h.output.flush();
 				} catch (IOException e) {
 					continue;
 				}
@@ -548,7 +560,7 @@ class GameServer extends Thread {
 			if (h.id != id) {
 				try {
 					h.output.write(data, offset, length);
-					h.output.flush();
+					//h.output.flush();
 				} catch (IOException e) {
 					continue;
 				}
@@ -561,7 +573,7 @@ class GameServer extends Thread {
 			try {
 				// System.out.println(data.length);
 				g.output.write(data, off, length);
-				g.output.flush();
+				//g.output.flush();
 			} catch (IOException e) {
 				continue;
 			}
@@ -601,7 +613,7 @@ class GameServer extends Thread {
 								g.output.write(S4Server.encode("Welcome to SAS4 Private Server!\n!help for a list of commands.",h.id));
 								g.welcomed=true;
 							}
-							g.output.flush();
+							//g.output.flush();
 						}
 				} else
 					for (GameServerThread h : playerThreads)
@@ -611,7 +623,7 @@ class GameServer extends Thread {
 								g.output.write(S4Server.encode("Welcome to SAS4 Private Server!\n!help for a list of commands.",h.id));
 								g.welcomed=true;
 							}
-							g.output.flush();
+							//g.output.flush();
 						}
 			}
 
@@ -619,6 +631,7 @@ class GameServer extends Thread {
 				continue;
 			}
 		}
+		this.flushAll();
 		//for (GameServerThread g : playerThreads) {
 			
 			//fullLoad(id);
@@ -682,7 +695,7 @@ class GameServer extends Thread {
 		}
 		byte[] pl = new byte[] { (byte) -6, id };
 		this.writeAll(pl, 0, 2);
-
+		this.flushAll();
 	}
 
 	// start building(start game button), or automatically in event/quickmatch
@@ -690,6 +703,7 @@ class GameServer extends Thread {
 		chat("Starting building...");
 		System.out.println("-------STARTING GAME " + code + "-------");
 		this.writeAll(new byte[] { (byte) -16 }, 0, 1);
+		this.flushAll();
 		this.started = true;
 		for (GameServerThread g : playerThreads) {
 			g.started = true;
@@ -706,26 +720,38 @@ class GameServer extends Thread {
 class GameServerThread extends Thread {
 	// See GameServer
 	public Socket client;
-	public volatile OutputStream output;
+	public volatile OutputStream rawOutput;
+	public volatile BufferedOutputStream output;
 	public boolean alive;
 	public short map;
-	public boolean init;
 	public Player player;
 	public GameServer parent;
 	public byte id;
 	public byte host;
+	//game state(started means building started, ingame means actually started)
+	public boolean init;
 	public boolean welcomed;
 	public boolean loaded;
 	public boolean started;
 	public boolean built;
 	public boolean ingame;
+	
 	public int pingSinceLoad;
 	private long lastPinged;
 	public int pingSinceBuild;
+	public long ingameSince;
+	
 	public boolean bot;
+	public boolean vs;
 	public int actualCode;
 	public float load;
 	public float build;
+	public float tickTime;
+	public long lastTick;
+	public void flushAll() throws IOException{
+		this.output.flush();
+		this.rawOutput.flush();
+	}
 	/**
 	 * -2 packet with operation -1 as interpreted in o14519; reflects most of the
 	 * data from the (0x00ca) packet containing player data. Appended to this is a
@@ -735,6 +761,7 @@ class GameServerThread extends Thread {
 	 * type=bytearray |1| suboperation IF type -1 |data| - usually includes id and
 	 * level early on See o14519, o2144.
 	 */
+	
 	public byte[] playerData(byte opcode) {
 		int len = this.player.data.length;
 		if (opcode == -1)
@@ -810,9 +837,10 @@ class GameServerThread extends Thread {
 	 * Constructor. If client isn't a real socket we will create a bot instead
 	 * parent is a reference to the GameServer we are connected to
 	 */
-	public GameServerThread(Socket client, GameServer parent, byte id, byte host) {
+	public GameServerThread(Socket client, GameServer parent, byte id, byte host, boolean vs) {
 		this.parent = parent;
 		this.welcomed=false;
+		this.tickTime=0.2f;
 		this.map = parent.map;
 		this.alive = true;
 		this.init = false;
@@ -822,22 +850,25 @@ class GameServerThread extends Thread {
 		this.built = false;
 		this.ingame = false;
 		this.bot = false;
+		this.vs=vs;
 		this.load=0.0f;
 		this.build=0.0f;
 		this.lastPinged = 0;
 		this.pingSinceLoad = 0;
 		this.pingSinceBuild = 0;
+		this.ingameSince=(new Date().getTime())*2;
 		this.id = id;
 		this.host = host;
 		this.client = client;
 		try {
-			this.output = client.getOutputStream();
+			this.rawOutput = client.getOutputStream();
 		} catch (Exception e) {
 			this.bot = true;
-			this.output = new NullOutputStream();
+			this.rawOutput = new NullOutputStream();
 			this.player = new Player((short) 100, new int[] {});
-			this.player.setData(S4Server.bot);
+			this.player.setData((this.vs)?S4Server.vsbot:S4Server.bot);
 		}
+		this.output = new BufferedOutputStream(rawOutput);
 	}
 
 	/**
@@ -861,15 +892,15 @@ class GameServerThread extends Thread {
 			 * auto boost codes(zzz, boost, 400)
 			 */
 			if (this.parent.actualCode == 254486284) {
-				this.parent.boost((byte)100);
+				this.parent.boost((byte)100, false);
 			}
 			if (this.parent.actualCode == 193514003) {
-				this.parent.boost((byte)100);
+				this.parent.boost((byte)100, false);
 			}
 			if (this.parent.actualCode == 400||Math.abs(this.parent.actualCode-2089076591)<20) {
-				this.parent.boost((byte)100);
-				this.parent.boost((byte)100);
-				this.parent.boost((byte)100);
+				this.parent.boost((byte)100, false);
+				this.parent.boost((byte)100, false);
+				this.parent.boost((byte)100, false);
 			}
 
 		} else if (buffer[0] == (byte) (-14)) {
@@ -908,7 +939,7 @@ class GameServerThread extends Thread {
 			pl[3] = ((byte) ((time >> 8) & 0xff));
 			pl[4] = ((byte) ((time) & 0xff));
 			output.write(pl, 0, 5);
-			output.flush();
+			//output.flush();
 		} else if (buffer[0] == (byte) (-2)) {
 			System.out.print("." + buffer[6]);
 			byte[] pl;
@@ -948,23 +979,40 @@ class GameServerThread extends Thread {
 					// System.out.println("MSG:"+msg);
 					if (msg.startsWith("!boost")) {
 						if(msg.indexOf(" ")==-1)
-							parent.boost((byte)100);
-						else parent.boost(Byte.parseByte(msg.substring(msg.indexOf(" ")+1)));
+							parent.boost((byte)100, false);
+						else parent.boost(Byte.parseByte(msg.substring(msg.indexOf(" ")+1)), false);
+					}if (msg.startsWith("!vsboost")) {
+						if(msg.indexOf(" ")==-1)
+							parent.boost((byte)100, true);
+						else parent.boost(Byte.parseByte(msg.substring(msg.indexOf(" ")+1)), true);
 					}
 					if (msg.startsWith("!unboost")) {
 						parent.unboost();
 					}
 					if (msg.startsWith("!source")) {
 						parent.chat("https://github.com/GlennnM/NKFlashServers");
-					}
-					if (msg.startsWith("!help")) {
-						parent.chat("Flash Private Server by Glenn M#9606.\nCommands:\n!boost <lvl>, !unboost, !source, !seed, !stats\nSpecial private match codes:\nboost, 400");
+					}if (msg.startsWith("!help tickrate")) {
+						parent.chat("!tickrate (number). \nThis determines the maximum number of packets the server can send to you per second.\nHigher values = less desync, lower values = less client lag. 0=no buffering.\nDefault is 0.\nOnly affects you.");
+					}else if (msg.startsWith("!help")) {
+						parent.chat("Flash Private Server by Glenn M#9606.\nCommands:\n!boost <lvl>, !vsboost, !unboost\n !source, !seed, !stats, !code\n!tickrate(!help tickrate)\nSpecial private match codes:\nboost, 400");
 					}
 					if (msg.startsWith("!seed")) {
 						parent.chat("Current seed: "+parent.seed);
 					}
+					if (msg.startsWith("!code")) {
+						parent.chat("Current code: "+parent.actualCode+"\nMatch ID: "+parent.code);
+					}
 					if (msg.startsWith("!stats")) {
 						parent.memory();
+					}
+					if (msg.startsWith("!tickrate")) {
+						if(msg.indexOf(" ")==-1)
+							this.tickTime=0.0f;
+						float q=Float.parseFloat(msg.substring(msg.indexOf(" ")+1));
+						if(q==0)
+							this.tickTime=0.0f;
+						else this.tickTime=1.0f/q;
+						parent.chat("Tick rate is now "+q);
 					}
 				}
 			}
@@ -1003,6 +1051,7 @@ class GameServerThread extends Thread {
 	@Override
 	public void run() {
 		try {
+			int overflow=0;
 			this.alive = true;
 			InputStream input = null;
 			if (!this.bot) {
@@ -1011,6 +1060,7 @@ class GameServerThread extends Thread {
 			}
 			int timeouts = 0;
 			byte[] buffer;
+			byte[] prev=new byte[0];
 			int l4 = 0;
 			/**
 			 * -4 packet will load the game lobby; map is also included along with a lot of
@@ -1048,13 +1098,26 @@ class GameServerThread extends Thread {
 				// pl[18]=((byte)0x00);
 				// pl[19]=((byte)0x00);
 				// pl[20]=((byte)0x00);
-				output.write(pl, 0, 17);
-				output.flush();
+				rawOutput.write(pl, 0, 17);
+				rawOutput.flush();
+				//this.flushAll();
 			}
 			while (this.alive) {
+				if(!this.parent.alive){
+					this.alive=false;
+					break;
+				}
 				if (this.bot) {
-					Thread.sleep(1000);
-					if (this.started) {
+					try{
+						Thread.sleep(1000);
+					}catch(InterruptedException e){
+						Thread.currentThread().interrupt();
+					}
+					if (this.started&&!this.vs) {
+						parent.dropPlayer(this.id);
+						this.alive = false;
+						break;
+					}if(this.vs&&(new Date().getTime())-this.ingameSince>6000){
 						parent.dropPlayer(this.id);
 						this.alive = false;
 						break;
@@ -1093,41 +1156,79 @@ class GameServerThread extends Thread {
 					 */
 					int x = 0;
 					System.out.print("[");
+					if(overflow>0){
+						
+						int read = Math.min(overflow,actualSize);
+						overflow-=read;
+						x+=read;
+						int j=0;
+						prev = Arrays.copyOf(prev,prev.length+read);
+						for(j=prev.length-read;j<prev.length;j++)
+							prev[j]=buffer[j-prev.length+read];
+						if(overflow==0){
+							System.out.println("{"+prev.length+"/"+actualSize+"}");
+							try{
+								parsePacket(Arrays.copyOfRange(prev, 0, prev.length), prev.length);
+								if((new Date()).getTime()-lastTick>tickTime*1000){
+									parent.flushAll();
+									lastTick=(new Date()).getTime();
+								}
+							}catch(Exception e){
+								System.out.print("*");
+							}
+							
+						}else continue;
+					}
 					while (x < actualSize) {
+						
 						byte opcode = buffer[x];
 						int length = 1;
 						switch (opcode) {
-						case -9:
-							length += 4;
-							break;
-						case -3:
-						case -17:
-							length += 0;
-							break;
-						case -14:
-							length += 4;
-							break;
-						case -10:
-							length += 21;
-							break;
-						case -15:
-							length += 21;
-							break;
-						case -2:
-							length += (((int) buffer[x + 1] & 0xff) << 24) | (((int) buffer[x + 2] & 0xff) << 16)
-									| (((int) buffer[x + 3] & 0xff) << 8) | ((int) buffer[x + 4] & 0xff) + 4;
-							break;
-						default:
-							length = (actualSize - x);
-							break;
+							case -9:
+								length += 4;
+								break;
+							case -3:
+							case -17:
+								length += 0;
+								break;
+							case -14:
+								length += 4;
+								break;
+							case -10:
+								length += 21;
+								break;
+							case -15:
+								length += 21;
+								break;
+							case -2:
+								length += (((int) buffer[x + 1] & 0xff) << 24) | (((int) buffer[x + 2] & 0xff) << 16)
+										| (((int) buffer[x + 3] & 0xff) << 8) | ((int) buffer[x + 4] & 0xff) + 4;
+								break;
+							default:
+								length = (actualSize - x);
+								break;
+						}if(buffer.length>x+5&&buffer[x+6]==(byte)0x07&&buffer[x]==(byte)-2){
+							length+=2;
 						}
-						try {
-							System.out.print("(" + length + "/" + actualSize + ")");
-							parsePacket(Arrays.copyOfRange(buffer, x, x + length), length);
-						} catch (Exception e) {
-							e.printStackTrace();
-							System.out.print("!");
-							break;
+						if(x+length<=actualSize){
+							try {
+								System.out.print("(" + length + "/" + actualSize + ")");
+									
+								
+								parsePacket(Arrays.copyOfRange(buffer, x, x + length), length);
+								if((new Date()).getTime()-lastTick>tickTime*1000){
+									parent.flushAll();
+									lastTick=(new Date()).getTime();
+								}
+							} catch (Exception e) {
+								e.printStackTrace();
+								System.out.print("!");
+								break;
+							}
+						}else{
+							overflow = x+length-actualSize;
+							System.out.print(":"+(actualSize-x)+"+"+overflow);
+							prev = Arrays.copyOfRange(buffer,x,actualSize);
 						}
 						x += length;
 						if (x < actualSize) {
@@ -1175,6 +1276,7 @@ class NullOutputStream extends OutputStream {
 //class for main method
 public class S4Server {
 	public static byte[] bot;
+	public static byte[] vsbot;
 	public static volatile ConcurrentHashMap<InetAddress, Integer> ipThreads;
 	public static volatile ConcurrentHashMap<String, GameServer> games;
 	public static volatile String log = "";
@@ -1201,7 +1303,7 @@ public class S4Server {
 	// makes a chat message packet
 	public static byte[] encode(String s, byte src) {
 		// System.out.println("chat:\n"+s);
-		String s2 = "\n[BEGINFONT size='17' color='#00FF00'CLOSEFONT]" + s + "[ENDFONT]";
+		String s2 = "\n[BEGINFONT face='Consolas' size='16' color='#21d91f'CLOSEFONT]" + s + "[ENDFONT]";
 		byte[] msg = s2.getBytes(StandardCharsets.UTF_8);
 		int mod = 0;
 		if (msg[msg.length - 1] == (byte) 0x00) {
@@ -1243,7 +1345,9 @@ public class S4Server {
 	public static void main(String[] args) {
 		try {
 			bot = Files.readAllBytes(Paths.get("bot.bin"));
+			vsbot = Files.readAllBytes(Paths.get("vs.bin"));
 		} catch (Exception e) {
+			bot = new byte[] {};
 			bot = new byte[] {};
 		}
 		games = new ConcurrentHashMap<String, GameServer>();
