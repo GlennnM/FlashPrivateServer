@@ -11,6 +11,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Calendar;
+import java.util.TimeZone;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.net.ServerSocket;
@@ -311,14 +313,14 @@ class GameServer extends Thread {
 	public ServerSocket server;
 	public int port;
 	public volatile boolean alive = true;
-	public ArrayList<GameServerThread> playerThreads;
+	public volatile ArrayList<GameServerThread> playerThreads;
 	public int mode;
 	public int code;
 	public int actualCode;
 	public boolean init;
 	public short seed;
 	public short map;
-	public byte nextId;
+	public volatile byte nextId;
 	public byte host;
 	public boolean started;
 	public boolean autostart;
@@ -384,12 +386,9 @@ class GameServer extends Thread {
 					* 9)];
 		} else if (this.mode < 100) {
 			// event
-			
-			this.map = 1100;
-			if((new Date()).getTime()/1000 >= 1655798400)
-				this.map=1096;
-			// this.map=(new
-			// short[]{1092,1095,1094,1100,1093,1099,1096,1111,1113})[(int)(Math.random()*9)];
+			this.map=S4Server.getEventMap();
+			//if(this.map==-1)
+			//	this.map=(new short[]{1092,1095,1094,1100,1093,1099,1096,1111,1113})[(int)(Math.random()*9)];
 			// onsl pods sur ls vac po vip is md
 		}
 		// Otherwise it is a contract, but contract lobbies seem to work fine without
@@ -469,7 +468,7 @@ class GameServer extends Thread {
 			}
 		//chat("No bots to remove");
 	}
-	// Accept connections and route f to GameServerThreads.
+	// Accept connections and route to GameServerThreads.
 	// Also use the loop for checks(start game=-11 packet when all built)
 	@Override
 	public void run() {
@@ -497,7 +496,7 @@ class GameServer extends Thread {
 					ready++;
 			}
 			if (ready == playerThreads.size()) {
-				long time = (new Date()).getTime() + 3000;
+				long time = (new Date()).getTime()/1000 + 3;
 				byte[] pl = new byte[5];
 				pl[0] = (byte) -11;
 				pl[1] = ((byte) (time >> 24));
@@ -605,7 +604,7 @@ class GameServer extends Thread {
 		for (GameServerThread g : playerThreads) {
 			try {
 				if (g.id == id) {
-					for (GameServerThread h : playerThreads)
+					for (GameServerThread h : playerThreads){
 						if (h.id != id) {
 							g.output.write(h.playerData((byte) -1));
 							//g.output.flush();
@@ -615,6 +614,8 @@ class GameServer extends Thread {
 							}
 							//g.output.flush();
 						}
+							
+					}
 				} else
 					for (GameServerThread h : playerThreads)
 						if (h.id == id) {
@@ -668,7 +669,10 @@ class GameServer extends Thread {
 	// remove a player/bot, alerting all other players(-6) and changing host(-7) if
 	// needed
 	public void dropPlayer(byte id) {
+		int prev = playerThreads.size();
 		playerThreads.removeIf(x -> (x.id == id));
+		if(playerThreads.size()==prev)
+			return;
 		int first = -1;
 		if (playerThreads.size() == 1 && this.autostart) {
 			this.startTime = -1;
@@ -687,15 +691,15 @@ class GameServer extends Thread {
 			S4Server.games.remove("" + this.code + "\n" + this.mode);
 			return;
 		}
+		byte[] pl = new byte[] { (byte) -6, id };
+		this.writeAll(pl, 0, 2);
+		this.flushAll();
 		if (this.host == id) {
 			// change host
 			byte[] pl2 = new byte[] { (byte) -7, id, playerThreads.get(first).id };
 			this.host = playerThreads.get(first).id;
 			this.writeAll(pl2, 0, 3);
 		}
-		byte[] pl = new byte[] { (byte) -6, id };
-		this.writeAll(pl, 0, 2);
-		this.flushAll();
 	}
 
 	// start building(start game button), or automatically in event/quickmatch
@@ -768,17 +772,19 @@ class GameServerThread extends Thread {
 			len++;
 		byte[] pl;
 		pl = new byte[len + 5];
-		if (this.bot) {
-			pl[len + 4] = (byte) 100;
-		}else
-			pl[len + 4] = (byte) (this.load*100);
+		if(opcode==-1){
+			if (this.bot) {
+				pl[len + 4] = (byte) 100;
+			}else
+				pl[len + 4] = (byte) (this.load*100);
+		}
 		try {
 			pl[0] = (byte) -2;
 			pl[1] = (byte) (len >> 24);
 			pl[2] = (byte) ((len >> 16) & 0xff);
 			pl[3] = (byte) ((len >> 8) & 0xff);
 			pl[4] = (byte) ((len) & 0xff);
-			pl[5] = (byte) -1;
+			pl[5] = (byte) opcode;
 			pl[6] = this.id;
 			short nameLen = (short) ((((short) this.player.data[0] & 0xff) << 8)
 					| ((short) this.player.data[1] & 0xff));
@@ -897,6 +903,9 @@ class GameServerThread extends Thread {
 			if (this.parent.actualCode == 193514003) {
 				this.parent.boost((byte)100, false);
 			}
+			if (this.parent.actualCode == 2) {
+				this.parent.boost((byte)100, false);
+			}
 			if (this.parent.actualCode == 400||Math.abs(this.parent.actualCode-2089076591)<20) {
 				this.parent.boost((byte)100, false);
 				this.parent.boost((byte)100, false);
@@ -933,7 +942,7 @@ class GameServerThread extends Thread {
 		} else if (buffer[0] == (byte) (-3)) {
 			byte[] pl = new byte[5];
 			pl[0] = ((byte) (-3));
-			long time = (new Date()).getTime();
+			long time = (new Date()).getTime()/1000;
 			pl[1] = ((byte) (time >> 24));
 			pl[2] = ((byte) ((time >> 16) & 0xff));
 			pl[3] = ((byte) ((time >> 8) & 0xff));
@@ -950,15 +959,16 @@ class GameServerThread extends Thread {
 
 			if (actualSize < 6)
 				return;
+			
 			pl = new byte[actualSize - 1];
 			int len = actualSize - 6;
 
-			if (buffer[6] == (byte) 0x05) {
-				pl = new byte[actualSize];
-				len = actualSize - 5;
-			}
+		//	if (buffer[6] == (byte) 0x05) {
+		//		pl = new byte[actualSize];
+		//		len = actualSize - 5;
+		//	}
 			pl[0] = (byte) -2;
-			pl[1] = (byte) (len >> 24);
+			pl[1] = (byte) ((len >> 24)& 0xff);
 			pl[2] = (byte) ((len >> 16) & 0xff);
 			pl[3] = (byte) ((len >> 8) & 0xff);
 			pl[4] = (byte) ((len) & 0xff);
@@ -966,7 +976,7 @@ class GameServerThread extends Thread {
 			if (buffer[6] == (byte) 0x05) {
 
 				// pl[6]=this.id;
-				pl[6] = this.id;
+				//pl[6] = this.id;
 				if (actualSize > 25) {
 					String msg = "";
 					byte chat_length=0;
@@ -1014,6 +1024,20 @@ class GameServerThread extends Thread {
 						else this.tickTime=1.0f/q;
 						parent.chat("Tick rate is now "+q);
 					}
+					if (msg.startsWith("!map")) {
+						if(msg.indexOf(" ")!=-1){
+							int q=Integer.parseInt(msg.substring(msg.indexOf(" ")+1));
+							if(q>0&&parent.mode>2&&parent.mode<100&&q<=S4Server.eventMaps.length){
+								if(parent.mode==5&&(q==5||q==8))
+									parent.chat("Invalid map");
+								else
+									parent.setMap(S4Server.getEventMap(q-1));
+							}else
+								parent.chat("Invalid map/not an event");
+						}else
+							parent.chat("Specify a map: 1-9 = normal maps, 10+ = contract maps");
+						parent.flushAll();
+					}
 				}
 			}
 			if (buffer[6] == (byte) 0x07) {
@@ -1028,9 +1052,12 @@ class GameServerThread extends Thread {
 				// pl[i]=buffer[i];
 				// parent.writeFrom(this.id,pl,0,pl.length);
 				// }else{
-				for (int i = 7; i < actualSize; i++)
-					pl[i - 1] = buffer[i];
-				parent.writeFrom(this.id, pl, 0, pl.length);
+				//for (int i = 7; i < actualSize; i++)
+			//		pl[i - 1] = buffer[i];
+			//	if(buffer[6]!=(byte)0x05)
+			//		parent.writeAll(pl, 0, pl.length);
+			//	else
+					parent.writeFrom(this.id, pl, 0, pl.length);
 				// }
 				// }
 			//}
@@ -1074,7 +1101,7 @@ class GameServerThread extends Thread {
 				pl[1] = host;
 
 				pl[2] = id;
-				long time = (new Date()).getTime();
+				long time = (new Date()).getTime()/1000;
 
 				pl[3] = ((byte) (time >> 24));
 				pl[4] = ((byte) ((time >> 16) & 0xff));
@@ -1091,13 +1118,7 @@ class GameServerThread extends Thread {
 				pl[10] = (byte) (parent.mode & 0xff);
 				pl[11] = ((byte) ((parent.seed >> 8) & (short)0xff));
 				pl[12] = (byte) (parent.seed & (short)0xff);
-				// pl[15]=((byte)0x00);
-				// pl[16]=((byte)0x04);
-
-				// pl[17]=((byte)0x00);
-				// pl[18]=((byte)0x00);
-				// pl[19]=((byte)0x00);
-				// pl[20]=((byte)0x00);
+				
 				rawOutput.write(pl, 0, 17);
 				rawOutput.flush();
 				//this.flushAll();
@@ -1177,7 +1198,11 @@ class GameServerThread extends Thread {
 								System.out.print("*");
 							}
 							
-						}else continue;
+						}else{
+							overflow=0;
+							prev = new byte[]{};
+							continue;
+						}
 					}
 					while (x < actualSize) {
 						
@@ -1282,7 +1307,70 @@ public class S4Server {
 	public static volatile String log = "";
 	public static volatile int nextPort = 8118;
 	public static long window = 0;
-
+	public static short[] eventMaps;
+	public static short getEventMap(int index){
+		return eventMaps[index];
+	}
+	public static short getEventMap(){
+		return getEventMap((int)(Math.random()*eventMaps.length));
+		/**Calendar event = Calendar.getInstance(TimeZone.getTimeZone("GMT-8"));
+		Calendar now = Calendar.getInstance(TimeZone.getTimeZone("GMT-8"));
+		now.setTime(new Date());
+		event.set(2022,1,16,0,0,0);
+		int eventOffset=0;
+		while(now.get(Calendar.YEAR)!=event.get(Calendar.YEAR)||now.get(Calendar.DAY_OF_YEAR)!=event.get(Calendar.DAY_OF_YEAR)){
+			event.add(Calendar.HOUR,24);
+			eventOffset++;
+		}
+		switch(eventOffset % 21){
+			case 0:
+			case 1:
+				return -1;
+			case 2:
+				return 1094;
+			case 3:
+				return 1093;
+			case 4:
+				return 1113;
+			case 5:
+			case 6:
+				return -1;
+			case 7:
+				return 1111;
+			case 8:
+				return -1;
+			case 9:
+				return 1096;
+			case 10:
+				return 1111;
+			case 11:
+				return 1095;
+			case 12:
+			case 13:
+				return -1;
+			case 14:
+				return 1093;
+			case 15:
+				return 1095;
+			case 16:
+				return 1100;
+			case 17:
+				return 1092;
+			case 18:
+				return 1111;
+			case 19:
+				return 1100;
+			case 20:
+				return 1096;
+			default:
+				return -1;
+		}// short[]{1092,1095,1094,1100,1093,1099,1096,1111,1113})[(int)(Math.random()*9)];
+			// onsl pods sur ls vac po vip is md
+		//System.out.println(c);
+		//System.out.println(c.getTime());
+		//return 0;
+		*/
+	}
 	private static boolean checkPort(int p) {
 		for (String s : games.keySet())
 			if (games.get(s).port == p)
@@ -1299,7 +1387,6 @@ public class S4Server {
 		return nextPort;
 
 	}
-
 	// makes a chat message packet
 	public static byte[] encode(String s, byte src) {
 		// System.out.println("chat:\n"+s);
@@ -1313,7 +1400,7 @@ public class S4Server {
 			return new byte[] {};
 		byte[] pl = new byte[msg.length + 31];
 		int len = msg.length + 26;
-		long time = (new Date()).getTime();
+		long time = (new Date()).getTime()/1000;
 		pl[0] = (byte) -2;
 		pl[1] = ((byte) (len >> 24));
 		pl[2] = ((byte) ((len >> 16) & 0xff));
@@ -1343,6 +1430,8 @@ public class S4Server {
 	}
 
 	public static void main(String[] args) {
+		//first 9 are normal evnt maps rest are contracts
+		eventMaps=new short[]{1092,1093,1094,1095,1096,1099,1100,1111,1113,1114,1115,1116,1117,1118,1119};
 		try {
 			bot = Files.readAllBytes(Paths.get("bot.bin"));
 			vsbot = Files.readAllBytes(Paths.get("vs.bin"));
