@@ -108,7 +108,7 @@ class ServerThread extends Thread {
 						S4Server.games.put(strCode, g);
 						new Thread(g).start();
 					}
-					byte[] ip = "154.53.49.118".getBytes(StandardCharsets.UTF_8);
+					byte[] ip = "localhost".getBytes(StandardCharsets.UTF_8);
 					
 					//byte[] ip = "154.53.49.118".getBytes(StandardCharsets.UTF_8);
 					byte[] pl = new byte[10 + ip.length];
@@ -327,9 +327,10 @@ class GameServer extends Thread {
 	public short minLvl;
 	public short maxLvl;
 	public int startTime;
+	public volatile boolean autoFlush;
 	public int elapsedTime;
 	public long lastTime;
-
+	public volatile boolean tcpNoDelay;
 	// public long startAt;
 	public boolean allows(short lvl) {
 		return (!this.started) && (this.playerThreads != null) && (this.playerThreads.size() < 4) && (lvl <= maxLvl)
@@ -344,6 +345,15 @@ class GameServer extends Thread {
 			}
 		}
 	}
+	public void toggleNoDelay(){
+		this.tcpNoDelay=!this.tcpNoDelay;
+		for(GameServerThread g:playerThreads){
+			try{
+			g.client.setTcpNoDelay(this.tcpNoDelay);
+			}catch(Exception e){continue;}
+		}
+	}
+	
 	public GameServer(int port, int mode, int code, short auto, int actualCode) {
 		playerThreads = new ArrayList<GameServerThread>();
 		this.nextId = 0;
@@ -354,6 +364,8 @@ class GameServer extends Thread {
 		this.actualCode=actualCode;
 		this.started = false;
 		this.autostart = (auto >= 0);
+		this.tcpNoDelay=false;
+		this.autoFlush=true;
 		if (this.autostart) {
 			this.minLvl = (short) (auto - 10);
 			this.maxLvl = (short) (auto + 10);
@@ -403,7 +415,7 @@ class GameServer extends Thread {
 		Runtime instance = Runtime.getRuntime();
 		String usage = "";
 		// available memory
-		usage+=("Games: " +S4Server.games.size());
+		usage+=("Games: " +S4Server.games.size()+", Players: "+S4Server.getPlayerCount());
 		usage+=(", Threads: " +Thread.activeCount()+"\n");
 		// used memory
 		usage+=("Used Memory: "
@@ -513,6 +525,7 @@ class GameServer extends Thread {
 			}
 			try {
 				client = server.accept();
+				client.setTcpNoDelay(this.tcpNoDelay);
 				this.init = true;
 				GameServerThread connection = new GameServerThread(client, this, this.nextId, this.host, false);
 				this.nextId++;
@@ -583,24 +596,7 @@ class GameServer extends Thread {
 	// existing players of them.
 	// See playerData() for protocol information.
 	public void newPlayer(byte id) {
-		if (autostart&&!this.started) {
-			if (playerThreads.size() == 2) {
-				this.startTime = (this.mode == 5) ? 15 : 30;
-				this.elapsedTime = 0;
-			} else if (playerThreads.size() == 3 && this.startTime > 10) {
-				this.startTime -= 7;
-			} else if (playerThreads.size() == 4) {
-				this.startTime = 0;
-			}
-			byte[] pl = new byte[5];
-			pl[0] = (byte) -13;
-			long st = 1000 * this.startTime;
-			pl[1] = (byte) (st >> 24);
-			pl[2] = (byte) ((st >> 16) & 0xff);
-			pl[3] = (byte) ((st >> 8) & 0xff);
-			pl[4] = (byte) ((st) & 0xff);
-			this.writeAll(pl, 0, 5);
-		}
+		
 		for (GameServerThread g : playerThreads) {
 			try {
 				if (g.id == id) {
@@ -638,7 +634,35 @@ class GameServer extends Thread {
 			//fullLoad(id);
 		//}
 	}
-
+	private void autoTick(){
+		if(this.allLoaded()){
+			if (playerThreads.size() == 2) {
+					this.startTime = (this.mode == 5) ? 8 : 15;
+					this.elapsedTime = 0;
+				} else if (playerThreads.size() == 3) {
+					if(this.startTime > 4)
+						this.startTime -= 3;
+					else this.startTime=4;
+				} else if (playerThreads.size() == 4) {
+					this.startTime = 0;
+				}
+				if (autostart&&!this.started) {
+			
+					byte[] pl = new byte[5];
+					pl[0] = (byte) -13;
+					int st = 1000 * Math.max(0,this.startTime-this.elapsedTime);
+					pl[1] = (byte) (st >> 24);
+					pl[2] = (byte) ((st >> 16) & 0xff);
+					pl[3] = (byte) ((st >> 8) & 0xff);
+					pl[4] = (byte) ((st) & 0xff);
+					this.writeAll(pl, 0, 5);
+				}
+				
+		}else{
+			this.startTime=-1;
+			this.elapsedTime=0;
+		}
+	}
 	// float value containing loading or building % for some player(0.0-1.0).
 	public void loadingState(byte id, byte[] buffer) {
 		byte[] pl = new byte[11];
@@ -651,7 +675,8 @@ class GameServer extends Thread {
 		pl[9] = buffer[12];
 		pl[10] = buffer[13];
 		this.writeFrom(id, pl);
-
+		autoTick();
+		
 	}
 
 	// force building/loading finish(workaround for stuck lobbies)
@@ -664,6 +689,9 @@ class GameServer extends Thread {
 		pl[7] = (byte) 0x3f;
 		pl[8] = (byte) 0x80;
 		this.writeFrom(id, pl);
+		this.flushAll();
+		autoTick();
+		this.flushAll();
 	}
 
 	// remove a player/bot, alerting all other players(-6) and changing host(-7) if
@@ -735,9 +763,9 @@ class GameServerThread extends Thread {
 	//game state(started means building started, ingame means actually started)
 	public boolean init;
 	public boolean welcomed;
-	public boolean loaded;
+	public volatile boolean loaded;
 	public boolean started;
-	public boolean built;
+	public volatile boolean built;
 	public boolean ingame;
 	
 	public int pingSinceLoad;
@@ -772,12 +800,11 @@ class GameServerThread extends Thread {
 			len++;
 		byte[] pl;
 		pl = new byte[len + 5];
-		if(opcode==-1){
-			if (this.bot) {
-				pl[len + 4] = (byte) 100;
-			}else
-				pl[len + 4] = (byte) (this.load*100);
-		}
+		if (this.bot) {
+			pl[len + 4] = (byte) 100;
+		}else
+			pl[len + 4] = (byte) (this.load*100);
+		
 		try {
 			pl[0] = (byte) -2;
 			pl[1] = (byte) (len >> 24);
@@ -870,6 +897,8 @@ class GameServerThread extends Thread {
 			this.rawOutput = client.getOutputStream();
 		} catch (Exception e) {
 			this.bot = true;
+			this.built=true;
+			this.loaded=true;
 			this.rawOutput = new NullOutputStream();
 			this.player = new Player((short) 100, new int[] {});
 			this.player.setData((this.vs)?S4Server.vsbot:S4Server.bot);
@@ -905,6 +934,8 @@ class GameServerThread extends Thread {
 			}
 			if (this.parent.actualCode == 2) {
 				this.parent.boost((byte)100, false);
+			}if (this.parent.actualCode == 0) {
+				this.parent.boost((byte)100, false);
 			}
 			if (this.parent.actualCode == 400||Math.abs(this.parent.actualCode-2089076591)<20) {
 				this.parent.boost((byte)100, false);
@@ -921,7 +952,7 @@ class GameServerThread extends Thread {
 				this.pingSinceBuild++;
 				lastPinged = (new Date()).getTime();
 			}
-			if (!this.started && !this.loaded && this.pingSinceLoad > 20) {
+			if (!this.started && !this.loaded && this.pingSinceLoad > 10) {
 				this.loaded = true;
 				this.load=1.0f;
 				parent.fullLoad(this.id);
@@ -933,8 +964,9 @@ class GameServerThread extends Thread {
 			}
 		} else if (buffer[0] == (byte) (-10)) {
 			this.pingSinceLoad = 0;
-			this.load = Float.intBitsToFloat( buffer[10] ^ buffer[11]<<8 ^ buffer[12]<<16 ^ buffer[13]<<24 );
+			this.load = Float.intBitsToFloat(( buffer[10]&0xff )| ((buffer[11]&0xff)<<8 ) | ((buffer[12]&0xff)<<16 ) | ((buffer[13] &0xff)<<24 ));
 			if(Math.abs(1f-this.load)<0.0001){
+				this.load=1.0f;
 				parent.fullLoad(this.id);
 				this.loaded=true;
 			}else 
@@ -964,7 +996,7 @@ class GameServerThread extends Thread {
 			int len = actualSize - 6;
 
 		//	if (buffer[6] == (byte) 0x05) {
-		//		pl = new byte[actualSize];
+	//			pl = new byte[actualSize];
 		//		len = actualSize - 5;
 		//	}
 			pl[0] = (byte) -2;
@@ -1025,7 +1057,7 @@ class GameServerThread extends Thread {
 						parent.chat("Tick rate is now "+q);
 					}
 					if (msg.startsWith("!map")) {
-						if(msg.indexOf(" ")!=-1){
+						if(msg.indexOf(" ")!=-1&&!parent.started){
 							int q=Integer.parseInt(msg.substring(msg.indexOf(" ")+1));
 							if(q>0&&parent.mode>2&&parent.mode<100&&q<=S4Server.eventMaps.length){
 								if(parent.mode==5&&(q==5||q==8))
@@ -1037,10 +1069,17 @@ class GameServerThread extends Thread {
 						}else
 							parent.chat("Specify a map: 1-9 = normal maps, 10+ = contract maps");
 						parent.flushAll();
+					}if(msg.startsWith("!autoflush")){
+						this.parent.autoFlush=!this.parent.autoFlush;
+						parent.chat("Auto flush set to "+this.parent.autoFlush);
+					}if(msg.startsWith("!tcpnodelay")){
+						this.parent.toggleNoDelay();
+						parent.chat("TCP nodelay set to "+this.parent.tcpNoDelay);
 					}
 				}
 			}
 			if (buffer[6] == (byte) 0x07) {
+				this.build=1.0f;
 				parent.fullLoad(this.id);
 				this.built = true;
 			}// else {
@@ -1052,12 +1091,14 @@ class GameServerThread extends Thread {
 				// pl[i]=buffer[i];
 				// parent.writeFrom(this.id,pl,0,pl.length);
 				// }else{
-				//for (int i = 7; i < actualSize; i++)
-			//		pl[i - 1] = buffer[i];
+				for (int i = 7; i < actualSize; i++)
+					pl[i - 1] = buffer[i];
 			//	if(buffer[6]!=(byte)0x05)
 			//		parent.writeAll(pl, 0, pl.length);
 			//	else
+					
 					parent.writeFrom(this.id, pl, 0, pl.length);
+					
 				// }
 				// }
 			//}
@@ -1066,13 +1107,17 @@ class GameServerThread extends Thread {
 				parent.start();
 		} else if (this.started&&buffer[0] == (byte) (-15) && !built) {
 			this.pingSinceBuild = 0;
-			this.build=Float.intBitsToFloat( buffer[10] ^ buffer[11]<<8 ^ buffer[12]<<16 ^ buffer[13]<<24 );
+			
+			this.build=Float.intBitsToFloat(( buffer[10]&0xff )| ((buffer[11]&0xff)<<8 ) | ((buffer[12]&0xff)<<16 ) | ((buffer[13] &0xff)<<24 ));
 			if(Math.abs(1f-this.build)<0.0001){
+				this.build=1.0f;
 				parent.fullLoad(this.id);
 				this.built=true;
 			}else 
 				parent.loadingState(this.id, buffer);
 		}
+		if(parent.autoFlush)
+			parent.flushAll();
 	}
 
 	@Override
@@ -1122,6 +1167,11 @@ class GameServerThread extends Thread {
 				rawOutput.write(pl, 0, 17);
 				rawOutput.flush();
 				//this.flushAll();
+				if(this.bot){
+					this.load=1.0f;
+					this.build=1.0f;
+					parent.fullLoad(this.id);
+				}
 			}
 			while (this.alive) {
 				if(!this.parent.alive){
@@ -1308,6 +1358,12 @@ public class S4Server {
 	public static volatile int nextPort = 8118;
 	public static long window = 0;
 	public static short[] eventMaps;
+	public static int getPlayerCount(){
+		int x=0;
+		for(String s:games.keySet())
+			x+=games.get(s).playerThreads.size();
+		return x;
+	}
 	public static short getEventMap(int index){
 		return eventMaps[index];
 	}
