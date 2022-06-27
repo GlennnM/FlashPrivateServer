@@ -149,7 +149,7 @@ class ServerThread extends Thread {
 											gs.p1 = FlashServer.queue2.poll();
 										t1 = "FoundYouAGame,154.53.49.118," + gs.port + "," + 0 + ",4480\n";
 										toSend += "\nFoundYouAGame,154.53.49.118," + gs.port + "," + 0 + ",4480\n";
-										sendAfter = 1;
+										sendAfter = 3;
 										gs.p1.doubleWrite(t1);
 										FlashServer.games.add(gs);
 										new Thread(gs).start();
@@ -187,7 +187,7 @@ class ServerThread extends Thread {
 													+ FlashServer.privateMatches.get(joinCode).port + "," + joinCode
 													+ ",4480\n";
 											gs.p2 = this.player;
-											sendAfter = 1;
+											sendAfter = 3;
 											gs.p1.doubleWrite(t1);
 											FlashServer.privateMatches.put(joinCode, gs);
 											// doubleWrite(toSend);toSend="";
@@ -589,11 +589,11 @@ class GameServerThread extends Thread {
 								toSend += "OpponentUpgradedATower" + tail;
 							}
 							if (msg[0].equals("ISentABloonWave")) {
-								if (tail.contains("Cerem")) {
+								/**if (tail.contains("Cerem")) {
 									doubleWrite("RelayMsg,SentChatMsg," + FlashServer.encode("they WILL die,"));
 									opponent.doubleWrite(
 											"RelayMsg,SentChatMsg," + FlashServer.encode("they WILL die,"));
-								}
+								}*/
 								toSend += "OpponentSentABloonWave" + tail;
 							}
 							if (msg[0].equals("IRemovedABloonWave")) {
