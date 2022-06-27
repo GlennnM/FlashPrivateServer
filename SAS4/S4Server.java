@@ -20,7 +20,8 @@ import java.net.ServerSocket;
 /**
  * @TODO /done
  *		 /done /done
- *       feature: custom map for event. -> hard :( also cycle events properly(date->event)
+ *       /done fix desync?!?!?!?
+ *       cycle events properly(date->event)
  *		/done /nvm
  *       /done /done
  */
@@ -108,7 +109,7 @@ class ServerThread extends Thread {
 						S4Server.games.put(strCode, g);
 						new Thread(g).start();
 					}
-					byte[] ip = "localhost".getBytes(StandardCharsets.UTF_8);
+					byte[] ip = "154.53.49.118".getBytes(StandardCharsets.UTF_8);
 					
 					//byte[] ip = "154.53.49.118".getBytes(StandardCharsets.UTF_8);
 					byte[] pl = new byte[10 + ip.length];
@@ -932,9 +933,12 @@ class GameServerThread extends Thread {
 			if (this.parent.actualCode == 193514003) {
 				this.parent.boost((byte)100, false);
 			}
-			if (this.parent.actualCode == 2) {
+			if (this.parent.actualCode == 1855064479&&this.parent.playerThreads.size()<2) {
 				this.parent.boost((byte)100, false);
-			}if (this.parent.actualCode == 0) {
+			}
+			if (this.parent.actualCode == 2&&this.parent.playerThreads.size()<2) {
+				this.parent.boost((byte)100, false);
+			}if (this.parent.actualCode == 0&&this.parent.playerThreads.size()<2) {
 				this.parent.boost((byte)100, false);
 			}
 			if (this.parent.actualCode == 400||Math.abs(this.parent.actualCode-2089076591)<20) {
