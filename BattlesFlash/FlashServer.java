@@ -34,7 +34,8 @@ class ServerThread extends Thread {
 	private void doubleWrite(String s) throws IOException {
 		this.output.write(s.getBytes(StandardCharsets.UTF_8));
 		this.output.flush();
-		System.out.println("OUT: " + s);
+		if(FlashServer.verbose)
+			System.out.println("OUT: " + s);
 	}
 
 	public ServerThread(Socket socket) throws IOException {
@@ -468,7 +469,8 @@ class GameServerThread extends Thread {
 	public void doubleWrite(String s) throws IOException {
 		this.output.write((s + "\n").getBytes(StandardCharsets.UTF_8));
 		this.output.flush();
-		System.out.println("#OUT: " + s);
+		if(FlashServer.verbose)
+			System.out.println("#OUT: " + s);
 	}
 
 	public GameServerThread(Socket client, int map, int seed) {
@@ -538,12 +540,12 @@ class GameServerThread extends Thread {
 					/**
 					 * kill after multiple timeouts
 					 */
-					ste.printStackTrace();
 				}
 				if (line.length() > 0) {
 					timeouts = 0;
 					toSend = "";
-					System.out.println("#incoming: " + headers);
+					if(FlashServer.verbose)
+						System.out.println("#incoming: " + headers);
 					String[] msgs = headers.split("\n");
 					for (String m : msgs) {
 						String[] msg = m.split(",");
@@ -574,6 +576,7 @@ class GameServerThread extends Thread {
 								toSend += "OpponentReadyStatus" + tail;
 							}
 							if (msg[0].equals("MyGameIsLoaded")) {
+								System.out.println("player ready");
 								toSend += "OpponentHasLoaded" + tail;
 							}
 							if (msg[0].equals("GimmeOpponentSyncData")) {
@@ -604,11 +607,13 @@ class GameServerThread extends Thread {
 								toSend += "OpponentLived" + tail;
 							}
 							if (msg[0].equals("IDied")) {
+								System.out.println("game ended probably");
 								this.win = 1;
 								this.reason = "Player died";
 								toSend += "OpponentDied" + tail;
 							}
 							if (msg[0].equals("ISurrender")) {
+								System.out.println("game ended probably");
 								this.win = 1;
 								this.reason = "Player surrendered";
 								toSend += "OpponentSurrendered" + tail;
@@ -727,7 +732,6 @@ class GameServerThread extends Thread {
 						}
 					}
 				} else {
-					System.out.println("%%timeout");
 					timeouts++;
 					if (timeouts > 60) {
 						this.alive = false;
@@ -784,9 +788,9 @@ class Player {
 	}
 
 	public void doubleWrite(String s) throws IOException {
-		System.out.println(output);
 		this.output.write((s + "\n").getBytes(StandardCharsets.UTF_8));
 		this.output.flush();
+		if(FlashServer.verbose)
 		System.out.println("player.OUT: " + s);
 	}
 
@@ -797,7 +801,6 @@ class Player {
 
 	@Override
 	public boolean equals(Object o) {
-		System.out.println(this.output.equals(((Player) o).output));
 		return this.output.equals(((Player) o).output);
 	}
 }
@@ -900,6 +903,7 @@ public class FlashServer {
 				fw.write(privateMatches.get(x).toString() + "\nType: Private\n");
 				fw.flush();
 				privateMatches.remove(x);
+				System.out.println("game finished");
 			}
 		for (GameServer q : games)
 			if (!q.alive) {
@@ -919,6 +923,7 @@ public class FlashServer {
 				fw.write(q.toString() + "\nType: Quick\n");
 				fw.flush();
 				games.remove(q);
+				System.out.println("game finished");
 			}
 		fw.close();
 		// log=Files.readString(Paths.get("FlashLog.txt"), StandardCharsets.UTF_8);
@@ -946,7 +951,7 @@ public class FlashServer {
 			}
 		}
 		for (int i = Math.max(0, compact.size() - 10); i < compact.size(); i++) {
-			System.out.println(i);
+			//System.out.println(i);
 			h += compact.get(i);
 		}
 		return h;
