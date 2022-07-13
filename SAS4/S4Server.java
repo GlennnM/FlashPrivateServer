@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.io.InputStream;
@@ -7,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -22,6 +24,7 @@ import java.net.ServerSocket;
  *		 /done /done
  *       /done fix desync?!?!?!?
  *       cycle events properly(date->event)
+ *		easier compile
  *		/done /nvm
  *       /done /done
  */
@@ -81,7 +84,6 @@ class ServerThread extends Thread {
 					 * 
 					 * after this exchange this server isn't used as far as i'm aware
 					 */
-					// System.out.println("incoming:");
 					timeouts = 0;
 					code = (((int) buffer[2] & 0xff) << 24) | (((int) buffer[3] & 0xff) << 16)
 							| (((int) buffer[4] & 0xff) << 8) | ((int) buffer[5] & 0xff);
@@ -109,7 +111,7 @@ class ServerThread extends Thread {
 						S4Server.games.put(strCode, g);
 						new Thread(g).start();
 					}
-					byte[] ip = "154.53.49.118".getBytes(StandardCharsets.UTF_8);
+					byte[] ip = "localhost".getBytes(StandardCharsets.UTF_8);
 					
 					//byte[] ip = "154.53.49.118".getBytes(StandardCharsets.UTF_8);
 					byte[] pl = new byte[10 + ip.length];
@@ -128,9 +130,8 @@ class ServerThread extends Thread {
 					pl[i + 8] = (byte) ((code >> 8) & 0xff);
 					pl[i + 9] = (byte) ((code) & 0xff);
 					output.write(pl);
-					// System.out.println("OUT: "+pl.length);
-					for (int a = 0; a < pl.length; a++)
-						System.out.print(">" + pl[a] + " ");
+					//for (int a = 0; a < pl.length; a++)
+					//	System.out.print(">" + pl[a] + " ");
 					output.flush();
 				} else {
 					timeouts++;
@@ -203,15 +204,19 @@ class FilePolicyServerThread extends Thread {
 	public Socket client;
 	public OutputStream output;
 	public boolean alive;
-
+	private String xml;
 	public void doubleWrite(String s) throws IOException {
 		this.output.write((s + "\n").getBytes(StandardCharsets.UTF_8));
 		this.output.flush();
-		System.out.println("#OUT: file policy");
+		//System.out.println("#OUT: file policy");
 	}
 
 	public FilePolicyServerThread(Socket client) {
 		this.client = client;
+		xml = "<?xml version=\"1.0\"?>\n<!DOCTYPE cross-domain-policy SYSTEM \n\"http://www.adobe.com/xml/dtds/cross-domain-policy.dtd\">\n<cross-domain-policy>\n";
+		xml += "<site-control permitted-cross-domain-policies=\"master-only\"/>\n";
+		xml += "<allow-access-from domain=\"*\" to-ports=\"*\"/>\n";
+		xml += "</cross-domain-policy>\n";
 		try {
 			this.output = client.getOutputStream();
 		} catch (Exception e) {
@@ -247,12 +252,7 @@ class FilePolicyServerThread extends Thread {
 				}
 				if (line.length() > 0) {
 					timeouts = 0;
-					// System.out.println("#incoming: "+headers);
 					if (headers.equals("<policy-file-request/>")) {
-						String xml = "<?xml version=\"1.0\"?>\n<!DOCTYPE cross-domain-policy SYSTEM \n\"http://www.adobe.com/xml/dtds/cross-domain-policy.dtd\">\n<cross-domain-policy>\n";
-						xml += "<site-control permitted-cross-domain-policies=\"master-only\"/>\n";
-						xml += "<allow-access-from domain=\"*\" to-ports=\"*\"/>\n";
-						xml += "</cross-domain-policy>\n";
 						doubleWrite(xml);
 						this.alive = false;
 						output.close();
@@ -286,9 +286,9 @@ class FilePolicyServerThread extends Thread {
 
 class Player {
 	// header use is unknown; data is from the initial message to game server
-	public int level;
-	public int[] header;
-	public byte[] data;
+	public volatile int level;
+	public volatile int[] header;
+	public volatile byte[] data;
 
 	public Player(int level, int[] header) {
 		this.level = level;
@@ -311,26 +311,26 @@ class GameServer extends Thread {
 	 * will have a GameServerThread Most of the multiplayer protocol is in here and
 	 * GameServerThread. See o2144, o14519, o7788
 	 */
-	public ServerSocket server;
-	public int port;
+	public volatile ServerSocket server;
+	public volatile int port;
 	public volatile boolean alive = true;
-	public volatile ArrayList<GameServerThread> playerThreads;
-	public int mode;
-	public int code;
-	public int actualCode;
-	public boolean init;
-	public short seed;
-	public short map;
+	public volatile List<GameServerThread> playerThreads;
+	public volatile int mode;
+	public volatile int code;
+	public volatile int actualCode;
+	public volatile boolean init;
+	public volatile short seed;
+	public volatile short map;
 	public volatile byte nextId;
-	public byte host;
-	public boolean started;
-	public boolean autostart;
-	public short minLvl;
-	public short maxLvl;
-	public int startTime;
+	public volatile byte host;
+	public volatile boolean started;
+	public volatile boolean autostart;
+	public volatile short minLvl;
+	public volatile short maxLvl;
+	public volatile int startTime;
 	public volatile boolean autoFlush;
-	public int elapsedTime;
-	public long lastTime;
+	public volatile int elapsedTime;
+	public volatile long lastTime;
 	public volatile boolean tcpNoDelay;
 	// public long startAt;
 	public boolean allows(short lvl) {
@@ -338,25 +338,31 @@ class GameServer extends Thread {
 				&& (lvl >= minLvl);
 	}
 	public void flushAll(){
-		for(GameServerThread g:playerThreads){
-			try{
-			g.flushAll();
-			}catch(Exception e){
-			e.printStackTrace();
+		synchronized(playerThreads){
+			for(GameServerThread g:playerThreads){
+				try{
+				g.flushAll();
+				}catch(Exception e){
+				e.printStackTrace();
+				}
 			}
 		}
 	}
+	
 	public void toggleNoDelay(){
-		this.tcpNoDelay=!this.tcpNoDelay;
-		for(GameServerThread g:playerThreads){
-			try{
-			g.client.setTcpNoDelay(this.tcpNoDelay);
-			}catch(Exception e){continue;}
+		
+		synchronized(playerThreads){
+			this.tcpNoDelay=!this.tcpNoDelay;
+			for(GameServerThread g:playerThreads){
+				try{
+				g.client.setTcpNoDelay(this.tcpNoDelay);
+				}catch(Exception e){continue;}
+			}
 		}
 	}
 	
 	public GameServer(int port, int mode, int code, short auto, int actualCode) {
-		playerThreads = new ArrayList<GameServerThread>();
+		playerThreads = Collections.synchronizedList(new ArrayList<GameServerThread>());
 		this.nextId = 0;
 		this.host = 0;
 		this.startTime = -1;
@@ -429,35 +435,37 @@ class GameServer extends Thread {
 	public void chat(String s) {
 		byte first=(byte)-1;
 		byte[] msg;
-		for(GameServerThread g:playerThreads){
-			if(first==(byte)-1){
-				first=g.id;
-				byte second=(byte)-1;
-				for(GameServerThread h:playerThreads)
-					if(h.id!=g.id)
-						second=h.id;
-				if(second==-1)
-					return;
-				msg = S4Server.encode(s, second);
-			}else{
-				if(first==-1)
-					return;
-				msg = S4Server.encode(s, first);
-				
+		synchronized(playerThreads){
+			for(GameServerThread g:playerThreads){
+				if(first==(byte)-1){
+					first=g.id;
+					byte second=(byte)-1;
+					for(GameServerThread h:playerThreads)
+						if(h.id!=g.id)
+							second=h.id;
+					if(second==-1)
+						return;
+					msg = S4Server.encode(s, second);
+				}else{
+					if(first==-1)
+						return;
+					msg = S4Server.encode(s, first);
+					
+				}
+				try{
+					g.output.write(msg,0,msg.length);
+					//g.output.flush();
+				}catch(IOException e){continue;}
 			}
-			try{
-				g.output.write(msg,0,msg.length);
-				//g.output.flush();
-			}catch(IOException e){continue;}
 		}
-		
+		flushAll();
 		//this.writeAll(msg, 0, msg.length);
 	}
 
 	// Add a bot, if possible.
 	// Bots will leave as soon as building starts.
 	public void boost(byte level,boolean vs) {
-		if (level>101||playerThreads.size() > 3||this.started) {
+	if (level>101||(level==101&&playerThreads.get(0).player.level<96)||playerThreads.size() > 3||this.started) {
 			chat("Unable to boost.");
 			return;
 		}
@@ -472,13 +480,16 @@ class GameServer extends Thread {
 	// Remove a bot.
 	public void unboost() {
 		int i = 0;
-		for (i = 0; i < this.playerThreads.size(); i++)
-			if (playerThreads.get(i).bot) {
-				chat("Removed 1 bot!");
-				this.dropPlayer(playerThreads.get(i).id);
-				i--;
-				return;
-			}
+		
+		synchronized(playerThreads){
+			for (i = 0; i < this.playerThreads.size(); i++)
+				if (playerThreads.get(i).bot) {
+					chat("Removed 1 bot!");
+					this.dropPlayer(playerThreads.get(i).id);
+					i--;
+					return;
+				}
+		}
 		//chat("No bots to remove");
 	}
 	// Accept connections and route to GameServerThreads.
@@ -488,12 +499,12 @@ class GameServer extends Thread {
 		while (this.alive) {
 			long t = (new Date()).getTime();
 			if (t - 1000 > lastTime) {
+				this.minLvl--;
+				this.maxLvl++;
 				lastTime = t;
 				if (this.startTime != -1) {
 					this.elapsedTime++;
 					if (autostart) {
-						this.minLvl--;
-						this.maxLvl++;
 						if (this.allLoaded()&&!this.started && this.elapsedTime >= this.startTime) {
 							this.start();
 							this.startTime = -1;
@@ -504,9 +515,12 @@ class GameServer extends Thread {
 			}
 			Socket client = null;
 			int ready = 0;
-			for (GameServerThread g : playerThreads) {
-				if ((g.built && g.started && !g.ingame)||g.vs)
-					ready++;
+			
+			synchronized(playerThreads){
+				for (GameServerThread g : playerThreads) {
+					if ((g.built && g.started && !g.ingame)||g.vs)
+						ready++;
+				}
 			}
 			if (ready == playerThreads.size()) {
 				long time = (new Date()).getTime()/1000 + 3;
@@ -519,9 +533,12 @@ class GameServer extends Thread {
 				this.writeAll(pl, 0, 5);
 				chat("All players built(hopefully)\nStarting game!");
 				long hydar = (new Date()).getTime();
-				for (GameServerThread g : playerThreads){
-					g.ingame = true;
-					g.ingameSince=hydar;
+				
+				synchronized(playerThreads){
+					for (GameServerThread g : playerThreads){
+						g.ingame = true;
+						g.ingameSince=hydar;
+					}
 				}
 			}
 			try {
@@ -549,46 +566,58 @@ class GameServer extends Thread {
 		pl[4] = (byte) (mode & 0xff);
 		pl[1] = ((byte) ((map >> 8) & 0xff));
 		pl[2] = (byte) (map & 0xff);
-		for (GameServerThread g : playerThreads)
-			g.map = this.map;
+		
+		synchronized(playerThreads){
+			for (GameServerThread g : playerThreads)
+				g.map = this.map;
+		}
 		this.writeAll(pl, 0, 5);
 	}
 
 	// Forward a message to all players except the one specified by id.
 	public void writeFrom(byte id, byte[] data) {
-		for (GameServerThread h : playerThreads)
-			if (h.id != id) {
-				try {
-					h.output.write(data);
-					//h.output.flush();
-				} catch (IOException e) {
-					continue;
+		
+		synchronized(playerThreads){
+			for (GameServerThread h : playerThreads)
+				if (h.id != id) {
+					try {
+						h.output.write(data);
+						//h.output.flush();
+					} catch (IOException e) {
+						continue;
+					}
 				}
-			}
+		}
 	}
 
 	// same function different arguments
 	public void writeFrom(byte id, byte[] data, int offset, int length) {
-		for (GameServerThread h : playerThreads)
-			if (h.id != id) {
-				try {
-					h.output.write(data, offset, length);
-					//h.output.flush();
-				} catch (IOException e) {
-					continue;
+		
+		synchronized(playerThreads){
+			for (GameServerThread h : playerThreads)
+				if (h.id != id) {
+					try {
+						h.output.write(data, offset, length);
+						//h.output.flush();
+					} catch (IOException e) {
+						continue;
+					}
 				}
-			}
+		}
 	}
 
 	// Forward a message to all players.
 	public void writeAll(byte[] data, int off, int length) {
-		for (GameServerThread g : playerThreads) {
-			try {
-				// System.out.println(data.length);
-				g.output.write(data, off, length);
-				//g.output.flush();
-			} catch (IOException e) {
-				continue;
+		
+		synchronized(playerThreads){
+			for (GameServerThread g : playerThreads) {
+				try {
+					// System.out.println(data.length);
+					g.output.write(data, off, length);
+					//g.output.flush();
+				} catch (IOException e) {
+					continue;
+				}
 			}
 		}
 	}
@@ -598,35 +627,37 @@ class GameServer extends Thread {
 	// See playerData() for protocol information.
 	public void newPlayer(byte id) {
 		
-		for (GameServerThread g : playerThreads) {
-			try {
-				if (g.id == id) {
-					for (GameServerThread h : playerThreads){
-						if (h.id != id) {
-							g.output.write(h.playerData((byte) -1));
-							//g.output.flush();
-							if(!g.welcomed){
-								g.output.write(S4Server.encode("Welcome to SAS4 Private Server!\n!help for a list of commands.",h.id));
-								g.welcomed=true;
+		synchronized(playerThreads){
+			for (GameServerThread g : playerThreads) {
+				try {
+					if (g.id == id) {
+						for (GameServerThread h : playerThreads){
+							if (h.id != id) {
+								g.output.write(h.playerData((byte) -1));
+								//g.output.flush();
+								if(!g.welcomed){
+									g.output.write(S4Server.encode("Welcome to SAS4 Private Server!\n!help for a list of commands.",h.id));
+									g.welcomed=true;
+								}
+								//g.output.flush();
 							}
-							//g.output.flush();
+								
 						}
-							
-					}
-				} else
-					for (GameServerThread h : playerThreads)
-						if (h.id == id) {
-							g.output.write(h.playerData((byte) -1));
-							if(!g.welcomed){
-								g.output.write(S4Server.encode("Welcome to SAS4 Private Server!\n!help for a list of commands.",h.id));
-								g.welcomed=true;
+					} else
+						for (GameServerThread h : playerThreads)
+							if (h.id == id) {
+								g.output.write(h.playerData((byte) -1));
+								if(!g.welcomed){
+									g.output.write(S4Server.encode("Welcome to SAS4 Private Server!\n!help for a list of commands.",h.id));
+									g.welcomed=true;
+								}
+								//g.output.flush();
 							}
-							//g.output.flush();
-						}
-			}
+				}
 
-			catch (IOException e) {
-				continue;
+				catch (IOException e) {
+					continue;
+				}
 			}
 		}
 		this.flushAll();
@@ -676,7 +707,11 @@ class GameServer extends Thread {
 		pl[9] = buffer[12];
 		pl[10] = buffer[13];
 		this.writeFrom(id, pl);
-		autoTick();
+		this.flushAll();
+		if(autostart){
+			autoTick();
+			this.flushAll();
+		}
 		
 	}
 
@@ -691,43 +726,48 @@ class GameServer extends Thread {
 		pl[8] = (byte) 0x80;
 		this.writeFrom(id, pl);
 		this.flushAll();
-		autoTick();
-		this.flushAll();
+		if(autostart){
+			autoTick();
+			this.flushAll();
+		}
 	}
 
 	// remove a player/bot, alerting all other players(-6) and changing host(-7) if
 	// needed
 	public void dropPlayer(byte id) {
-		int prev = playerThreads.size();
-		playerThreads.removeIf(x -> (x.id == id));
-		if(playerThreads.size()==prev)
-			return;
-		int first = -1;
-		if (playerThreads.size() == 1 && this.autostart) {
-			this.startTime = -1;
-			this.elapsedTime = 0;
-		}
-		for (int i = 0; i < playerThreads.size(); i++) {
-			if (!playerThreads.get(i).bot && playerThreads.get(i).alive)
-				first = i;
-		}
-		if (first == -1) {
-			this.alive = false;
-			try {
-				this.server.close();
-			} catch (Exception e) {
+		
+		synchronized(playerThreads){
+			int prev = playerThreads.size();
+			playerThreads.removeIf(x -> (x.id == id));
+			if(playerThreads.size()==prev)
+				return;
+			int first = -1;
+			if (playerThreads.size() == 1 && this.autostart) {
+				this.startTime = -1;
+				this.elapsedTime = 0;
 			}
-			S4Server.games.remove("" + this.code + "\n" + this.mode);
-			return;
-		}
-		byte[] pl = new byte[] { (byte) -6, id };
-		this.writeAll(pl, 0, 2);
-		this.flushAll();
-		if (this.host == id) {
-			// change host
-			byte[] pl2 = new byte[] { (byte) -7, id, playerThreads.get(first).id };
-			this.host = playerThreads.get(first).id;
-			this.writeAll(pl2, 0, 3);
+			for (int i = 0; i < playerThreads.size(); i++) {
+				if (!playerThreads.get(i).bot && playerThreads.get(i).alive)
+					first = i;
+			}
+			if (first == -1) {
+				this.alive = false;
+				try {
+					this.server.close();
+				} catch (Exception e) {
+				}
+				S4Server.games.remove("" + this.code + "\n" + this.mode);
+				return;
+			}
+			byte[] pl = new byte[] { (byte) -6, id };
+			this.writeAll(pl, 0, 2);
+			this.flushAll();
+			if (this.host == id) {
+				// change host
+				byte[] pl2 = new byte[] { (byte) -7, id, playerThreads.get(first).id };
+				this.host = playerThreads.get(first).id;
+				this.writeAll(pl2, 0, 3);
+			}
 		}
 	}
 
@@ -738,9 +778,12 @@ class GameServer extends Thread {
 		this.writeAll(new byte[] { (byte) -16 }, 0, 1);
 		this.flushAll();
 		this.started = true;
-		for (GameServerThread g : playerThreads) {
-			g.started = true;
-			g.pingSinceBuild = 0;
+		
+		synchronized(playerThreads){
+			for (GameServerThread g : playerThreads) {
+				g.started = true;
+				g.pingSinceBuild = 0;
+			}
 		}
 	}public boolean allLoaded(){
 		for(GameServerThread g:playerThreads)
@@ -752,35 +795,35 @@ class GameServer extends Thread {
 
 class GameServerThread extends Thread {
 	// See GameServer
-	public Socket client;
+	public volatile Socket client;
 	public volatile OutputStream rawOutput;
 	public volatile BufferedOutputStream output;
-	public boolean alive;
-	public short map;
-	public Player player;
-	public GameServer parent;
-	public byte id;
-	public byte host;
+	public volatile boolean alive;
+	public volatile short map;
+	public volatile Player player;
+	public volatile GameServer parent;
+	public volatile byte id;
+	public volatile byte host;
 	//game state(started means building started, ingame means actually started)
-	public boolean init;
-	public boolean welcomed;
+	public volatile boolean init;
+	public volatile boolean welcomed;
 	public volatile boolean loaded;
-	public boolean started;
+	public volatile boolean started;
 	public volatile boolean built;
-	public boolean ingame;
+	public volatile boolean ingame;
 	
-	public int pingSinceLoad;
-	private long lastPinged;
-	public int pingSinceBuild;
-	public long ingameSince;
+	public volatile int pingSinceLoad;
+	private volatile long lastPinged;
+	public volatile int pingSinceBuild;
+	public volatile long ingameSince;
 	
-	public boolean bot;
-	public boolean vs;
-	public int actualCode;
-	public float load;
-	public float build;
-	public float tickTime;
-	public long lastTick;
+	public volatile boolean bot;
+	public volatile boolean vs;
+	public volatile int actualCode;
+	public volatile float load;
+	public volatile float build;
+	public volatile float tickTime;
+	public volatile long lastTick;
 	public void flushAll() throws IOException{
 		this.output.flush();
 		this.rawOutput.flush();
@@ -874,7 +917,7 @@ class GameServerThread extends Thread {
 	public GameServerThread(Socket client, GameServer parent, byte id, byte host, boolean vs) {
 		this.parent = parent;
 		this.welcomed=false;
-		this.tickTime=0.2f;
+		this.tickTime=0.05f;
 		this.map = parent.map;
 		this.alive = true;
 		this.init = false;
@@ -913,7 +956,8 @@ class GameServerThread extends Thread {
 	 * suboperations see o14519,o2144
 	 */
 	public void parsePacket(byte[] buffer, int actualSize) throws IOException {
-		System.out.print((buffer[0]));
+		if(S4Server.verbose)
+			System.out.print((buffer[0]));
 		if (buffer[0] == (byte) 0 && buffer[1] == (byte) 202) {
 			int length = (((int) buffer[10] & 0xff) << 24) | (((int) buffer[11] & 0xff) << 16)
 					| (((int) buffer[12] & 0xff) << 8) | ((int) buffer[13] & 0xff);
@@ -986,6 +1030,7 @@ class GameServerThread extends Thread {
 			output.write(pl, 0, 5);
 			//output.flush();
 		} else if (buffer[0] == (byte) (-2)) {
+			if(S4Server.verbose)
 			System.out.print("." + buffer[6]);
 			byte[] pl;
 			// pl[1]=buffer[1];
@@ -1040,7 +1085,7 @@ class GameServerThread extends Thread {
 					}if (msg.startsWith("!help tickrate")) {
 						parent.chat("!tickrate (number). \nThis determines the maximum number of packets the server can send to you per second.\nHigher values = less desync, lower values = less client lag. 0=no buffering.\nDefault is 0.\nOnly affects you.");
 					}else if (msg.startsWith("!help")) {
-						parent.chat("Flash Private Server by Glenn M#9606.\nCommands:\n!boost <lvl>, !vsboost, !unboost\n !source, !seed, !stats, !code\n!tickrate(!help tickrate)\nSpecial private match codes:\nboost, 400");
+						parent.chat("Flash Private Server by Glenn M#9606.\nCommands:\n!boost <lvl>, !vsboost, !unboost\n !source, !seed, !stats, !code, !range\n!tickrate(!help tickrate)\n!tcpnodelay !autoflush");
 					}
 					if (msg.startsWith("!seed")) {
 						parent.chat("Current seed: "+parent.seed);
@@ -1050,6 +1095,9 @@ class GameServerThread extends Thread {
 					}
 					if (msg.startsWith("!stats")) {
 						parent.memory();
+					}
+					if (msg.startsWith("!range")) {
+						parent.chat("Accepting levels "+parent.minLvl+"-"+parent.maxLvl);
 					}
 					if (msg.startsWith("!tickrate")) {
 						if(msg.indexOf(" ")==-1)
@@ -1230,7 +1278,8 @@ class GameServerThread extends Thread {
 					 * of the message based on the "opcode"(1st byte)
 					 */
 					int x = 0;
-					System.out.print("[");
+					if(S4Server.verbose)
+						System.out.print("[");
 					if(overflow>0){
 						
 						int read = Math.min(overflow,actualSize);
@@ -1241,7 +1290,8 @@ class GameServerThread extends Thread {
 						for(j=prev.length-read;j<prev.length;j++)
 							prev[j]=buffer[j-prev.length+read];
 						if(overflow==0){
-							System.out.println("{"+prev.length+"/"+actualSize+"}");
+							if(S4Server.verbose)
+								System.out.println("{"+prev.length+"/"+actualSize+"}");
 							try{
 								parsePacket(Arrays.copyOfRange(prev, 0, prev.length), prev.length);
 								if((new Date()).getTime()-lastTick>tickTime*1000){
@@ -1249,7 +1299,7 @@ class GameServerThread extends Thread {
 									lastTick=(new Date()).getTime();
 								}
 							}catch(Exception e){
-								System.out.print("*");
+								//System.out.print("*");
 							}
 							
 						}else{
@@ -1283,42 +1333,48 @@ class GameServerThread extends Thread {
 								length += (((int) buffer[x + 1] & 0xff) << 24) | (((int) buffer[x + 2] & 0xff) << 16)
 										| (((int) buffer[x + 3] & 0xff) << 8) | ((int) buffer[x + 4] & 0xff) + 4;
 								break;
-							default:
+							default://print something maybe
 								length = (actualSize - x);
 								break;
-						}if(buffer.length>x+5&&buffer[x+6]==(byte)0x07&&buffer[x]==(byte)-2){
+						}if(buffer.length>x+6&&buffer[x+6]==(byte)0x07&&buffer[x]==(byte)-2){
 							length+=2;
 						}
 						if(x+length<=actualSize){
 							try {
-								System.out.print("(" + length + "/" + actualSize + ")");
+								if(S4Server.verbose)
+									System.out.print("(" + length + "/" + actualSize + ")");
 									
 								
 								parsePacket(Arrays.copyOfRange(buffer, x, x + length), length);
-								if((new Date()).getTime()-lastTick>tickTime*1000){
+								if(!parent.autoFlush && (new Date()).getTime()-lastTick>tickTime*1000){
 									parent.flushAll();
 									lastTick=(new Date()).getTime();
 								}
 							} catch (Exception e) {
 								e.printStackTrace();
-								System.out.print("!");
+								overflow=0;
+								prev = new byte[]{};
+								//System.out.print("!");
 								break;
 							}
 						}else{
 							overflow = x+length-actualSize;
-							System.out.print(":"+(actualSize-x)+"+"+overflow);
+							if(S4Server.verbose)
+								System.out.print(":"+(actualSize-x)+"+"+overflow);
 							prev = Arrays.copyOfRange(buffer,x,actualSize);
 						}
 						x += length;
-						if (x < actualSize) {
+						if (S4Server.verbose&&x < actualSize) {
 							System.out.print(",");
 							S4Server.window++;
 						}
 					}
-					System.out.print("] ");
+					if(S4Server.verbose){
+						System.out.print("] ");
 					S4Server.window++;
 					if (S4Server.window % 20 == 0)
 						System.out.println();
+					}
 				} else {
 					timeouts++;
 
@@ -1331,6 +1387,7 @@ class GameServerThread extends Thread {
 				}
 			}
 		} catch (Exception ioe_) {
+			ioe_.printStackTrace();
 			this.alive = false;
 			try {
 				output.close();
@@ -1360,8 +1417,9 @@ public class S4Server {
 	public static volatile ConcurrentHashMap<String, GameServer> games;
 	public static volatile String log = "";
 	public static volatile int nextPort = 8118;
-	public static long window = 0;
+	public static volatile long window = 0;
 	public static short[] eventMaps;
+	public static boolean verbose=true;//printing
 	public static int getPlayerCount(){
 		int x=0;
 		for(String s:games.keySet())
@@ -1497,7 +1555,7 @@ public class S4Server {
 			vsbot = Files.readAllBytes(Paths.get("vs.bin"));
 		} catch (Exception e) {
 			bot = new byte[] {};
-			bot = new byte[] {};
+			vsbot = new byte[] {};
 		}
 		games = new ConcurrentHashMap<String, GameServer>();
 		// checks if a port is specified
@@ -1521,7 +1579,7 @@ public class S4Server {
 		}
 
 		// server loop(only ends on ctrl-c)
-		ArrayList<ServerThread> threads = new ArrayList<ServerThread>();
+		List<ServerThread> threads = Collections.synchronizedList(new ArrayList<ServerThread>());
 		try {
 			server.setSoTimeout(1000);
 		} catch (Exception eeeeeee) {
@@ -1573,7 +1631,7 @@ public class S4Server {
 				// all threads are dead -> reset threadpool
 				// System.out.println("ALIVE: "+alives+", EXIST: ");
 				if (alives == 0 && index == -1) {
-					threads = new ArrayList<ServerThread>();
+					threads = Collections.synchronizedList(new ArrayList<ServerThread>());
 					threads.add(connection);
 					index = 0;
 					run = true;
