@@ -11,6 +11,8 @@ import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.Charset;
 import java.util.Date;
@@ -148,8 +150,8 @@ class ServerThread extends Thread {
 											gs.p1 = FlashServer.queue1.poll();
 										else
 											gs.p1 = FlashServer.queue2.poll();
-										t1 = "FoundYouAGame,154.53.49.118," + gs.port + "," + 0 + ",4480\n";
-										toSend += "\nFoundYouAGame,154.53.49.118," + gs.port + "," + 0 + ",4480\n";
+										t1 = "FoundYouAGame,"+FlashServer.ip+"," + gs.port + "," + 0 + ",4480\n";
+										toSend += "\nFoundYouAGame,"+FlashServer.ip+"," + gs.port + "," + 0 + ",4480\n";
 										sendAfter = 3;
 										gs.p1.doubleWrite(t1);
 										FlashServer.games.add(gs);
@@ -180,11 +182,11 @@ class ServerThread extends Thread {
 										if (FlashServer.privateMatches.containsKey(joinCode)) {
 											toSend += "FindingYouAMatch," + joinCode;
 											//
-											toSend += "\nFoundYouAGame,154.53.49.118,"
+											toSend += "\nFoundYouAGame,"+FlashServer.ip+","
 													+ FlashServer.privateMatches.get(joinCode).port + "," + joinCode
 													+ ",4480\n";
 											gs = FlashServer.privateMatches.get(joinCode);
-											t1 = "FoundYouAGame,154.53.49.118,"
+											t1 = "FoundYouAGame,"+FlashServer.ip+","
 													+ FlashServer.privateMatches.get(joinCode).port + "," + joinCode
 													+ ",4480\n";
 											gs.p2 = this.player;
@@ -824,8 +826,9 @@ public class FlashServer {
 	public static volatile ConcurrentHashMap<Integer, String> profiles;// might become settings object
 	public static volatile ConcurrentHashMap<Integer, ArrayList<String>> history;
 	public static volatile String log = "";
+	public static volatile String ip = "";
 	public static volatile int nextPort = 8119;
-
+	public static boolean verbose=false;
 	private static boolean checkPort(int p) {
 		for (GameServer g : games)
 			if (g.port == p)
@@ -838,8 +841,8 @@ public class FlashServer {
 
 	public static int nextPort() {
 		do {
-			nextPort += 10;
-			if (nextPort > 65000)
+			nextPort += 5;
+			if (nextPort > 32000)
 				nextPort = 8129;
 		} while (checkPort(nextPort));
 		return nextPort;
@@ -987,8 +990,10 @@ public class FlashServer {
 		}
 		ServerSocket server;
 		try {
+			ip=Files.readString(Paths.get("./config.txt")).trim();
 			server = new ServerSocket(port);
 		} catch (IOException e) {
+			System.out.println("Error. Please ensure the port is available and config.txt exists(put IP or \"localhost\" there)");
 			return;
 		}
 
