@@ -1,1 +1,2 @@
-
+daily challenge HTTP server files
+(should be run in a jsp container, the one being deployed is custom and not included here yet)
