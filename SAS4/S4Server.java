@@ -23,6 +23,7 @@ import java.net.ServerSocket;
  * @TODO /done
  *		 /done /done
  *       /done fix desync?!?!?!?
+ *		/make list not synchronized + full manual sync
  *       cycle events properly(date->event)
  *		easier compile
  *		/done /nvm
@@ -111,7 +112,7 @@ class ServerThread extends Thread {
 						S4Server.games.put(strCode, g);
 						new Thread(g).start();
 					}
-					byte[] ip = "localhost".getBytes(StandardCharsets.UTF_8);
+					byte[] ip = S4Server.ip.getBytes(StandardCharsets.UTF_8);
 					
 					//byte[] ip = "154.53.49.118".getBytes(StandardCharsets.UTF_8);
 					byte[] pl = new byte[10 + ip.length];
@@ -176,6 +177,7 @@ class FilePolicyServer extends Thread {
 			this.server = new ServerSocket(port);
 			this.server.setSoTimeout(1000);
 		} catch (IOException e) {
+			this.alive = false;
 			return;
 		}
 		this.alive = true;
@@ -774,7 +776,7 @@ class GameServer extends Thread {
 	// start building(start game button), or automatically in event/quickmatch
 	public void start() {
 		chat("Starting building...");
-		System.out.println("-------STARTING GAME " + code + "-------");
+		System.out.println("-------STARTING GAME " + code + "@"+new Date()+"-------");
 		this.writeAll(new byte[] { (byte) -16 }, 0, 1);
 		this.flushAll();
 		this.started = true;
@@ -1419,7 +1421,8 @@ public class S4Server {
 	public static volatile int nextPort = 8118;
 	public static volatile long window = 0;
 	public static short[] eventMaps;
-	public static boolean verbose=true;//printing
+	public static boolean verbose=false;//printing
+	public static volatile String ip="";
 	public static int getPlayerCount(){
 		int x=0;
 		for(String s:games.keySet())
@@ -1498,8 +1501,8 @@ public class S4Server {
 
 	public static int nextPort() {
 		do {
-			nextPort += 10;
-			if (nextPort > 65000)
+			nextPort += 5;
+			if (nextPort > 32000)
 				nextPort = 8128;
 		} while (checkPort(nextPort));
 		return nextPort;
@@ -1570,14 +1573,19 @@ public class S4Server {
 			System.exit(0);
 		}
 		ServerSocket server;
-		FilePolicyServer fps = new FilePolicyServer(843);
 		try {
+			ip=Files.readString(Paths.get("./config.txt")).trim();
 			server = new ServerSocket(port);
-			new Thread(fps).start();
 		} catch (IOException e) {
+			System.out.println("error. Please ensure the port is available and config.txt exists(put IP or \"localhost\" there)");
 			return;
 		}
-
+		try {
+			FilePolicyServer fps = new FilePolicyServer(843);
+			new Thread(fps).start();
+		} catch (Exception e) {
+			
+		}
 		// server loop(only ends on ctrl-c)
 		List<ServerThread> threads = Collections.synchronizedList(new ArrayList<ServerThread>());
 		try {
