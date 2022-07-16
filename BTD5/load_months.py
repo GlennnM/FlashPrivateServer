@@ -48,6 +48,16 @@ def loadDc(y,m,d):
     else:
         a["data"]=[]
     q["reserves"]=a;
+    u={"objectType":"Vector.<challenges.UpgradeLock>","data":[]}
+    if("upgradeLocks" in q.keys() and not (isinstance(q["upgradeLocks"] ,list))):
+        for t in q["upgradeLocks"].keys():
+            u["data"].append({"objectType":"challenges.UpgradeLock","id":t,"path":0,"upgrade":q["upgradeLocks"].get(t)[0]})
+            u["data"].append({"objectType":"challenges.UpgradeLock","id":t,"path":1,"upgrade":q["upgradeLocks"].get(t)[1]})
+    elif("upgradeLocks" in q.keys()):
+        u["data"]=q["upgradeLocks"]
+    else:
+        u["data"]=[]
+    q["upgradeLocks"]=u;
     #print(q)
     e=base64.b64encode((bytes(json.dumps(q),encoding="utf-8"))).decode("utf-8")
     #print(e)
