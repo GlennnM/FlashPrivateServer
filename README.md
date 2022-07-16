@@ -28,6 +28,6 @@ Hosting your own server from source<br>
 Install java 10+ and run the .sh or .bat file for the game you wish to host after replacing the IP in config.txt with your ip(or localhost).<br>
 For hosting daily challenges, the "BTD5" folder should be the root directory of a jsp server on the port being accessed by the game. The one being deployed currently is custom and the source is not available here yet.<br>
 You can now play locally with one of the "localhost" SWFs<br> To load these, use the <a href=https://github.com/GlennnM/NKFlashServers/blob/main/FlashClient_localhost.ps1>localhost powershell script</a> or the <a href = https://github.com/GlennnM/NKFlashServers/blob/main/Fiddler-guide.md>fiddler guide</a>. <br>
-If you want to host it yourself you will need to change the IP and make a new swf(instructions not provided here, but it is fairly simple)<br>
+If you want to host it for other people to play you will need to change the IP and make a new swf(instructions not provided here, but it is fairly simple)<br>
 <br>
 
