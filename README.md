@@ -24,12 +24,12 @@ That's it! Next time you start BTD Battles, BTD5, or SAS4 on the archive they wi
 -join code 400 in SAS4 to play a boosted game with bots(works in any mode)<br>
 -<a href = https://github.com/Kinnay/Bloons-Terminator>bots</a> for battles flash(can be reworked into challenge bots, similar to professor evil on mobile)<br>
 <h1>
-Hosting your own server<br>
+Hosting your own server from source<br>
   </h1>
 <br>
 Install java 10+ and run the .sh or .bat file for the game you wish to host after replacing the IP in config.txt with your ip(or localhost).<br>
 For hosting daily challenges, the "BTD5" folder should be the root directory of a jsp server on the port being accessed by the game. The one being deployed currently is custom and the source is not available here yet.<br>
-You can now play locally with one of the "localhost" SWFs<br> To load these, use the localhost powershell script(might not exist yet) or use the fiddler guide(also might not exist yet). <br>
+You can now play locally with one of the "localhost" SWFs<br> To load these, use the localhost powershell script(<a href=https://github.com/GlennnM/NKFlashServers/blob/main/FlashClient_localhost.ps1>click</a>) or use the fiddler guide(<a href = https://github.com/GlennnM/NKFlashServers/blob/main/Fiddler-guide.md>click</a>). <br>
 If you want to host it yourself you will need to change the IP and make a new swf(instructions not provided here, but it is fairly simple)<br>
 <br>
 
