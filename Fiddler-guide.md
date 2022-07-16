@@ -1,6 +1,6 @@
 # NKFlashServers
 <h1>Fiddler Guide<br></h1>
-Fiddler allows you to replace the SWFs as they are being loaded. This allows for:
+Fiddler allows you to replace the SWFs as they are being loaded. This allows for:<br>
 1. multiple archive instances connected to the server<br>
 2. browser clients connected to the server<br>
 3. self hosting/local servers(note that a separate powershell script for localhost swfs is also available)<br>
