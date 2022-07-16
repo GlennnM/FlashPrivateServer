@@ -1,1 +1,0 @@
-uses chromium's Cache V3(used by mac archive for some reason...)
