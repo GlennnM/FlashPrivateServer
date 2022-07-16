@@ -12,7 +12,6 @@ Currently I am hosting BTD Battles, BTD5 challenges, BTD5 co-op, and SAS4. The g
 When playing on these servers, some quality of life/easter egg features are added, but mostly they will play exactly as you would expect the game to play on Ninja Kiwi's servers, and any data or achievements from these games will register in your actual NK profile.<br>
 <h1>
 HOW TO PLAY<br></h1>
-<br>
 1. Ensure you have Ninja Kiwi Archive installed(from ninja kiwi website or Steam)<br>
 2. Download FlashServer.ps1 from this page<a href = https://github.com/GlennnM/NKFlashServers/releases/tag/v2.0>(click)</a><br>
 3. Open the folder you downloaded it to, close all NK Archive windows(INCLUDING THE LAUNCHER), right click and click "Run with PowerShell".<br>
