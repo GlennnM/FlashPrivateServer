@@ -15,7 +15,7 @@ HOW TO PLAY<br></h1>
 1. Ensure you have Ninja Kiwi Archive installed(from ninja kiwi website or Steam)<br>
 2. Download FlashClient.ps1 from this page<a href = https://github.com/GlennnM/NKFlashServers/releases/tag/v2.0>(click)</a><br>
 3. Open the folder you downloaded it to, close all NK Archive windows(INCLUDING THE LAUNCHER), right click and click "Run with PowerShell".<br>
-<img src =https://user-images.githubusercontent.com/77253453/179336059-339cbc88-6e0d-43c7-a918-e9f0f4b8387a.png><br>
+<img src =https://user-images.githubusercontent.com/77253453/179336059-339cbc88-6e0d-43c7-a918-e9f0f4b8387a.png></img><br>
 
 4. Make sure it runs correctly; it should say "Mod installation successful!!".<br><br>This should work on mac as well now (you will need to install powershell first)<br>
 That's it! Next time you start BTD Battles, BTD5, or SAS4 on the archive they will be modded to link to the private server, allowing you to play.<br><b>Enjoy!!</b><br>
