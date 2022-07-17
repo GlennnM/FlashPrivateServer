@@ -339,6 +339,18 @@ class GameServer extends Thread {
 		return (!this.started) && (this.playerThreads != null) && (this.playerThreads.size() < 4) && (lvl <= maxLvl)
 				&& (lvl >= minLvl);
 	}
+	public boolean can101(){
+		try{
+			synchronized(playerThreads){
+				for(GameServerThread g:playerThreads){
+					if(!g.bot&&g.player.level<96)
+						return false;
+				}
+			}
+		}catch(Exception e){
+			
+		}return true;
+	}
 	public void flushAll(){
 		synchronized(playerThreads){
 			for(GameServerThread g:playerThreads){
@@ -394,7 +406,7 @@ class GameServer extends Thread {
 		// Pick a map based on mode; nm and event maps both have separate id's
 		// playing normal on an NM map and vice versa is playable; playing normal on an
 		// event map does nothing
-		this.seed = (short) (Math.random() * 1000);
+		this.seed = (short) (Math.random() * 32768);
 		if (this.mode == 2) {
 			// NM
 			this.map = (short) 1102;
@@ -467,7 +479,7 @@ class GameServer extends Thread {
 	// Add a bot, if possible.
 	// Bots will leave as soon as building starts.
 	public void boost(byte level,boolean vs) {
-	if (level>101||(level==101&&playerThreads.get(0).player.level<96)||playerThreads.size() > 3||this.started) {
+	if (level>101||(level==101&&!can101())||playerThreads.size() > 3||this.started) {
 			chat("Unable to boost.");
 			return;
 		}
@@ -1132,11 +1144,12 @@ class GameServerThread extends Thread {
 					}
 				}
 			}
+			
 			if (buffer[6] == (byte) 0x07) {
 				this.build=1.0f;
 				parent.fullLoad(this.id);
 				this.built = true;
-			}// else {
+			}
 				// if((byte)(buffer[8]>>4&0xff)==(byte)0x0c){
 				// parent.writeFrom(this.id,buffer,0,actualSize);
 				// }else{
@@ -1145,8 +1158,17 @@ class GameServerThread extends Thread {
 				// pl[i]=buffer[i];
 				// parent.writeFrom(this.id,pl,0,pl.length);
 				// }else{
+					
+			
 				for (int i = 7; i < actualSize; i++)
 					pl[i - 1] = buffer[i];
+				if(actualSize>10&&buffer[6] != (byte) 0x07){
+					long time = (new Date()).getTime()/1000;
+					pl[6] = ((byte) (time >> 24));
+					pl[7] = ((byte) ((time >> 16) & 0xff));
+					pl[8] = ((byte) ((time >> 8) & 0xff));
+					pl[9] = ((byte) ((time) & 0xff));
+				}
 			//	if(buffer[6]!=(byte)0x05)
 			//		parent.writeAll(pl, 0, pl.length);
 			//	else
