@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterOutputStream;
 import java.net.InetAddress;
@@ -44,7 +45,7 @@ class ServerThread extends Thread {
 		this.client = socket;
 		this.alive = true;
 		this.output = this.client.getOutputStream();
-	}
+	} 
 
 	@Override
 	public void run() {
@@ -65,9 +66,9 @@ class ServerThread extends Thread {
 			boolean matched = false;
 			boolean queued = false;
 			boolean assault = false;
+			Player opp=null;
 			int sendAfter = 0;
 			while (this.alive) {
-				// System.out.println("alive");
 				// headers = "";
 				// line="";
 				/*
@@ -96,7 +97,8 @@ class ServerThread extends Thread {
 				if (line.length() > 0) {
 					timeouts = 0;
 					toSend = "";
-					// System.out.println("incoming: "+headers);
+					if(FlashServer.verbose)
+						System.out.println("incoming: "+headers);
 					if (headers.equals("<policy-file-request/>")) {
 						String xml = "<?xml version=\"1.0\"?>\n<!DOCTYPE cross-domain-policy SYSTEM \n\"http://www.adobe.com/xml/dtds/cross-domain-policy.dtd\">\n<cross-domain-policy>\n";
 						xml += "<site-control permitted-cross-domain-policies=\"master-only\"/>\n";
@@ -129,7 +131,7 @@ class ServerThread extends Thread {
 							this.player = new Player(Integer.parseInt(msg[1]), msg[2], Integer.parseInt(msg[3]), 0, 0,
 									msg[5], this.output, Integer.parseInt(msg[4]));
 							// set player info, add to queue
-							if (shouldQueue)
+							if (shouldQueue&&!matched)
 								toSend += "FindingYouAMatch";
 							if (!matched) {
 								//
@@ -145,17 +147,19 @@ class ServerThread extends Thread {
 										queued = true;
 									} else if (!queued) {
 										gs = new GameServer(FlashServer.nextPort());
-										gs.p2 = this.player;
+										//Player opp;
 										if (assault)
-											gs.p1 = FlashServer.queue1.poll();
+											opp = FlashServer.queue1.poll();
 										else
-											gs.p1 = FlashServer.queue2.poll();
-										t1 = "FoundYouAGame,"+FlashServer.ip+"," + gs.port + "," + 0 + ",4480\n";
+											opp = FlashServer.queue2.poll();
+										opp.doubleWrite("\nFoundYouAGame,"+FlashServer.ip+"," + gs.port + "," + 0 + ",4480");
+										t1="\nFoundYouAGame,"+FlashServer.ip+"," + gs.port + "," + 0 + ",4480";
 										toSend += "\nFoundYouAGame,"+FlashServer.ip+"," + gs.port + "," + 0 + ",4480\n";
-										sendAfter = 3;
-										gs.p1.doubleWrite(t1);
+										//sendAfter = 3;
+										//gs.p1.doubleWrite(t1);
 										FlashServer.games.add(gs);
 										new Thread(gs).start();
+										matched=true;
 										queued = true;
 									}
 								} else if (!queued) {
@@ -175,26 +179,34 @@ class ServerThread extends Thread {
 										}
 										code = "B2GARB" + code;
 										gs = new GameServer(FlashServer.nextPort());
-										gs.p1 = this.player;
+										gs.code=code;
 										FlashServer.privateMatches.put(code, gs);
+										FlashServer.privateHosts.put(code, player);
+										gs.p1=player;
+										
 										toSend += "FindingYouAMatch," + code;
 									} else if (joinCode != null) {
 										if (FlashServer.privateMatches.containsKey(joinCode)) {
-											toSend += "FindingYouAMatch," + joinCode;
-											//
-											toSend += "\nFoundYouAGame,"+FlashServer.ip+","
+											new Thread(FlashServer.privateMatches.get(joinCode)).start();
+											toSend+="FindingYouAMatch," + joinCode+ "\nFoundYouAGame,"+FlashServer.ip+","
 													+ FlashServer.privateMatches.get(joinCode).port + "," + joinCode
 													+ ",4480\n";
 											gs = FlashServer.privateMatches.get(joinCode);
-											t1 = "FoundYouAGame,"+FlashServer.ip+","
+											sendAfter = 5;
+											//if(gs.p1==null){
+											opp=FlashServer.privateHosts.remove(joinCode);
+											opp.doubleWrite("FoundYouAGame,"+FlashServer.ip+","
+													+ FlashServer.privateMatches.get(joinCode).port + "," + joinCode
+													+ ",4480");
+											t1="\nFoundYouAGame,"+FlashServer.ip+","
 													+ FlashServer.privateMatches.get(joinCode).port + "," + joinCode
 													+ ",4480\n";
-											gs.p2 = this.player;
-											sendAfter = 3;
-											gs.p1.doubleWrite(t1);
-											FlashServer.privateMatches.put(joinCode, gs);
-											// doubleWrite(toSend);toSend="";
-											new Thread(FlashServer.privateMatches.get(joinCode)).start();
+											gs.p2=player;
+											matched=true;
+											//}
+											//gs.p1.doubleWrite(t1);
+											//FlashServer.privateMatches.put(joinCode, gs);
+											// doubleWrite(toSend);
 										} else {
 											toSend += "CouldntFindYourCustomBattle";
 										}
@@ -274,20 +286,29 @@ class ServerThread extends Thread {
 					headers = "";
 					line = "";
 				}
-				if (t1 != null && gs != null && gs.g2 == null)
-					gs.p1.doubleWrite(t1);
-				if (t2 != null && gs != null && gs.p2 != null)
-					gs.p2.doubleWrite(t2);
+				try{
+					if (t1 != null && gs != null && opp != null)
+						opp.doubleWrite(t1);
+					if (t2 != null && gs != null && gs.p2 != null)
+						gs.p2.doubleWrite(t2);
+				}catch(IOException e){
+					if(FlashServer.verbose)
+						e.printStackTrace();
+				}
 				if (toSend.trim().length() > 0 && timeouts < 2) {
 					if (sendAfter == 0)
 						doubleWrite(toSend);
-					else {
+					else if(gs!=null&&gs.g1!=null&&gs.g1.player!=null&&gs.g1.player.init){
+						doubleWrite(toSend);
+						sendAfter=0;
+					}else {
 						sendAfter--;
 						timeouts--;
 					}
 				}
 			}
 		} catch (Exception ioe_) {
+			ioe_.printStackTrace();
 			FlashServer.queue1.remove(this.player);
 			FlashServer.queue2.remove(this.player);
 			try {
@@ -305,22 +326,22 @@ class ServerThread extends Thread {
 }
 
 class GameServer extends Thread {
-	public GameServerThread g1;
-	public GameServerThread g2;
+	public volatile GameServerThread g1;
+	public volatile GameServerThread g2;
 	public ServerSocket server;
-	public Player p1;
-	public Player p2;
-	public String code;
+	public volatile Player p1;
+	public volatile Player p2;
+	public volatile String code;
 	public int port;
 	public boolean alive;
 	public int round;
-	public int map;
+	public volatile int map;
 	public int seed;
-
 	public GameServer(int port) {
 		this.round = 1;
 		this.g2 = null;
 		this.p1 = null;
+		this.code=null;
 		try {
 			this.port = port;
 			this.server = new ServerSocket(port);
@@ -361,6 +382,7 @@ class GameServer extends Thread {
 			if (g1 != null && g2 != null && !g1.alive && g2.alive && g1.state > 0 && g2.state > 0) {
 				try {
 					g2.doubleWrite("OpponentDisconnected");
+					g2.doubleWrite("ServerMessage");
 					if (g2.win == 0 && g1.win == 0) {
 						g2.win = 2;
 						g1.win = 1;
@@ -372,6 +394,7 @@ class GameServer extends Thread {
 			if (g1 != null && g2 != null && g1.alive && !g2.alive && g1.state > 0 && g2.state > 0) {
 				try {
 					g1.doubleWrite("OpponentDisconnected");
+					g1.doubleWrite("ServerMessage");
 					if (g2.win == 0 && g1.win == 0) {
 						g1.win = 2;
 						g2.win = 1;
@@ -407,14 +430,15 @@ class GameServer extends Thread {
 			}
 			try {
 				client = server.accept();
-				GameServerThread connection = new GameServerThread(client, this.map, this.seed);
+				System.out.println("GS accept");
+				GameServerThread connection = new GameServerThread(client, this.map, this.seed,this);
 				if (this.g1 == null) {
 					g1 = connection;
 					g1.opponent = p2;
 					g1.side = 0;
 					// g2.opponent.output=client.getOutputStream();
 					g1.output = client.getOutputStream();
-					p1.output = client.getOutputStream();
+					p1=g1.player;
 					new Thread(g1).start();
 				}
 
@@ -422,15 +446,15 @@ class GameServer extends Thread {
 					g2 = connection;
 					g2.opponent = p1;
 					g2.side = 1;
-					g1.opponent.output = client.getOutputStream();
-					p2.output = client.getOutputStream();
 					g2.output = client.getOutputStream();
 					g2.init = true;
 					g1.init = true;
+					p2=g2.player;
+					g1.opponent=p2;
 					new Thread(g2).start();
 				}
 			} catch (Exception e) {
-				// e.printStackTrace();
+				//e.printStackTrace();
 				continue;
 			}
 		}
@@ -452,34 +476,36 @@ class GameServer extends Thread {
 }
 
 class GameServerThread extends Thread {
-	public Player player;
-	public Player opponent;
+	public volatile Player player;
+	public volatile Player opponent;
 	public Socket client;
-	public OutputStream output;
-	public boolean alive;
+	public volatile OutputStream output;
+	public volatile boolean alive;
 	public int side;
 	public boolean r;
 	public int relays;
 	public int state = 0;
+	public int timeouts = 0;
 	public int seed = 0;
-	public int map;
+	public volatile int map;
 	public int win;
 	public String reason = "Player disconnected";
 	public int time = 0;
-	public boolean init = false;
-
+	public volatile boolean init = false;
+	public volatile GameServer parent;
 	public void doubleWrite(String s) throws IOException {
 		this.output.write((s + "\n").getBytes(StandardCharsets.UTF_8));
 		this.output.flush();
+		if(this.parent!=null&&this.parent.round<1)
+			this.timeouts=0;
 		if(FlashServer.verbose)
 			System.out.println("#OUT: " + s);
 	}
 
-	public GameServerThread(Socket client, int map, int seed) {
+	public GameServerThread(Socket client, int map, int seed, GameServer parent) {
+		this.parent=parent;
 		this.r = false;
 		this.relays = 0;
-		this.player = null;
-		this.opponent = null;
 		this.client = client;
 		this.map = map;
 		this.win = 0;
@@ -498,7 +524,6 @@ class GameServerThread extends Thread {
 			this.client.setSoTimeout(1000);
 			InputStream input = this.client.getInputStream();
 			InputStreamReader ir = new InputStreamReader(input, Charset.forName("UTF-8"));
-			int timeouts = 0;
 			String headers = "";
 			String line = "";
 			String toSend = "";
@@ -511,22 +536,28 @@ class GameServerThread extends Thread {
 				// System.out.println(opponent);
 				// if(!this.init)
 				// continue;
-				if (state == 0) {
+				if (state<2&&opponent!=null&&((this==parent.g1)?(parent.g2):(parent.g1))!=null) {
 					if (FlashServer.getProfile(opponent.id) != null)
 						opponent.profile = FlashServer.getProfile(opponent.id);
 					doubleWrite("FoundYourGame," + opponent.id + "," + opponent.name + "," + opponent.bs + ","
 							+ opponent.decal + "," + opponent.profile + "," + this.seed + "," + this.side + ","
-							+ this.map + "," + opponent.w + "," + opponent.l);
-					state = 1;
+							+ parent.map + "," + opponent.w + "," + opponent.l);
+					if(parent.code!=null){
+						doubleWrite("OpponentChangedBattleOptions,InkBlot,0");
+						opponent.doubleWrite("OpponentChangedBattleOptions,InkBlot,0");
+					}
+					state+=1;
 				}
-				if (this.player == null) {
+				if (this.player == null||!this.player.init) {
 					doubleWrite("GimmeUrPlayerInfo,h");
 				}
 				if (lastTest != null && ((new Date()).getTime() - lastTest.getTime()) > 5000) {
-					doubleWrite("RelayMsg,SentChatMsg," + FlashServer.encode("Lag test results: The game ran at "
+					String lt="RelayMsg,SentChatMsg," + FlashServer.encode("Lag test results: The game ran at "
 							+ ((((double) ((int) (1.0 / (((double) ((new Date()).getTime() - lastTest.getTime()))
 									/ ((double) (time * 1000 - lastTime * 1000))) * 10000))) / 100.0))
-							+ "% speed over about 5 seconds"));
+							+ "% speed over about 5 seconds");
+					doubleWrite(lt);
+					opponent.doubleWrite(lt);
 					lastTest = null;
 				}
 				try {
@@ -542,6 +573,8 @@ class GameServerThread extends Thread {
 					/**
 					 * kill after multiple timeouts
 					 */
+					 headers="";
+					 line="";
 				}
 				if (line.length() > 0) {
 					timeouts = 0;
@@ -555,9 +588,20 @@ class GameServerThread extends Thread {
 						if (!toSend.equals(""))
 							toSend += "\n";
 						if (msg[0].equals("HeresMyPlayerInfo")) {
-							state = 1;
 							this.player = new Player(Integer.parseInt(msg[1]), msg[2], Integer.parseInt(msg[3]), 0, 0,
 									msg[5], this.output, Integer.parseInt(msg[4]));
+							this.player.init=true;
+							
+								if(this==parent.g1){
+									if(parent.g2!=null)
+										parent.g2.opponent=this.player;
+									parent.p1=this.player;
+								}else{
+									if(parent.g1!=null)
+										parent.g1.opponent=this.player;
+									parent.p2=this.player;
+								}
+							//state=1;
 						} else {
 							String tail;
 
@@ -573,6 +617,7 @@ class GameServerThread extends Thread {
 							}
 							if (msg[0].equals("IChangedBattleOptions")) {
 								toSend += "OpponentChangedBattleOptions" + tail;
+								parent.map=FlashServer.MAPIDS.indexOf(msg[1]);
 							}
 							if (msg[0].equals("MyReadyToPlayStatus")) {
 								toSend += "OpponentReadyStatus" + tail;
@@ -594,11 +639,9 @@ class GameServerThread extends Thread {
 								toSend += "OpponentUpgradedATower" + tail;
 							}
 							if (msg[0].equals("ISentABloonWave")) {
-								/**if (tail.contains("Cerem")) {
-									doubleWrite("RelayMsg,SentChatMsg," + FlashServer.encode("they WILL die,"));
-									opponent.doubleWrite(
-											"RelayMsg,SentChatMsg," + FlashServer.encode("they WILL die,"));
-								}*/
+								if (tail.contains("Cerem")) {
+									doubleWrite("RelayMsg,SentChatMsg," + FlashServer.encode("they WILL die,\n(only you can see this)"));
+								}
 								toSend += "OpponentSentABloonWave" + tail;
 							}
 							if (msg[0].equals("IRemovedABloonWave")) {
@@ -673,10 +716,10 @@ class GameServerThread extends Thread {
 												count = Math.min(Integer.parseInt(param), 10);
 											ArrayList<String> x = new ArrayList<String>();
 											for (int n = 0; n < count; n++) {
-												int q = (int) (Math.random() * FlashServer.towers.length);
-												while (x.contains(FlashServer.towers[q]))
-													q = (int) (Math.random() * FlashServer.towers.length);
-												x.add(FlashServer.towers[q]);
+												int q = (int) (Math.random() * FlashServer.TOWERS.length);
+												while (x.contains(FlashServer.TOWERS[q]))
+													q = (int) (Math.random() * FlashServer.TOWERS.length);
+												x.add(FlashServer.TOWERS[q]);
 											}
 											doubleWrite("RelayMsg,SentChatMsg," + FlashServer
 													.encode(x.toString().substring(1, x.toString().length() - 1)));
@@ -688,10 +731,10 @@ class GameServerThread extends Thread {
 												count = Math.min(Integer.parseInt(param), 10);
 											ArrayList<String> x = new ArrayList<String>();
 											for (int n = 0; n < count; n++) {
-												int q = (int) (Math.random() * FlashServer.maps.length);
-												while (x.contains(FlashServer.maps[q]))
-													q = (int) (Math.random() * FlashServer.maps.length);
-												x.add(FlashServer.maps[q]);
+												int q = (int) (Math.random() * FlashServer.MAPS.length);
+												while (x.contains(FlashServer.MAPS[q]))
+													q = (int) (Math.random() * FlashServer.MAPS.length);
+												x.add(FlashServer.MAPS[q]);
 											}
 											doubleWrite("RelayMsg,SentChatMsg," + FlashServer
 													.encode(x.toString().substring(1, x.toString().length() - 1)));
@@ -700,6 +743,8 @@ class GameServerThread extends Thread {
 													"Known issues:\n-game disconnects sometimes\n-wins and losses aren't shown\n-wins, losses, battlescore don't update"));
 										else if (cmd[0].equals("!lagtest")) {
 											doubleWrite("RelayMsg,SentChatMsg,"
+													+ FlashServer.encode("Starting lag test..."));
+											opponent.doubleWrite("RelayMsg,SentChatMsg,"
 													+ FlashServer.encode("Starting lag test..."));
 											lastTest = new Date();
 											lastTime = this.time;
@@ -728,7 +773,7 @@ class GameServerThread extends Thread {
 							}
 
 							if (msg[0].equals("GiveMeDaBalance")) {
-								doubleWrite("HeresDaBalance," + FlashServer.balance);
+								doubleWrite("HeresDaBalance," + FlashServer.BALANCE);
 							}
 							// ImReadyToStartARound
 						}
@@ -736,6 +781,7 @@ class GameServerThread extends Thread {
 				} else {
 					timeouts++;
 					if (timeouts > 60) {
+						System.out.println("GST timeout");
 						this.alive = false;
 						output.close();
 						input.close();
@@ -749,14 +795,22 @@ class GameServerThread extends Thread {
 				}
 
 				if (toSend.length() > 0 && state == 0)
-					doubleWrite(toSend);
+					try{
+						doubleWrite(toSend);
+						}catch(IOException e){
+						e.printStackTrace();
+					}
 				else if (toSend.length() > 0 && this.init) {
-
-					opponent.doubleWrite(toSend);
+					try{
+						opponent.doubleWrite(toSend);
+						headers = "";
+						line = "";
+						toSend = "";
+					}catch(IOException e){
+						e.printStackTrace();
+						
+					}
 					// opponent.doubleWrite("ServerMessage");
-					headers = "";
-					line = "";
-					toSend = "";
 				}
 			}
 		} catch (Exception e) {
@@ -772,11 +826,11 @@ class Player {
 	public int bs;
 	public int w;
 	public int l;
-	public OutputStream output;
+	public volatile OutputStream output;
 	public int decal;
 	public String profile;
-	public boolean r;
-
+	public volatile boolean r;
+	public volatile boolean init=false;
 	public Player(int id, String name, int bs, int w, int l, String profile, OutputStream o, int decal) {
 		this.name = name;
 		this.id = id;
@@ -809,25 +863,30 @@ class Player {
 
 //class for main method
 public class FlashServer {
-	public static String[] towers = new String[] { "Banana Farm", "Bomb Tower", "Boomerang Thrower", "Dart Monkey",
+	public static final String[] TOWERS = new String[] { "Banana Farm", "Bomb Tower", "Boomerang Thrower", "Dart Monkey",
 			"Dartling Gun", "Glue Gunner", "Ice Tower", "Monkey Ace", "Monkey Apprentice", "Monkey Buccaneer",
 			"Monkey Village", "Mortar Tower", "Ninja Monkey", "Sniper Monkey", "Spike Factory", "Super Monkey",
 			"Tack Shooter" };
-	public static String[] maps = new String[] { "Park", "Temple", "Yin Yang", "Cards", "Rally", "Mine", "Hydro Dam",
+	public static final String[] MAPS = new String[] { "Park", "Temple", "Yin Yang", "Cards", "Rally", "Mine", "Hydro Dam",
 			"Pyramid Steps", "Patch", "Battle Park", "Ice Flow", "Yellow Brick Road", "Swamp", "Battle River",
 			"Mondrian", "Zen Garden", "Volcano", "Water Hazard", "Indoor Pools", "A-Game", "Ink Blot", "Snowy Castle" };
-	public static String balance = "baseVals;STARTING_ENERGY=50;ENERGY_COST_PER_GAME=5;ENERGY_COST_SPY=3;ENERGY_COST_EXTRA_TOWER=6;ENERGY_REGEN_TIME=720;MEDS_FOR_WIN=5;MEDS_FOR_LOSS=2;BATTLESCORE_FOR_WIN=10;BATTLESCORE_FOR_LOSS=2;SURRENDER_ROUND_REWARD=7;COST_MULTIPLIER_REGEN=1.8;COST_MULTIPLIER_CAMO=2.5;UNLOCK_ROUND_REGEN=8;UNLOCK_ROUND_CAMO=12;STARTING_CASH=650;STARTING_HEALTH=150;CASH_PER_TICK_MINIMUM=0;CASH_PER_TICK_STARTING=250;CASH_PER_TICK_STARTING_DEFEND=25;CASH_PER_TICK_MAXIMUM_DEFEND=3000;GIVE_CASH_TIME=6;FIRST_ROUND_START_TIME=6;ROUND_EXPIRY_TIME_BASE=8;ROUND_EXPIRY_TIME_MUL=1.5;PREMATCH_SCREEN_TIME=30;MAX_BLOON_QUE_SIZE=10;baseValsEnd;bloonSetsid=RedGroup1;type=0;name=Grouped Reds;hotkey=1;quantity=8;interval=0.1;cost=25;incomeChange=1;unlockRound=2;,id=SpaceBlue1;type=1;name=Spaced Blues;hotkey=Shift+1;quantity=6;interval=0.33;cost=25;incomeChange=1;unlockRound=2;,id=BlueGroup1;type=1;name=Blue Bloon;hotkey=2;quantity=6;interval=0.1;cost=42;incomeChange=1.7;unlockRound=4;,id=SpacedPink1;type=4;name=Spaced Pink;hotkey=Shift+2;quantity=3;interval=0.5;cost=42;incomeChange=1.7;unlockRound=4;,id=GreenGroup1;type=2;name=Grouped Greens;hotkey=3;quantity=5;interval=0.08;cost=60;incomeChange=2.4;unlockRound=6,id=SpacedBlack1;type=5;name=Spaced Black;hotkey=Shift+3;quantity=3;interval=0.6;cost=60;incomeChange=2.4;unlockRound=6,id=YellowGroup1;type=3;name=Grouped Yellows;hotkey=4;quantity=5;interval=0.06;cost=75;incomeChange=3;unlockRound=8,id=SpaceWhite1;type=6;name=Spaced White;hotkey=Shift+4;quantity=4;interval=0.5;cost=75;incomeChange=3;unlockRound=8,id=PinkGroup1;type=4;name=Grouped Pink;hotkey=5;quantity=3;interval=0.05;cost=90;incomeChange=3.6;unlockRound=10,id=SpaceLead1;type=7;name=Spaced Leads;hotkey=Shift+5;quantity=2;interval=1.5;cost=90;incomeChange=3.6;unlockRound=10,id=WhiteGroup1;type=6;name=Group White;hotkey=6;quantity=3;interval=0.15;cost=125;incomeChange=5;unlockRound=11,id=SpaceZebra1;type=8;name=Space Zebra;hotkey=Shift+6;quantity=3;interval=0.6;cost=125;incomeChange=5;unlockRound=11,id=BlackGroup1;type=5;name=Black Bloon;hotkey=7;quantity=3;interval=0.15;cost=150;incomeChange=6;unlockRound=12,id=SpaceRainbowGroup1;type=9;name=Space Rainbow;hotkey=Shift+7;quantity=1;interval=1;cost=150;incomeChange=6;unlockRound=12,id=ZebraGroup1;type=8;name=Zebra Bloon;hotkey=8;quantity=3;interval=0.18;cost=200;incomeChange=6;unlockRound=13,id=RainbowGroup1;type=9;name=Rainbow Bloon;hotkey=Shift+8;quantity=3;interval=0.18;cost=450;incomeChange=3;unlockRound=13,id=LeadGroup1;type=7;name=Grouped Leads;hotkey=9;quantity=4;interval=0.2;cost=200;incomeChange=6;unlockRound=15,id=SpaceCeremic1;type=10;name=Space Ceremic;hotkey=Shift+9;quantity=1;interval=1;cost=300;incomeChange=0;unlockRound=15,id=CeremicGroup1;type=10;name=Fast Ceremic;hotkey=0;quantity=1;interval=0.25;cost=450;incomeChange=-5;unlockRound=18,id=SpaceMOABGroup1;type=11;name=Space MOAB;hotkey=Shift+0;quantity=1;interval=5;cost=1500;incomeChange=-60;unlockRound=18,id=MOABGroup1;type=11;name=Fast MOAB;hotkey=O;quantity=1;interval=0.5;cost=1500;incomeChange=-140;unlockRound=20,id=BFBGroup1;type=12;name=BFB;hotkey=Shift+O;quantity=1;interval=4;cost=2500;incomeChange=-350;unlockRound=20,id=FastBFBGroup1;type=12;name=Fast BFB;hotkey=P;quantity=1;interval=0.6;cost=2500;incomeChange=-350;unlockRound=22,id=ZOMGGroup1;type=13;name=ZOMG;hotkey=Shift+P;quantity=1;interval=6;cost=9000;incomeChange=-1500;unlockRound=22;bloonSetsEnd";
+	public static final List<String> MAPIDS = Arrays.asList(new String[] { "Park", "Temple", "YinYang", "Cards", "Rally", "Mine", "HydroDam",
+			"PyramidSteps", "Patch", "BattlePark", "IceFlowBattle", "YellowBrick", "Swamp", "BattleRiver",
+			"Mondrian", "ZenGarden", "Volcano", "WaterHazard", "IndoorPools", "Agame", "InkBlot", "SnowyCastle" });
+	
+	public static final String BALANCE = "baseVals;STARTING_ENERGY=50;ENERGY_COST_PER_GAME=5;ENERGY_COST_SPY=3;ENERGY_COST_EXTRA_TOWER=6;ENERGY_REGEN_TIME=720;MEDS_FOR_WIN=5;MEDS_FOR_LOSS=2;BATTLESCORE_FOR_WIN=10;BATTLESCORE_FOR_LOSS=2;SURRENDER_ROUND_REWARD=7;COST_MULTIPLIER_REGEN=1.8;COST_MULTIPLIER_CAMO=2.5;UNLOCK_ROUND_REGEN=8;UNLOCK_ROUND_CAMO=12;STARTING_CASH=650;STARTING_HEALTH=150;CASH_PER_TICK_MINIMUM=0;CASH_PER_TICK_STARTING=250;CASH_PER_TICK_STARTING_DEFEND=25;CASH_PER_TICK_MAXIMUM_DEFEND=3000;GIVE_CASH_TIME=6;FIRST_ROUND_START_TIME=6;ROUND_EXPIRY_TIME_BASE=8;ROUND_EXPIRY_TIME_MUL=1.5;PREMATCH_SCREEN_TIME=30;MAX_BLOON_QUE_SIZE=10;baseValsEnd;bloonSetsid=GroupRed1;type=0;name=Grouped Reds;hotkey=1;quantity=8;interval=0.1;cost=25;incomeChange=1;unlockRound=2;,id=SpacedBlue1;type=1;name=Spaced Blues;hotkey=Shift+1;quantity=6;interval=0.33;cost=25;incomeChange=1;unlockRound=2;,id=GroupBlue1;type=1;name=Blue Bloon;hotkey=2;quantity=6;interval=0.1;cost=42;incomeChange=1.7;unlockRound=4;,id=SpacedPink1;type=4;name=Spaced Pink;hotkey=Shift+2;quantity=3;interval=0.5;cost=42;incomeChange=1.7;unlockRound=4;,id=GroupGreen1;type=2;name=Grouped Greens;hotkey=3;quantity=5;interval=0.08;cost=60;incomeChange=2.4;unlockRound=6,id=SpacedBlack;type=5;name=Spaced Black;hotkey=Shift+3;quantity=3;interval=0.6;cost=60;incomeChange=2.4;unlockRound=6,id=GroupYellow1;type=3;name=Grouped Yellows;hotkey=4;quantity=5;interval=0.06;cost=75;incomeChange=3;unlockRound=8,id=SpaceWhite1;type=6;name=Spaced White;hotkey=Shift+4;quantity=4;interval=0.5;cost=75;incomeChange=3;unlockRound=8,id=GroupPink1;type=4;name=Grouped Pink;hotkey=5;quantity=3;interval=0.05;cost=90;incomeChange=3.6;unlockRound=10,id=SpaceLead1;type=7;name=Spaced Leads;hotkey=Shift+5;quantity=2;interval=1.5;cost=90;incomeChange=3.6;unlockRound=10,id=GroupWhite1;type=6;name=Group White;hotkey=6;quantity=3;interval=0.15;cost=125;incomeChange=5;unlockRound=11,id=SpaceZebra1;type=8;name=Space Zebra;hotkey=Shift+6;quantity=3;interval=0.6;cost=125;incomeChange=5;unlockRound=11,id=GroupBlack1;type=5;name=Black Bloon;hotkey=7;quantity=3;interval=0.15;cost=150;incomeChange=6;unlockRound=12,id=SpaceRainbow1;type=9;name=Space Rainbow;hotkey=Shift+7;quantity=1;interval=1;cost=150;incomeChange=6;unlockRound=12,id=GroupZebra1;type=8;name=Zebra Bloon;hotkey=8;quantity=3;interval=0.18;cost=200;incomeChange=6;unlockRound=13,id=GroupRainbow1;type=9;name=Rainbow Bloon;hotkey=Shift+8;quantity=3;interval=0.18;cost=450;incomeChange=3;unlockRound=13,id=GroupLead1;type=7;name=Grouped Leads;hotkey=9;quantity=4;interval=0.2;cost=200;incomeChange=6;unlockRound=15,id=SpaceCerem1;type=10;name=Space Ceremic;hotkey=Shift+9;quantity=1;interval=1;cost=300;incomeChange=0;unlockRound=15,id=CeremicGroup1;type=10;name=Fast Ceremic;hotkey=0;quantity=1;interval=0.25;cost=450;incomeChange=-5;unlockRound=18,id=SpaceMOABGroup1;type=11;name=Space MOAB;hotkey=Shift+0;quantity=1;interval=5;cost=1500;incomeChange=-60;unlockRound=18,id=Moab2;type=11;name=Fast MOAB;hotkey=O;quantity=1;interval=0.5;cost=1500;incomeChange=-140;unlockRound=20,id=BFB1;type=12;name=BFB;hotkey=Shift+O;quantity=1;interval=4;cost=2500;incomeChange=-350;unlockRound=20,id=FastBFBGroup1;type=12;name=Fast BFB;hotkey=P;quantity=1;interval=0.6;cost=2500;incomeChange=-350;unlockRound=22,id=ZOMG1;type=13;name=ZOMG;hotkey=Shift+P;quantity=1;interval=6;cost=9000;incomeChange=-1500;unlockRound=22;bloonSetsEnd";
 	//
 	public static volatile ConcurrentHashMap<InetAddress, Integer> ipThreads;
 	public static volatile ConcurrentLinkedQueue<Player> queue1;// assault
 	public static volatile ConcurrentLinkedQueue<Player> queue2;// defend
 	public static volatile ArrayList<GameServer> games;
 	public static volatile ConcurrentHashMap<String, GameServer> privateMatches;
+	public static volatile ConcurrentHashMap<String, Player> privateHosts;
 	public static volatile ConcurrentHashMap<Integer, String> profiles;// might become settings object
 	public static volatile ConcurrentHashMap<Integer, ArrayList<String>> history;
 	public static volatile String log = "";
 	public static volatile String ip = "";
-	public static volatile int nextPort = 8119;
+	public static volatile int nextPort = 8129;
 	public static boolean verbose=false;
 	private static boolean checkPort(int p) {
 		for (GameServer g : games)
@@ -906,6 +965,7 @@ public class FlashServer {
 				fw.write(privateMatches.get(x).toString() + "\nType: Private\n");
 				fw.flush();
 				privateMatches.remove(x);
+				privateHosts.remove(x);
 				System.out.println("game finished");
 			}
 		for (GameServer q : games)
@@ -973,6 +1033,7 @@ public class FlashServer {
 		queue1 = new ConcurrentLinkedQueue<Player>();
 		queue2 = new ConcurrentLinkedQueue<Player>();
 		privateMatches = new ConcurrentHashMap<String, GameServer>();
+		privateHosts = new ConcurrentHashMap<String, Player>();
 		profiles = new ConcurrentHashMap<Integer, String>();
 		history = new ConcurrentHashMap<Integer, ArrayList<String>>();
 		Date lastUpdate = new Date();
