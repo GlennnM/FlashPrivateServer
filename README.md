@@ -19,20 +19,18 @@ There are different methods of running the PowerShell script. The methods are as
 
 ### First Method
 
-1) Download the .zip file on the main page of the GitHub and extract the .zip file to your desired location
-2) Once extracted, open [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/overview?view=powershell-5.1) (or [PowerShell ISE](https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/ise/introducing-the-windows-powershell-ise?view=powershell-7)) as an Administrator
-3) Enable PowerShell execution
+1) open [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/overview?view=powershell-5.1) (or [PowerShell ISE](https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/ise/introducing-the-windows-powershell-ise?view=powershell-7)) as an Administrator
+2) Enable PowerShell execution
 <code>Set-ExecutionPolicy Unrestricted -Force</code>
-4) On the prompt, change to the directory where you extracted the files:
-  e.g. - `cd c:\temp`
-5) Next, to run either script, enter in the following:
-  e.g. - `.\Windows10DebloaterGUI.ps1`
+3) On the prompt, change to the directory where you extracted the files:
+  `cd c:\Users\NAME_HERE\Downloads`
+4) Next, to run the script, enter in the following:
+  `.\FlashClient.ps1`
 
 ### Second Method
 
-1) Download the .zip file on the main page of the GitHub and extract the .zip file to your desired location
-2) Right-click the PowerShell file that you'd like to run and click on "Run With PowerShell"
-3) This will allow the script to run without having to do the above steps but Powershell will ask if you're sure you want to run this script.
+1) Right-click the PowerShell file that you'd like to run and click on "Run With PowerShell"
+2) This will allow the script to run without having to do the above steps but Powershell will ask if you're sure you want to run this script.
 That's it! Next time you start BTD Battles, BTD5, or SAS4 on the archive they will be modded to link to the private server, allowing you to play.<br><b>Enjoy!!</b><br>
 <br>Since the games are fairly inactive, you can play "solo" multiplayer with the following methods:<br>
 join code 400 in SAS4 to play a boosted game with bots(works in any mode)<br>
