@@ -19,7 +19,7 @@ There are different methods of running the PowerShell script. The methods are as
 
 ### First Method
 
-1) open [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/overview?view=powershell-5.1) (or [PowerShell ISE](https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/ise/introducing-the-windows-powershell-ise?view=powershell-7)) as an Administrator
+1) open [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/overview?view=powershell-5.1) (or [PowerShell ISE](https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/ise/introducing-the-windows-powershell-ise?view=powershell-7))
 2) Enable PowerShell execution
 <code>Set-ExecutionPolicy Unrestricted -Force</code>
 3) On the prompt, change to the directory where you downloaded the files:
