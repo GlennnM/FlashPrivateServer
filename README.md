@@ -14,9 +14,25 @@ When playing on these servers, some quality of life/easter egg features are adde
 HOW TO PLAY<br></h1>
 1. Ensure you have Ninja Kiwi Archive installed(from ninja kiwi website or Steam)<br>
 2. Download FlashClient.ps1 from this page<a href = https://github.com/GlennnM/NKFlashServers/releases/tag/v2.0>(click)</a><br>
-3. Open the folder you downloaded it to, close all NK Archive windows(INCLUDING THE LAUNCHER), right click and click "Run with PowerShell".<br>
-<img src =https://user-images.githubusercontent.com/77253453/179336059-339cbc88-6e0d-43c7-a918-e9f0f4b8387a.png></img>
-4. Make sure it runs correctly; it should say "Mod installation successful!!".<br><br>This should work on mac as well now (you will need to install powershell first)<br>
+3. Open the folder you downloaded it to, close all NK Archive windows(INCLUDING THE LAUNCHER), then run the script.<br>
+There are different methods of running the PowerShell script. The methods are as follows:<br>
+
+### First Method
+
+1) Download the .zip file on the main page of the GitHub and extract the .zip file to your desired location
+2) Once extracted, open [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/overview?view=powershell-5.1) (or [PowerShell ISE](https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/ise/introducing-the-windows-powershell-ise?view=powershell-7)) as an Administrator
+3) Enable PowerShell execution
+<code>Set-ExecutionPolicy Unrestricted -Force</code>
+4) On the prompt, change to the directory where you extracted the files:
+  e.g. - `cd c:\temp`
+5) Next, to run either script, enter in the following:
+  e.g. - `.\Windows10DebloaterGUI.ps1`
+
+### Second Method
+
+1) Download the .zip file on the main page of the GitHub and extract the .zip file to your desired location
+2) Right-click the PowerShell file that you'd like to run and click on "Run With PowerShell"
+3) This will allow the script to run without having to do the above steps but Powershell will ask if you're sure you want to run this script.
 That's it! Next time you start BTD Battles, BTD5, or SAS4 on the archive they will be modded to link to the private server, allowing you to play.<br><b>Enjoy!!</b><br>
 <br>Since the games are fairly inactive, you can play "solo" multiplayer with the following methods:<br>
 -join code 400 in SAS4 to play a boosted game with bots(works in any mode)<br>
