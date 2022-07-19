@@ -30,7 +30,7 @@ There are different methods of running the PowerShell script. The methods are as
 ### Second Method
 
 1) Right-click the PowerShell file that you'd like to run and click on "Run With PowerShell"
-2) This will allow the script to run without having to do the above steps but Powershell will ask if you're sure you want to run this script.
+2) This will allow the script to run without having to do the above steps but Powershell will ask if you're sure you want to run this script.<br><br>
 That's it! Next time you start BTD Battles, BTD5, or SAS4 on the archive they will be modded to link to the private server, allowing you to play.<br><b>Enjoy!!</b><br>
 
 
