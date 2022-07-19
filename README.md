@@ -22,7 +22,7 @@ There are different methods of running the PowerShell script. The methods are as
 1) open [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/overview?view=powershell-5.1) (or [PowerShell ISE](https://docs.microsoft.com/en-us/powershell/scripting/windows-powershell/ise/introducing-the-windows-powershell-ise?view=powershell-7)) as an Administrator
 2) Enable PowerShell execution
 <code>Set-ExecutionPolicy Unrestricted -Force</code>
-3) On the prompt, change to the directory where you extracted the files:
+3) On the prompt, change to the directory where you downloaded the files:
   `cd c:\Users\NAME_HERE\Downloads`
 4) Next, to run the script, enter in the following:
   `.\FlashClient.ps1`
