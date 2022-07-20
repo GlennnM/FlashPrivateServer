@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.io.InputStream;
@@ -22,10 +23,9 @@ import java.net.ServerSocket;
 /**
  * @TODO /done
  *		 /done /done
- *       /done fix desync?!?!?!?
- *		/make list not synchronized + full manual sync
- *       cycle events properly(date->event)
- *		easier compile
+ *       /done /done
+ *		/done
+ *		/done
  *		/done /nvm
  *       /done /done
  */
@@ -334,6 +334,7 @@ class GameServer extends Thread {
 	public volatile int elapsedTime;
 	public volatile long lastTime;
 	public volatile boolean tcpNoDelay;
+	public volatile int mapSet=0;
 	// public long startAt;
 	public boolean allows(short lvl) {
 		return (!this.started) && (this.playerThreads != null) && (this.playerThreads.size() < 4) && (lvl <= maxLvl)
@@ -376,7 +377,7 @@ class GameServer extends Thread {
 	}
 	
 	public GameServer(int port, int mode, int code, short auto, int actualCode) {
-		playerThreads = Collections.synchronizedList(new ArrayList<GameServerThread>());
+		playerThreads = new ArrayList<GameServerThread>();
 		this.nextId = 0;
 		this.host = 0;
 		this.startTime = -1;
@@ -420,6 +421,10 @@ class GameServer extends Thread {
 		} else if (this.mode < 100) {
 			// event
 			this.map=S4Server.getEventMap();
+			if(this.map<1000){
+				this.mapSet=map;
+				map=S4Server.EVENT_MAP_SETS[mapSet][(int) (Math.random() * S4Server.EVENT_MAP_SETS[mapSet].length)];
+			}else this.mapSet=-1;
 			//if(this.map==-1)
 			//	this.map=(new short[]{1092,1095,1094,1100,1093,1099,1096,1111,1113})[(int)(Math.random()*9)];
 			// onsl pods sur ls vac po vip is md
@@ -970,227 +975,225 @@ class GameServerThread extends Thread {
 	 * suboperations see o14519,o2144
 	 */
 	public void parsePacket(byte[] buffer, int actualSize) throws IOException {
+		byte[] pl;
+		long time;
 		if(S4Server.verbose)
 			System.out.print((buffer[0]));
-		if (buffer[0] == (byte) 0 && buffer[1] == (byte) 202) {
-			int length = (((int) buffer[10] & 0xff) << 24) | (((int) buffer[11] & 0xff) << 16)
-					| (((int) buffer[12] & 0xff) << 8) | ((int) buffer[13] & 0xff);
-			int[] header = new int[length];
-			int i;
-			for (i = 0; i < length; i++)
-				header[i] = (((int) buffer[14 + 2 * i] & 0xff) << 8) | ((int) buffer[15 + 2 * i] & 0xff);
-			this.player = new Player(buffer[9], header);
-			this.player.setData(Arrays.copyOfRange(buffer, 14 + 2 * i, actualSize));
-			this.parent.newPlayer(this.id);
-			/**
-			 * auto boost codes(zzz, boost, 400)
-			 */
-			if (this.parent.actualCode == 254486284) {
-				this.parent.boost((byte)100, false);
-			}
-			if (this.parent.actualCode == 193514003) {
-				this.parent.boost((byte)100, false);
-			}
-			if (this.parent.actualCode == 1855064479&&this.parent.playerThreads.size()<2) {
-				this.parent.boost((byte)100, false);
-			}
-			if (this.parent.actualCode == 2&&this.parent.playerThreads.size()<2) {
-				this.parent.boost((byte)100, false);
-			}if (this.parent.actualCode == 0&&this.parent.playerThreads.size()<2) {
-				this.parent.boost((byte)100, false);
-			}
-			if (this.parent.actualCode == 400||Math.abs(this.parent.actualCode-2089076591)<20) {
-				this.parent.boost((byte)100, false);
-				this.parent.boost((byte)100, false);
-				this.parent.boost((byte)100, false);
-			}
+		switch((int)buffer[0]){
+			case 0:
+				if(buffer[1] == (byte) 202){
+					int length = (((int) buffer[10] & 0xff) << 24) | (((int) buffer[11] & 0xff) << 16)
+						| (((int) buffer[12] & 0xff) << 8) | ((int) buffer[13] & 0xff);
+					int[] header = new int[length];
+					int i;
+					for (i = 0; i < length; i++)
+						header[i] = (((int) buffer[14 + 2 * i] & 0xff) << 8) | ((int) buffer[15 + 2 * i] & 0xff);
+					this.player = new Player(buffer[9], header);
+					this.player.setData(Arrays.copyOfRange(buffer, 14 + 2 * i, actualSize));
+					this.parent.newPlayer(this.id);
+					/**
+					 * auto boost codes(zzz, boost, 400)
+					 */
+					if (this.parent.actualCode == 254486284) {
+						this.parent.boost((byte)100, false);
+					}
+					else if (this.parent.actualCode == 193514003) {
+						this.parent.boost((byte)100, false);
+					}
+					else if (this.parent.actualCode == 1855064479&&this.parent.playerThreads.size()<2) {
+						this.parent.boost((byte)100, false);
+					}
+					else if (this.parent.actualCode == 2&&this.parent.playerThreads.size()<2) {
+						this.parent.boost((byte)100, false);
+					}else if (this.parent.actualCode == 0&&this.parent.playerThreads.size()<2) {
+						this.parent.boost((byte)100, false);
+					}
+					else if (this.parent.actualCode == 400||Math.abs(this.parent.actualCode-2089076591)<20) {
+						this.parent.boost((byte)100, false);
+						this.parent.boost((byte)100, false);
+						this.parent.boost((byte)100, false);
+					}
+				}
+			break;
+			case -14:
+				this.map = (short) ((((short) buffer[1] & 0xff) << 8) | ((short) buffer[2] & 0xff));
+				parent.setMap(this.map);
+			break;
+			case -9:
+				if ((new Date()).getTime() - lastPinged > 1000) {
+					this.pingSinceLoad++;
+					this.pingSinceBuild++;
+					lastPinged = (new Date()).getTime();
+				}
+				if (!this.started && !this.loaded && this.pingSinceLoad > 10) {
+					this.loaded = true;
+					this.load=1.0f;
+					parent.fullLoad(this.id);
+				}
+				if (!this.built && !this.ingame && this.started && this.pingSinceBuild > 40) {
+					this.built = true;
+					this.load=1.0f;
+					parent.fullLoad(this.id);
+				}
+			break;
+			case -10:
+				this.pingSinceLoad = 0;
+				this.load = Float.intBitsToFloat(( buffer[10]&0xff )| ((buffer[11]&0xff)<<8 ) | ((buffer[12]&0xff)<<16 ) | ((buffer[13] &0xff)<<24 ));
+				if(Math.abs(1f-this.load)<0.0001){
+					this.load=1.0f;
+					parent.fullLoad(this.id);
+					this.loaded=true;
+				}else 
+					parent.loadingState(this.id, buffer);
+			break;
+			case -3:
+				pl = new byte[5];
+				pl[0] = ((byte) (-3));
+				time = (new Date()).getTime()/1000;
+				pl[1] = ((byte) (time >> 24));
+				pl[2] = ((byte) ((time >> 16) & 0xff));
+				pl[3] = ((byte) ((time >> 8) & 0xff));
+				pl[4] = ((byte) ((time) & 0xff));
+				output.write(pl, 0, 5);
+			break;
+			case -2:
+				if(S4Server.verbose)
+					System.out.print("." + buffer[6]);
 
-		} else if (buffer[0] == (byte) (-14)) {
-			this.map = (short) ((((short) buffer[1] & 0xff) << 8) | ((short) buffer[2] & 0xff));
-			parent.setMap(this.map);
-		} else if (buffer[0] == (byte) (-9)) {
-			if ((new Date()).getTime() - lastPinged > 1000) {
-				this.pingSinceLoad++;
-				this.pingSinceBuild++;
-				lastPinged = (new Date()).getTime();
-			}
-			if (!this.started && !this.loaded && this.pingSinceLoad > 10) {
-				this.loaded = true;
-				this.load=1.0f;
-				parent.fullLoad(this.id);
-			}
-			if (!this.built && !this.ingame && this.started && this.pingSinceBuild > 40) {
-				this.built = true;
-				this.load=1.0f;
-				parent.fullLoad(this.id);
-			}
-		} else if (buffer[0] == (byte) (-10)) {
-			this.pingSinceLoad = 0;
-			this.load = Float.intBitsToFloat(( buffer[10]&0xff )| ((buffer[11]&0xff)<<8 ) | ((buffer[12]&0xff)<<16 ) | ((buffer[13] &0xff)<<24 ));
-			if(Math.abs(1f-this.load)<0.0001){
-				this.load=1.0f;
-				parent.fullLoad(this.id);
-				this.loaded=true;
-			}else 
-				parent.loadingState(this.id, buffer);
-		} else if (buffer[0] == (byte) (-3)) {
-			byte[] pl = new byte[5];
-			pl[0] = ((byte) (-3));
-			long time = (new Date()).getTime()/1000;
-			pl[1] = ((byte) (time >> 24));
-			pl[2] = ((byte) ((time >> 16) & 0xff));
-			pl[3] = ((byte) ((time >> 8) & 0xff));
-			pl[4] = ((byte) ((time) & 0xff));
-			output.write(pl, 0, 5);
-			//output.flush();
-		} else if (buffer[0] == (byte) (-2)) {
-			if(S4Server.verbose)
-			System.out.print("." + buffer[6]);
-			byte[] pl;
-			// pl[1]=buffer[1];
-			// pl[2]=buffer[2];
-			// pl[3]=buffer[3];
-			// pl[4]=buffer[4];
+				if (actualSize < 6)
+					return;
+				
+				pl = new byte[actualSize - 1];
+				int len = actualSize - 6;
 
-			if (actualSize < 6)
-				return;
-			
-			pl = new byte[actualSize - 1];
-			int len = actualSize - 6;
+				pl[0] = (byte) -2;
+				pl[1] = (byte) ((len >> 24)& 0xff);
+				pl[2] = (byte) ((len >> 16) & 0xff);
+				pl[3] = (byte) ((len >> 8) & 0xff);
+				pl[4] = (byte) ((len) & 0xff);
+				pl[5] = (byte) buffer[6];
+				if (buffer[6] == (byte) 0x05) {
 
-		//	if (buffer[6] == (byte) 0x05) {
-	//			pl = new byte[actualSize];
-		//		len = actualSize - 5;
-		//	}
-			pl[0] = (byte) -2;
-			pl[1] = (byte) ((len >> 24)& 0xff);
-			pl[2] = (byte) ((len >> 16) & 0xff);
-			pl[3] = (byte) ((len >> 8) & 0xff);
-			pl[4] = (byte) ((len) & 0xff);
-			pl[5] = (byte) buffer[6];
-			if (buffer[6] == (byte) 0x05) {
-
-				// pl[6]=this.id;
-				//pl[6] = this.id;
-				if (actualSize > 25) {
-					String msg = "";
-					byte chat_length=0;
-					try{
-						chat_length = buffer[23];
-						msg = new String(Arrays.copyOfRange(buffer, 24, 24+chat_length), StandardCharsets.UTF_8);
-					}catch(Exception e){
+					// pl[6]=this.id;
+					pl[6] = this.id;
+					if (actualSize > 25) {
+						String msg = "";
+						byte chat_length=0;
+						try{
+							chat_length = buffer[23];
+							msg = new String(Arrays.copyOfRange(buffer, 24, 24+chat_length), StandardCharsets.UTF_8);
+							if (msg.startsWith("!boost")) {
+							if(msg.indexOf(" ")==-1)
+								parent.boost((byte)100, false);
+							else parent.boost(Byte.parseByte(msg.substring(msg.indexOf(" ")+1)), false);
+							}else if (msg.startsWith("!vsboost")) {
+								if(msg.indexOf(" ")==-1)
+									parent.boost((byte)100, true);
+								else parent.boost(Byte.parseByte(msg.substring(msg.indexOf(" ")+1)), true);
+							}
+							else if (msg.startsWith("!unboost")) {
+								parent.unboost();
+							}
+							else if (msg.startsWith("!source")) {
+								parent.chat("https://github.com/GlennnM/NKFlashServers");
+							}else if (msg.startsWith("!help tickrate")) {
+								parent.chat("!tickrate (number). \nThis determines the maximum number of packets the server can send to you per second.\nNo effect unless autoflush is off.\nDefault is 0.\nOnly affects you.");
+							}else if (msg.startsWith("!help")) {
+								parent.chat("Flash Private Server by Glenn M#9606.\nCommands:\n!boost <lvl>, !vsboost, !unboost\n !source, !seed, !stats, !code, !range\n!tickrate(!help tickrate)\n!tcpnodelay !autoflush");
+							}
+							else if (msg.startsWith("!seed")) {
+								parent.chat("Current seed: "+parent.seed);
+							}
+							else if (msg.startsWith("!code")) {
+								parent.chat("Current code: "+parent.actualCode+"\nMatch ID: "+parent.code);
+							}
+							else if (msg.startsWith("!stats")) {
+								parent.memory();
+							}
+							else if (msg.startsWith("!range")) {
+								parent.chat("Accepting levels "+parent.minLvl+"-"+parent.maxLvl);
+							}
+							else if (msg.startsWith("!tickrate")) {
+								if(msg.indexOf(" ")==-1)
+									this.tickTime=0.0f;
+								float q=Float.parseFloat(msg.substring(msg.indexOf(" ")+1));
+								if(q==0)
+									this.tickTime=0.0f;
+								else this.tickTime=1.0f/q;
+								parent.chat("Tick rate is now "+q);
+							}
+							else if (msg.startsWith("!map")) {
+								if(msg.indexOf(" ")!=-1&&!parent.started){
+									int q=Integer.parseInt(msg.substring(msg.indexOf(" ")+1));
+									if(q>0&&parent.mode>2&&parent.mode<7&&q<=S4Server.EVENT_MAPS.length){
+										if(parent.mapSet==-1)
+											parent.chat("Invalid map");
+										else{
+											short m=S4Server.getEventMap(q-1);
+											for(short s:S4Server.EVENT_MAP_SETS[parent.mapSet])
+												if(m==s){
+													parent.setMap(m);
+													m=-1;
+													break;
+												}
+											if(m>=0){
+												parent.chat("Map not allowed today. Allowed:\n"+S4Server.EVENT_MAP_DESC[parent.mapSet]);
+											}
+										}
+									}else
+										parent.chat("Invalid map/not Apoc or LMS");
+								}else
+									parent.chat("Specify a map: 1-9 = normal maps, 10+ = contract maps");
+								parent.flushAll();
+							}else if(msg.startsWith("!autoflush")){
+								this.parent.autoFlush=!this.parent.autoFlush;
+								parent.chat("Auto flush set to "+this.parent.autoFlush);
+							}else if(msg.startsWith("!tcpnodelay")){
+								this.parent.toggleNoDelay();
+								parent.chat("TCP nodelay set to "+this.parent.tcpNoDelay);
+							}
+						}catch(Exception e){
+							//not a chat message, probably
+						}
+						// System.out.println("MSG:"+msg);
 						
 					}
-					// System.out.println("MSG:"+msg);
-					if (msg.startsWith("!boost")) {
-						if(msg.indexOf(" ")==-1)
-							parent.boost((byte)100, false);
-						else parent.boost(Byte.parseByte(msg.substring(msg.indexOf(" ")+1)), false);
-					}if (msg.startsWith("!vsboost")) {
-						if(msg.indexOf(" ")==-1)
-							parent.boost((byte)100, true);
-						else parent.boost(Byte.parseByte(msg.substring(msg.indexOf(" ")+1)), true);
-					}
-					if (msg.startsWith("!unboost")) {
-						parent.unboost();
-					}
-					if (msg.startsWith("!source")) {
-						parent.chat("https://github.com/GlennnM/NKFlashServers");
-					}if (msg.startsWith("!help tickrate")) {
-						parent.chat("!tickrate (number). \nThis determines the maximum number of packets the server can send to you per second.\nHigher values = less desync, lower values = less client lag. 0=no buffering.\nDefault is 0.\nOnly affects you.");
-					}else if (msg.startsWith("!help")) {
-						parent.chat("Flash Private Server by Glenn M#9606.\nCommands:\n!boost <lvl>, !vsboost, !unboost\n !source, !seed, !stats, !code, !range\n!tickrate(!help tickrate)\n!tcpnodelay !autoflush");
-					}
-					if (msg.startsWith("!seed")) {
-						parent.chat("Current seed: "+parent.seed);
-					}
-					if (msg.startsWith("!code")) {
-						parent.chat("Current code: "+parent.actualCode+"\nMatch ID: "+parent.code);
-					}
-					if (msg.startsWith("!stats")) {
-						parent.memory();
-					}
-					if (msg.startsWith("!range")) {
-						parent.chat("Accepting levels "+parent.minLvl+"-"+parent.maxLvl);
-					}
-					if (msg.startsWith("!tickrate")) {
-						if(msg.indexOf(" ")==-1)
-							this.tickTime=0.0f;
-						float q=Float.parseFloat(msg.substring(msg.indexOf(" ")+1));
-						if(q==0)
-							this.tickTime=0.0f;
-						else this.tickTime=1.0f/q;
-						parent.chat("Tick rate is now "+q);
-					}
-					if (msg.startsWith("!map")) {
-						if(msg.indexOf(" ")!=-1&&!parent.started){
-							int q=Integer.parseInt(msg.substring(msg.indexOf(" ")+1));
-							if(q>0&&parent.mode>2&&parent.mode<100&&q<=S4Server.eventMaps.length){
-								if(parent.mode==5&&(q==5||q==8))
-									parent.chat("Invalid map");
-								else
-									parent.setMap(S4Server.getEventMap(q-1));
-							}else
-								parent.chat("Invalid map/not an event");
-						}else
-							parent.chat("Specify a map: 1-9 = normal maps, 10+ = contract maps");
-						parent.flushAll();
-					}if(msg.startsWith("!autoflush")){
-						this.parent.autoFlush=!this.parent.autoFlush;
-						parent.chat("Auto flush set to "+this.parent.autoFlush);
-					}if(msg.startsWith("!tcpnodelay")){
-						this.parent.toggleNoDelay();
-						parent.chat("TCP nodelay set to "+this.parent.tcpNoDelay);
-					}
 				}
-			}
-			
-			if (buffer[6] == (byte) 0x07) {
-				this.build=1.0f;
-				parent.fullLoad(this.id);
-				this.built = true;
-			}
-				// if((byte)(buffer[8]>>4&0xff)==(byte)0x0c){
-				// parent.writeFrom(this.id,buffer,0,actualSize);
-				// }else{
-				// if(buffer[6]==(byte)0x05){
-				// for(int i=7;i<pl.length;i++)
-				// pl[i]=buffer[i];
-				// parent.writeFrom(this.id,pl,0,pl.length);
-				// }else{
-					
-			
-				for (int i = 7; i < actualSize; i++)
-					pl[i - 1] = buffer[i];
-				if(actualSize>10&&buffer[6] != (byte) 0x07){
-					long time = (new Date()).getTime()/1000;
-					pl[6] = ((byte) (time >> 24));
-					pl[7] = ((byte) ((time >> 16) & 0xff));
-					pl[8] = ((byte) ((time >> 8) & 0xff));
-					pl[9] = ((byte) ((time) & 0xff));
+				
+				if (buffer[6] == (byte) 0x07) {
+					this.build=1.0f;
+					parent.fullLoad(this.id);
+					this.built = true;
 				}
-			//	if(buffer[6]!=(byte)0x05)
-			//		parent.writeAll(pl, 0, pl.length);
-			//	else
-					
+				
+					for (int i = 7; i < actualSize; i++)
+						pl[i - 1] = buffer[i];
+					if(actualSize>10&&buffer[6] != (byte) 0x07){
+						time = (new Date()).getTime()/1000;
+						pl[6] = ((byte) (time >> 24));
+						pl[7] = ((byte) ((time >> 16) & 0xff));
+						pl[8] = ((byte) ((time >> 8) & 0xff));
+						pl[9] = ((byte) ((time) & 0xff));
+					}
 					parent.writeFrom(this.id, pl, 0, pl.length);
-					
-				// }
-				// }
-			//}
-		} else if (!parent.autostart && buffer[0] == (byte) (-17) && !parent.started) {
-			
+			break;
+			case -17:
+			if(buffer[0] == (byte) (-17) && !parent.started)
 				parent.start();
-		} else if (this.started&&buffer[0] == (byte) (-15) && !built) {
-			this.pingSinceBuild = 0;
+			break;
+			case -15:
+			if(!built){
+				this.pingSinceBuild = 0;
 			
-			this.build=Float.intBitsToFloat(( buffer[10]&0xff )| ((buffer[11]&0xff)<<8 ) | ((buffer[12]&0xff)<<16 ) | ((buffer[13] &0xff)<<24 ));
-			if(Math.abs(1f-this.build)<0.0001){
-				this.build=1.0f;
-				parent.fullLoad(this.id);
-				this.built=true;
-			}else 
-				parent.loadingState(this.id, buffer);
+				this.build=Float.intBitsToFloat(( buffer[10]&0xff )| ((buffer[11]&0xff)<<8 ) | ((buffer[12]&0xff)<<16 ) | ((buffer[13] &0xff)<<24 ));
+				if(Math.abs(1f-this.build)<0.0001){
+					this.build=1.0f;
+					parent.fullLoad(this.id);
+					this.built=true;
+				}else 
+					parent.loadingState(this.id, buffer);
+			}
+			break;
 		}
 		if(parent.autoFlush)
 			parent.flushAll();
@@ -1442,9 +1445,11 @@ public class S4Server {
 	public static volatile String log = "";
 	public static volatile int nextPort = 8118;
 	public static volatile long window = 0;
-	public static short[] eventMaps;
 	public static boolean verbose=false;//printing
 	public static volatile String ip="";
+	public static final short[] EVENT_MAPS=new short[]{1092,1093,1094,1095,1096,1099,1100,1111,1113,1114,1115,1116,1117,1118,1119};
+	public static final short[][] EVENT_MAP_SETS=new short[][]{EVENT_MAPS,new short[]{1092,1093,1094,1095,1099,1100,1113,1114,1116,1117,1118,1119},new short[]{1092,1093,1095,1099,1113,1114,1116,1117,1119},new short[]{1092,1093,1099,1116}};
+	public static String[] EVENT_MAP_DESC=new String[]{"All","All except Ice(8),VIP(5),Highway(11)","1, 2, 4, 6, 9, 10, 12, 13, 15","Ons(1), Vac(2), PO(6), Crash Site(12)"};
 	public static int getPlayerCount(){
 		int x=0;
 		for(String s:games.keySet())
@@ -1452,21 +1457,23 @@ public class S4Server {
 		return x;
 	}
 	public static short getEventMap(int index){
-		return eventMaps[index];
+		return EVENT_MAPS[index];
 	}
 	public static short getEventMap(){
-		return getEventMap((int)(Math.random()*eventMaps.length));
-		/**Calendar event = Calendar.getInstance(TimeZone.getTimeZone("GMT-8"));
+		//return getEventMap((int)(Math.random()*eventMaps.length));
+		Calendar event = Calendar.getInstance(TimeZone.getTimeZone("GMT-8"));
 		Calendar now = Calendar.getInstance(TimeZone.getTimeZone("GMT-8"));
+		Random x = new Random(33888522196117857l);
 		now.setTime(new Date());
 		event.set(2022,1,16,0,0,0);
 		int eventOffset=0;
 		while(now.get(Calendar.YEAR)!=event.get(Calendar.YEAR)||now.get(Calendar.DAY_OF_YEAR)!=event.get(Calendar.DAY_OF_YEAR)){
 			event.add(Calendar.HOUR,24);
+			x.nextInt();
 			eventOffset++;
 		}
 		switch(eventOffset % 21){
-			case 0:
+			/**case 0:
 			case 1:
 				return -1;
 			case 2:
@@ -1504,15 +1511,34 @@ public class S4Server {
 			case 19:
 				return 1100;
 			case 20:
-				return 1096;
+				return 1096;*/
+			case 4:
+			case 10:
+			case 15:
+			case 17:
+			case 19:
+				return EVENT_MAP_SETS[0][(int)(x.nextDouble()*EVENT_MAP_SETS[0].length)];
+			case 14:
+				return 3;
+			case 16:
+				return 2;
+			case 18:
+				return 1;
+			case 20:
+				return 0;
 			default:
-				return -1;
-		}// short[]{1092,1095,1094,1100,1093,1099,1096,1111,1113})[(int)(Math.random()*9)];
+				return 0;
+				
+			
+		}
+		// short[]{1092,1095,1094,1100,1093,1099,1096,1111,1113})[(int)(Math.random()*9)];
 			// onsl pods sur ls vac po vip is md
+			//1092,1093,1094,1095,1096,1099,1100,1111,1113,1114,1115,1116,1117,1118,1119
+			//
 		//System.out.println(c);
 		//System.out.println(c.getTime());
 		//return 0;
-		*/
+		
 	}
 	private static boolean checkPort(int p) {
 		for (String s : games.keySet())
@@ -1574,7 +1600,6 @@ public class S4Server {
 
 	public static void main(String[] args) {
 		//first 9 are normal evnt maps rest are contracts
-		eventMaps=new short[]{1092,1093,1094,1095,1096,1099,1100,1111,1113,1114,1115,1116,1117,1118,1119};
 		try {
 			bot = Files.readAllBytes(Paths.get("bot.bin"));
 			vsbot = Files.readAllBytes(Paths.get("vs.bin"));
@@ -1609,7 +1634,7 @@ public class S4Server {
 			
 		}
 		// server loop(only ends on ctrl-c)
-		List<ServerThread> threads = Collections.synchronizedList(new ArrayList<ServerThread>());
+		List<ServerThread> threads = new ArrayList<ServerThread>();
 		try {
 			server.setSoTimeout(1000);
 		} catch (Exception eeeeeee) {
@@ -1661,7 +1686,7 @@ public class S4Server {
 				// all threads are dead -> reset threadpool
 				// System.out.println("ALIVE: "+alives+", EXIST: ");
 				if (alives == 0 && index == -1) {
-					threads = Collections.synchronizedList(new ArrayList<ServerThread>());
+					threads = new ArrayList<ServerThread>();
 					threads.add(connection);
 					index = 0;
 					run = true;
