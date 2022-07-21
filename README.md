@@ -8,7 +8,7 @@ BTD5 Flash<br>
 as well as BTD Battles Flash, despite it not being mentioned in the original blog post.<br>
 <br>
 This project fully recreates these servers, built from scratch with Java TCP sockets.<br>
-Currently I am hosting BTD Battles, BTD5 challenges, BTD5 co-op, and SAS4. The guide to play on these servers is also available as a video<br>
+Currently I am hosting BTD Battles, BTD5 challenges, BTD5 co-op, and SAS4. The guide to play on these servers is also available as a video(soon<br>
 When playing on these servers, some quality of life/easter egg features are added, but mostly they will play exactly as you would expect the game to play on Ninja Kiwi's servers, and any data or achievements from these games will register in your actual NK profile.<br>
 <h1>
 HOW TO PLAY<br></h1>
