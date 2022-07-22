@@ -231,47 +231,98 @@ class ServerThread extends Thread {
 						else if(m.equals("<msg t='sys'><body action='login' r='0'><login z='SAS3'><nick><![CDATA[]]></nick><pword><![CDATA[]]></pword></login></body></msg>"))
 							toSend ="\0<msg t='sys'><body action='logOK' r='0'><login id='"+id+"' mod='0' n='SAS3'/></body></msg>\n";
 						else if(m.equals("<msg t='sys'><body action='getRmList' r='-1'></body></msg>"))
-							toSend ="\0<msg t='sys'><body action='rmList' r='0'><rmList><rm></rm></rmList></body></msg>\n";
+							toSend ="\0<msg t='sys'><body action='rmList' r='-1'><rmList><rm></rm></rmList></body></msg>\n";
 						else if(m.startsWith("%xt%SAS3%%")){
-							if(room==null){
-								List<String> msg = Arrays.asList(m.split("%"));
-								mode=Integer.parseInt(msg.get(12));
-								nm=Integer.parseInt(msg.get(13));
-								this.name=msg.get(7);
-								this.rank=Integer.parseInt(msg.get(8));
-								synchronized(S3Server.games){
-									for(Room r:S3Server.games){
-										if(r.mode==mode&&r.nm==nm&&r.players.size()<4){
-											r.players.add(this);
-											this.room=r;
-											break;
+							List<String> msg = Arrays.asList(m.split("%"));
+							int cmd = Integer.parseInt(msg.get(5));
+							if(cmd==3){
+								if(room==null){
+									mode=Integer.parseInt(msg.get(12));
+									nm=Integer.parseInt(msg.get(13));
+									this.name=msg.get(7);
+									this.rank=Integer.parseInt(msg.get(8));
+									synchronized(S3Server.games){
+										for(Room r:S3Server.games){
+											if(r.mode==mode&&r.nm==nm&&r.players.size()<4){
+												r.players.add(this);
+												this.room=r;
+												break;
+											}
+										}
+									}
+									if(this.room==null){
+										this.room=new Room(this,mode,nm);
+										S3Server.games.add(this.room);
+									}
+								}
+								long time = new Date().getTime() / 1000;
+								ArrayList<String> playerNames=new ArrayList<String>();
+								ArrayList<Integer> playerRanks=new ArrayList<Integer>();
+								ArrayList<Boolean> readyList=new ArrayList<Boolean>();
+								room.players.forEach(x->{playerNames.add("\""+x.name+"\"");playerRanks.add(x.rank);readyList.add(x.ready);});
+								if(!hydar){
+									toSend="\0"+"%xt%15%"+time+"%-1%1%"+room.players.size()+"%0%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.map;
+											synchronized(room.players){
+										for(ServerThread x:room.players){
+											if(x!=this){
+												try{
+													x.doubleWrite(toSend);
+												}catch(Exception e){
+													e.printStackTrace();
+												}
+											}
+										}
+									}
+									timeouts++;	//doubleWrite(toSend);+room.players.size()+"%0%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%\""+mode+"\"%"+nm+"%%%%%"
+								}else 
+								hydar=true;
+							}else if(cmd==26){
+								long time = new Date().getTime() / 1000;
+								ArrayList<String> playerNames=new ArrayList<String>();
+								ArrayList<Integer> playerRanks=new ArrayList<Integer>();
+								ArrayList<Boolean> readyList=new ArrayList<Boolean>();
+								room.players.forEach(x->{playerNames.add("\""+x.name+"\"");playerRanks.add(x.rank);readyList.add(x.ready);});
+								toSend="\0"+"%xt%25%"+time+"%-1%1%"+room.players.size()+"%0%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.map+"%\""+room.mapURL+"\"%"+room.nm;
+										synchronized(room.players){
+									for(ServerThread x:room.players){
+										if(x!=this){
+											try{
+												x.doubleWrite(toSend);
+											}catch(Exception e){
+												e.printStackTrace();
+											}
 										}
 									}
 								}
-								if(this.room==null){
-									this.room=new Room(this,mode,nm);
-									S3Server.games.add(this.room);
-								}
+								
 							}
+							msg.set(2,""+cmd);
 							long time = new Date().getTime() / 1000;
-							ArrayList<String> playerNames=new ArrayList<String>();
-							ArrayList<Integer> playerRanks=new ArrayList<Integer>();
-							ArrayList<Boolean> readyList=new ArrayList<Boolean>();
-							room.players.forEach(x->{playerNames.add("\""+x.name+"\"");playerRanks.add(x.rank);readyList.add(x.ready);});
-							if(!hydar){
-								toSend="\0"+"%xt%15%"+time+"%-1%1%"+room.players.size()+"%0%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+nm;
-								doubleWrite(toSend);
-							}else
-								//toSend="\0"+"%xt%3%"+time+"%-1%"+name+"%"+rank+"%0%"+mode+"%"+room.map+"%"+(mode+1)+"%"+nm;
-							toSend="\0"+"%xt%3%"+time+"%-1%"+"glenn m%50%0%%0%2%0%";
+							msg.set(3,""+time);
+							msg.set(4,""+-1);
+							String pl = String.join("%",msg)+"%";
+							synchronized(room.players){
+								room.players.forEach(x->{
+									if(x!=this){
+										try{
+											x.doubleWrite(pl);
+										}catch(Exception e){
+											e.printStackTrace();
+										}
+									}
+								}
+								);
+							}
+							
+								//toSend="\0"+"%xt%3%"+time+"%-1%"+name+"%\""+rank+"\"%0%\""+mode+"\"%\""+room.map+"\"%\""+(mode+1)+"\"%"+nm;
+							//toSend="\0"+"%xt%3%"+time+"%-1%"+"glenn m%50%0%%0%2%0%";
 							//doubleWrite(toSend);
-							hydar=true;
 							//doubleWrite(toSend);
 							//7 name
 							//8 lvl
 							//12 mode
 							//13 NM
-							
+							//room.players.forEach(x->x.doubleWrite()
 						}
 						
 					}
@@ -325,13 +376,20 @@ class Room {
 	public int nm;
 	public int id;
 	public int map;
+	public String mapURL;
+	public static final String[] MAP_URLS=new String[]{"http://sas3maps.ninjakiwi.com/sas3maps/FarmhouseMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/AirbaseMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/KarnivaleMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/VerdammtenstadtMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/BlackIsleMap.swf"};
+
 	public Room(ServerThread p1, int mode, int nm) {
 		players = new ArrayList<ServerThread>();
 		players.add(p1);
 		this.mode=mode;
 		this.nm=nm;
 		this.map=1+(int)(Math.random()*5);
+		this.mapURL=MAP_URLS[map-1];
 		this.id=(int)(Math.random()*999999999);
+	}
+	public void h(){
+		
 	}
 }
 
