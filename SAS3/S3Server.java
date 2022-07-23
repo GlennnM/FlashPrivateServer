@@ -155,8 +155,9 @@ class ServerThread extends Thread {
 	public volatile boolean ready;
 	public volatile boolean alive;
 	public volatile Room room;
+	public volatile int id;
 	// constructor initializes socket
-	private void doubleWrite(String s) throws IOException {
+	public void doubleWrite(String s) throws IOException {
 		this.output.write(s.getBytes(StandardCharsets.UTF_8));
 		this.output.flush();
 		if(S3Server.verbose)
@@ -170,6 +171,7 @@ class ServerThread extends Thread {
 		this.name=null;
 		this.ready=false;
 		mode=0;nm=0;
+		id=(int)(Math.random()*999999999);
 		this.rank=0;
 		this.output = this.client.getOutputStream();
 	}
@@ -187,7 +189,7 @@ class ServerThread extends Thread {
 			String toSend = "";
 			int sendAfter = 0;
 			boolean hydar=false;
-			int id=(int)(Math.random()*420);
+			
 			while (this.alive) {
 				try {
 					char[] buffer = new char[1024];
@@ -223,17 +225,23 @@ class ServerThread extends Thread {
 						this.client.close();
 						return;
 					}
-					String[] msgs = headers.split("\n");
+					String[] msgs = headers.split("%\0%");
+					for(String m:msgs){
+					if(!m.endsWith("%"))
+						m+="%";
+					if(!m.startsWith("%"))
+						m="%"+m;
+					}
 					for (String m : msgs) {
 						//String[] msg = m.split(",");
 						if(m.equals("<msg t='sys'><body action='verChk' r='0'><ver v='165' /></body></msg>"))
-							toSend ="\0<msg t='sys'><body action='apiOK' r='0'><ver v='165'/></body></msg>\n";
+							toSend +="\0<msg t='sys'><body action='apiOK' r='0'><ver v='165'/></body></msg>\n";
 						else if(m.equals("<msg t='sys'><body action='login' r='0'><login z='SAS3'><nick><![CDATA[]]></nick><pword><![CDATA[]]></pword></login></body></msg>"))
-							toSend ="\0<msg t='sys'><body action='logOK' r='0'><login id='"+id+"' mod='0' n='SAS3'/></body></msg>\n";
+							toSend +="\0<msg t='sys'><body action='logOK' r='0'><login id='"+id+"' mod='0' n='SAS3'/></body></msg>\n";
 						else if(m.equals("<msg t='sys'><body action='getRmList' r='-1'></body></msg>"))
-							toSend ="\0<msg t='sys'><body action='rmList' r='-1'><rmList><rm></rm></rmList></body></msg>\n";
+							toSend +="\0<msg t='sys'><body action='rmList' r='-1'><rmList><rm></rm></rmList></body></msg>\n";
 						else if(m.startsWith("%xt%SAS3%%")){
-							List<String> msg = Arrays.asList(m.split("%"));
+							ArrayList<String> msg = new ArrayList<String>(Arrays.asList(m.split("%")));
 							int cmd = Integer.parseInt(msg.get(5));
 							if(cmd==3){
 								if(room==null){
@@ -261,7 +269,7 @@ class ServerThread extends Thread {
 								ArrayList<Boolean> readyList=new ArrayList<Boolean>();
 								room.players.forEach(x->{playerNames.add("\""+x.name+"\"");playerRanks.add(x.rank);readyList.add(x.ready);});
 								if(!hydar){
-									toSend="\0"+"%xt%15%"+time+"%-1%1%"+room.players.size()+"%0%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.map;
+									toSend+="\0"+"%xt%15%"+time+"%-1%1%"+room.players.size()+"%"+room.indexOf(id)+"%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.map;
 											synchronized(room.players){
 										for(ServerThread x:room.players){
 											if(x!=this){
@@ -277,43 +285,62 @@ class ServerThread extends Thread {
 								}else 
 								hydar=true;
 							}else if(cmd==26){
+								
 								long time = new Date().getTime() / 1000;
+								time=0;
 								ArrayList<String> playerNames=new ArrayList<String>();
 								ArrayList<Integer> playerRanks=new ArrayList<Integer>();
 								ArrayList<Boolean> readyList=new ArrayList<Boolean>();
 								room.players.forEach(x->{playerNames.add("\""+x.name+"\"");playerRanks.add(x.rank);readyList.add(x.ready);});
-								toSend="\0"+"%xt%25%"+time+"%-1%1%"+room.players.size()+"%0%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.map+"%\""+room.mapURL+"\"%"+room.nm;
-										synchronized(room.players){
-									for(ServerThread x:room.players){
-										if(x!=this){
-											try{
-												x.doubleWrite(toSend);
-											}catch(Exception e){
-												e.printStackTrace();
-											}
-										}
-									}
-								}
+								toSend+="\0"+"%xt%25%"+time+"%-1%1%"+room.players.size()+"%"+room.indexOf(id)+"%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.mapURL+"%"+room.nm+"%"+room.nm;
+										room.writeAll(toSend);
 								
 							}
 							msg.set(2,""+cmd);
 							long time = new Date().getTime() / 1000;
 							msg.set(3,""+time);
 							msg.set(4,""+-1);
-							String pl = String.join("%",msg)+"%";
-							synchronized(room.players){
-								room.players.forEach(x->{
-									if(x!=this){
-										try{
-											x.doubleWrite(pl);
-										}catch(Exception e){
-											e.printStackTrace();
-										}
-									}
-								}
-								);
+							if(cmd==4){
+							this.ready=true;
+							time = new Date().getTime() / 1000;
+							time=0;
+								ArrayList<String> playerNames=new ArrayList<String>();
+								ArrayList<Integer> playerRanks=new ArrayList<Integer>();
+								ArrayList<Boolean> readyList=new ArrayList<Boolean>();
+								room.players.forEach(x->{playerNames.add("\""+x.name+"\"");playerRanks.add(x.rank);readyList.add(x.ready);});
+									toSend+="\0"+"%xt%15%"+time+"%1%"+room.players.size()+"%"+room.indexOf(id)+"%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.map;
+										room.writeAll(toSend);
+									toSend="";
+									//toSend+="\0"+"%xt%26%-1%"+time+"%1.0"+"%"+room.nm+"%";
+									//	room.writeAll(toSend);
+									//toSend="";
+								//	toSend="\0"+"%xt%17%-1%"+time+"%1"+"%"+10+"%";
+								//		room.writeAll(toSend);
+									//sendAfter=1;
+									msg.set(msg.size()-2,""+1);
+									msg.set(msg.size()-1,""+100);
+									//msg.add(""+room.nm);
+									//room.writeAll(pl);
+									//pl
 							}
-							
+							ArrayList<Integer> pc = new ArrayList<Integer>(Arrays.asList(new Integer[]{1,2,13,9,7,10,23,22,20,19,12,5,6,24,14,11}));
+							if(pc.contains(cmd)){
+								msg.remove(2);
+								msg.remove(2);
+								//msg.remove(msg.get(2));
+								String tmp = msg.get(2);
+								msg.set(2,msg.get(3));
+								msg.set(3,tmp);
+							}
+							String pl = "\0"+String.join("%",msg)+"%";
+							if(cmd==4){
+								pl+=""+room.nm+"%";
+							}
+							//room.writeAll(pl);
+							if(pc.contains(cmd))
+								room.writeFrom(this.id,pl);
+							else 
+							room.writeAll(pl);
 								//toSend="\0"+"%xt%3%"+time+"%-1%"+name+"%\""+rank+"\"%0%\""+mode+"\"%\""+room.map+"\"%\""+(mode+1)+"\"%"+nm;
 							//toSend="\0"+"%xt%3%"+time+"%-1%"+"glenn m%50%0%%0%2%0%";
 							//doubleWrite(toSend);
@@ -387,6 +414,40 @@ class Room {
 		this.map=1+(int)(Math.random()*5);
 		this.mapURL=MAP_URLS[map-1];
 		this.id=(int)(Math.random()*999999999);
+	}
+	public void writeFrom(int id, String toWrite){
+		synchronized(players){
+			players.forEach(x->{
+				if(x.id!=id){
+					try{
+						x.doubleWrite(toWrite);
+					}catch(Exception e){
+						e.printStackTrace();
+					}
+				}
+			}
+			);
+		}
+	}
+	public int indexOf(int id2){
+		synchronized(players){
+			for(int i=0;i<players.size();i++){
+					if(players.get(i).id==id2)
+						return i;
+			}
+		}return -1;
+	}
+	public void writeAll(String toWrite){
+		synchronized(players){
+			players.forEach(x->{
+				try{
+					x.doubleWrite(toWrite);
+				}catch(Exception e){
+					e.printStackTrace();
+				}
+			}
+			);
+		}
 	}
 	public void h(){
 		
