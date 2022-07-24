@@ -426,12 +426,15 @@ class WaveStartTask extends TimerTask{
 	
 	public WaveStartTask(Room room){
 		this.room = room;
+		room.p1=0;
+		room.p2=0f;
+		room.p3=0f;
 	}
 	@Override
 	public void run(){
 		//send WaveStrtCommand
-		room.wave++;
 		room.writeAll("\0"+"%xt%17%-1%"+0+"%"+room.wave+"%"+room.waveTotal+"%");
+		room.wave++;
 		room.timer.schedule(new SpawnTask(room),5000);
 		room.timer.schedule(new PowerupTask(room),30000);
 		room.init=true;
@@ -507,6 +510,30 @@ class SpawnTask extends TimerTask{
 			String spawnCmd="\0%xt%9%-1%0%0%"+loc12.index+"%"+spawn+"%"+room.SBEmult+"%"+0+"%-1%";
 			room.writeAll(spawnCmd);
 		}
+		room.p1++;
+		if(room.p1 < 24)
+         {
+			/**if(this.§]3§(§3H§.§-O§,3))
+			 {
+				this.§60§.delay = §6=§ + (Math.random() * §="§ - §="§ / 2);
+			 }
+			 else
+			 {
+				this.§60§.delay = 1;
+			 }
+			 this.§60§.reset();
+			 this.§60§.start();*/
+			 room.timer.schedule(new SpawnTask(room),2500);
+         }
+         else
+         {
+			 if(room.init && room.p1 >=24)
+			
+			 {
+				room.writeAll("\0"+"%xt%18%-1%"+0+"%"+room.wave+"%"+room.waveTotal+"%");
+				room.timer.schedule(new WaveStartTask(room),2500);
+			 }
+         }
 	}
 }
 class Zombie{
@@ -572,17 +599,17 @@ class Room {
 	public int id;
 	public int map;
 	public String mapURL;
-	public int rankSum;
-	public float SBEmult;
-	public float barriHP;
+	public volatile int rankSum;
+	public volatile float SBEmult;
+	public volatile float barriHP;
 	public volatile Timer timer;
-	public boolean init=false;
+	public volatile boolean init=false;
 	//SPAWNER ARGS
-	public int p1=0;//§[D§
-	public float p2=0f;//§]?§
-	public float p3=0f;//§5-§
-	public int wave=0;
-	public int waveTotal;
+	public volatile int p1=0;//§[D§
+	public volatile float p2=0f;//§]?§
+	public volatile float p3=0f;//§5-§
+	public volatile int wave=0;
+	public volatile int waveTotal;
 	
 	public static final String[] MAP_URLS=new String[]{"http://sas3maps.ninjakiwi.com/sas3maps/FarmhouseMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/AirbaseMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/KarnivaleMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/VerdammtenstadtMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/BlackIsleMap.swf"};
 	public int[] spawns(){
