@@ -17,6 +17,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.net.ServerSocket;
 
@@ -156,6 +158,7 @@ class ServerThread extends Thread {
 	public volatile boolean alive;
 	public volatile Room room;
 	public volatile int id;
+	public volatile int myPlayerNum;
 	// constructor initializes socket
 	public void doubleWrite(String s) throws IOException {
 		this.output.write(s.getBytes(StandardCharsets.UTF_8));
@@ -170,6 +173,7 @@ class ServerThread extends Thread {
 		this.room=null;
 		this.name=null;
 		this.ready=false;
+		myPlayerNum=-1;
 		mode=0;nm=0;
 		id=(int)(Math.random()*999999999);
 		this.rank=0;
@@ -262,6 +266,7 @@ class ServerThread extends Thread {
 										this.room=new Room(this,mode,nm);
 										S3Server.games.add(this.room);
 									}
+									this.myPlayerNum=room.players.size()-1;
 								}
 								long time = new Date().getTime() / 1000;
 								ArrayList<String> playerNames=new ArrayList<String>();
@@ -269,9 +274,9 @@ class ServerThread extends Thread {
 								ArrayList<Boolean> readyList=new ArrayList<Boolean>();
 								room.players.forEach(x->{playerNames.add("\""+x.name+"\"");playerRanks.add(x.rank);readyList.add(x.ready);});
 								if(!hydar){
-									toSend+="\0"+"%xt%15%"+time+"%-1%1%"+room.players.size()+"%"+room.indexOf(id)+"%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.map;
 											synchronized(room.players){
 										for(ServerThread x:room.players){
+									toSend="\0"+"%xt%15%"+time+"%-1%1%"+room.players.size()+"%"+x.myPlayerNum+"%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.map;
 											if(x!=this){
 												try{
 													x.doubleWrite(toSend);
@@ -292,8 +297,18 @@ class ServerThread extends Thread {
 								ArrayList<Integer> playerRanks=new ArrayList<Integer>();
 								ArrayList<Boolean> readyList=new ArrayList<Boolean>();
 								room.players.forEach(x->{playerNames.add("\""+x.name+"\"");playerRanks.add(x.rank);readyList.add(x.ready);});
-								toSend+="\0"+"%xt%25%"+time+"%-1%1%"+room.players.size()+"%"+room.indexOf(id)+"%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.mapURL+"%"+room.nm+"%"+room.nm;
-										room.writeAll(toSend);
+								//toSend+="\0"+"%xt%25%"+time+"%%1%"+room.players.size()+"%"+this.myPlayerNum+"%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.mapURL+"%"+room.nm+"%"+room.nm;
+								synchronized(room.players){
+										for(ServerThread x:room.players){
+											try{
+												toSend="\0"+"%xt%25%"+time+"%%1%"+room.players.size()+"%"+x.myPlayerNum+"%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.mapURL+"%"+room.nm+"%"+room.nm;
+												x.doubleWrite(toSend);
+											}catch(Exception e){
+													e.printStackTrace();
+												}	
+										}
+								}
+										//room.writeAll(toSend);
 								
 							}
 							msg.set(2,""+cmd);
@@ -308,17 +323,23 @@ class ServerThread extends Thread {
 								ArrayList<Integer> playerRanks=new ArrayList<Integer>();
 								ArrayList<Boolean> readyList=new ArrayList<Boolean>();
 								room.players.forEach(x->{playerNames.add("\""+x.name+"\"");playerRanks.add(x.rank);readyList.add(x.ready);});
-									toSend+="\0"+"%xt%15%"+time+"%1%"+room.players.size()+"%"+room.indexOf(id)+"%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.map;
-										room.writeAll(toSend);
-									toSend="";
+									//toSend+="\0"+"%xt%15%"+time+"%1%"+room.players.size()+"%"+room.indexOf(id)+"%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.map;
+									//	room.writeFrom(id,toSend);
+									//toSend="";
 									//toSend+="\0"+"%xt%26%-1%"+time+"%1.0"+"%"+room.nm+"%";
 									//	room.writeAll(toSend);
 									//toSend="";
 								//	toSend="\0"+"%xt%17%-1%"+time+"%1"+"%"+10+"%";
 								//		room.writeAll(toSend);
 									//sendAfter=1;
+									//msg.remove(5);
+									msg.set(3,"0");
 									msg.set(msg.size()-2,""+1);
 									msg.set(msg.size()-1,""+100);
+								String tmp = msg.get(3);
+								msg.set(3,msg.get(4));
+								msg.set(4,tmp);
+								room.setup();
 									//msg.add(""+room.nm);
 									//room.writeAll(pl);
 									//pl
@@ -331,16 +352,20 @@ class ServerThread extends Thread {
 								String tmp = msg.get(2);
 								msg.set(2,msg.get(3));
 								msg.set(3,tmp);
+								msg.set(5,""+myPlayerNum);
+								//msg.remove(3);
+								//msg.add("");
 							}
 							String pl = "\0"+String.join("%",msg)+"%";
-							if(cmd==4){
-								pl+=""+room.nm+"%";
-							}
+							//if(cmd==4){
+							//	pl+=""+room.nm+"%";
+							//}
 							//room.writeAll(pl);
 							if(pc.contains(cmd))
 								room.writeFrom(this.id,pl);
 							else 
 							room.writeAll(pl);
+							
 								//toSend="\0"+"%xt%3%"+time+"%-1%"+name+"%\""+rank+"\"%0%\""+mode+"\"%\""+room.map+"\"%\""+(mode+1)+"\"%"+nm;
 							//toSend="\0"+"%xt%3%"+time+"%-1%"+"glenn m%50%0%%0%2%0%";
 							//doubleWrite(toSend);
@@ -396,7 +421,150 @@ class ServerThread extends Thread {
 		return;
 	}
 }
-
+class WaveStartTask extends TimerTask{
+	public Room room;
+	
+	public WaveStartTask(Room room){
+		this.room = room;
+	}
+	@Override
+	public void run(){
+		//send WaveStrtCommand
+		room.wave++;
+		room.writeAll("\0"+"%xt%17%-1%"+0+"%"+room.wave+"%"+room.waveTotal+"%");
+		room.timer.schedule(new SpawnTask(room),5000);
+		room.timer.schedule(new PowerupTask(room),30000);
+		room.init=true;
+	}
+}
+class SpawnTask extends TimerTask{
+	public Room room;
+	public static Zombie[] zombies;
+	public SpawnTask(Room room){
+		this.room = room;
+		zombies = new Zombie[]{
+			new Zombie(0,1),
+			new Zombie(1,4),
+			new Zombie(2,10),
+			new Zombie(3,12),
+			new Zombie(4,14),
+			new Zombie(5,16),
+			new Zombie(9,18)
+			};
+	}
+	@Override
+	public void run(){
+		float loc2 = room.commaHash();
+		ArrayList<Zombie> loc3 = new ArrayList<Zombie>();
+		for(Zombie z:zombies){
+			if(!(room.map==1&&z.index==9)&&z.weight<=loc2){
+				loc3.add(z);
+			}
+		}
+		System.out.println("s3/"+loc3.size());
+		//create loc5
+		float chanceSum=0.0f;
+		for(Zombie z:loc3)
+			chanceSum+=z.chance;
+		float loc7=1;//locals from -;
+		int loc8_=loc3.size()-1;//locals from -;
+		float[] loc5 = new float[loc3.size()];
+		while(loc8_>=0){
+			loc5[loc8_]=loc7;
+			loc7 -= loc3.get(loc8_).chance / chanceSum;
+			loc8_--;
+		}
+		
+		float loc6=room.dashL(loc2);
+		loc7=loc6*2500f/1000f;
+		room.p3+=loc7;
+		float loc8 = room.p3-room.p2;
+		
+		float loc10=0f;
+		Zombie loc12=null;
+		float loc16=0f;
+		int loc17=0;
+		float loc13=0f;
+		System.out.println("l8");
+		System.out.println(loc8);
+		while(loc10<loc8){
+			loc12 = loc3.get(loc3.size() - 1);
+            loc16 = (float)Math.random();
+            loc17 = 0;
+            while(loc17 < loc5.length)
+            {
+               if(loc16 < loc5[loc17])
+               {
+                  loc12 = loc3.get(loc17);
+                  break;
+               }
+               loc17++;
+            }
+			loc13 = ((loc12.cap - 1f) * 0.5f + 1f) * room.SBEmult;
+            loc10 += loc13;
+            room.p2 += loc13;
+			int spawn = room.spawns()[(int)(Math.random() * room.spawns().length)];
+			String spawnCmd="\0%xt%9%-1%0%0%"+loc12.index+"%"+spawn+"%"+room.SBEmult+"%"+0+"%-1%";
+			room.writeAll(spawnCmd);
+		}
+	}
+}
+class Zombie{
+	public int index;
+	public int weight;//6c
+	public float chance;//function 8o
+	public float cap;//%O
+	public Zombie(int index, int weight){
+		this.index=index;
+		this.weight=weight;
+		switch(this.index){
+			case 0:
+				chance=100f;
+				cap=1f;
+				break;
+			case 1:
+				chance=30f;
+				cap=1.5f;
+				break;
+			case 2:
+				chance=15f;
+				cap=6f;
+				break;
+			case 3:
+				chance=5f;
+				cap=15f;
+				break;
+			case 4:
+				chance=2f;
+				cap=12f;
+				break;
+			case 5:
+				chance=1f;
+				cap=108f;
+				break;
+			case 9:
+				chance=0.1f;
+				cap=600f;
+				break;
+			default:
+				chance=0.0f;
+				cap=0f;
+				break;
+		}
+		
+	}
+	
+}
+class PowerupTask extends TimerTask{
+	public Room room;
+	public PowerupTask(Room room){
+		this.room = room;
+	}
+	@Override
+	public void run(){
+		
+	}
+}
 class Room {
 	public volatile ArrayList<ServerThread> players;
 	public int mode;
@@ -404,16 +572,113 @@ class Room {
 	public int id;
 	public int map;
 	public String mapURL;
+	public int rankSum;
+	public float SBEmult;
+	public float barriHP;
+	public volatile Timer timer;
+	public boolean init=false;
+	//SPAWNER ARGS
+	public int p1=0;//§[D§
+	public float p2=0f;//§]?§
+	public float p3=0f;//§5-§
+	public int wave=0;
+	public int waveTotal;
+	
 	public static final String[] MAP_URLS=new String[]{"http://sas3maps.ninjakiwi.com/sas3maps/FarmhouseMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/AirbaseMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/KarnivaleMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/VerdammtenstadtMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/BlackIsleMap.swf"};
-
+	public int[] spawns(){
+		switch(this.map){
+			case 1:
+				return new int[]{9,6,5,8,11,10,4};
+			case 2:
+				return new int[]{18,17,16,13,12,11,15,14,19};
+			case 3:
+				return new int[]{31,37,38,35,34,33,32,36};
+			case 4:
+				return new int[]{13,12,14,31};
+			case 5:
+				return new int[]{43,42,41,40,47,7,46,44,9,17,4,45};
+			default:
+				return new int[]{};
+		}
+	}
+	public float dashL(float param1){
+		float loc2=0.0f;
+		float loc3=(this.nm==0)?0.9f:2.5f;
+		float loc4=0.0f;
+		float loc5=0.0f;
+		switch(this.map){
+			case 1:
+				loc2=0.65f;
+				break;
+			case 2:
+			case 3:
+				loc2=0.75f;
+				break;
+			case 5:
+				loc2=1.1f;
+				break;
+			default:
+				loc2=1.0f;
+				break;
+		}
+		if(param1 > 45f)
+         {
+            loc4 = 45f;
+            loc5 = param1 - 45f;
+         }
+         else
+         {
+            loc4 = param1;
+            loc5 = 0f;
+         }
+		 float loc6 = 10f - (loc4 - 10f) / 7f;
+         float loc7 = loc4 / 18f;
+         float loc8 = (float)Math.pow(loc6,loc7) * 1.2f;
+         float loc9 = (float)Math.pow(loc5,1.5f) * 5.2f;
+         return (loc8 + loc9) / 4f * (float)(players.size()) * loc2 * loc3;
+	}
+	
+	public float commaHash(){
+		return (float)this.rankSum + ((float)this.p1 + 24f * (float)this.waveTotal) / (24f * (float)this.waveTotal) * 10f * ((float)(this.waveTotal - 4) / 12f + 1f);
+	}
 	public Room(ServerThread p1, int mode, int nm) {
 		players = new ArrayList<ServerThread>();
 		players.add(p1);
 		this.mode=mode;
 		this.nm=nm;
+		this.SBEmult=0f;
 		this.map=1+(int)(Math.random()*5);
 		this.mapURL=MAP_URLS[map-1];
 		this.id=(int)(Math.random()*999999999);
+		timer = new Timer();
+		
+	}
+	public void setup(){
+		this.rankSum=0;
+		for(ServerThread t:players){
+			this.rankSum+=t.rank;
+		}
+		if(this.nm!=0)
+			this.SBEmult=(1f + (float)this.rankSum / 10f) / 2f * 10f;
+		else this.SBEmult=(1f + (float)this.rankSum / 10f) / 2f * 10f;
+		
+		this.barriHP=(int)(600f*this.SBEmult*this.SBEmult);
+		
+		if(this.rankSum>=38)
+			this.waveTotal=11;
+		else if(this.rankSum>=30)
+			this.waveTotal=10;
+		else if(this.rankSum>=22)
+			this.waveTotal=9;
+		else if(this.rankSum>=15)
+			this.waveTotal=8;
+		else if(this.rankSum>=9)
+			this.waveTotal=7;
+		else if(this.rankSum>=5)
+			this.waveTotal=6;
+		else 
+			this.waveTotal=5;
+		timer.schedule(new WaveStartTask(this),1000);
 	}
 	public void writeFrom(int id, String toWrite){
 		synchronized(players){
@@ -486,6 +751,7 @@ public class S3Server {
 		}
 		try {
 			ip=Files.readString(Paths.get("./config.txt")).trim();
+			
 			server = new ServerSocket(port);
 		} catch (IOException e) {
 			System.out.println("error. Please ensure the port is available and config.txt exists(put IP or \"localhost\" there)");
