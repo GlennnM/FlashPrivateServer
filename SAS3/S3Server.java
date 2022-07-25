@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.net.ServerSocket;
 
 /**
@@ -253,7 +254,6 @@ class ServerThread extends Thread {
 									nm=Integer.parseInt(msg.get(13));
 									this.name=msg.get(7);
 									this.rank=Integer.parseInt(msg.get(8));
-									synchronized(S3Server.games){
 										for(Room r:S3Server.games){
 											if(r.mode==mode&&r.nm==nm&&r.players.size()<4){
 												r.players.add(this);
@@ -261,7 +261,6 @@ class ServerThread extends Thread {
 												break;
 											}
 										}
-									}
 									if(this.room==null){
 										this.room=new Room(this,mode,nm);
 										S3Server.games.add(this.room);
@@ -274,7 +273,6 @@ class ServerThread extends Thread {
 								ArrayList<Boolean> readyList=new ArrayList<Boolean>();
 								room.players.forEach(x->{playerNames.add("\""+x.name+"\"");playerRanks.add(x.rank);readyList.add(x.ready);});
 								if(!hydar){
-											synchronized(room.players){
 										for(ServerThread x:room.players){
 									toSend="\0"+"%xt%15%"+time+"%-1%1%"+room.players.size()+"%"+x.myPlayerNum+"%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.map;
 											if(x!=this){
@@ -285,7 +283,7 @@ class ServerThread extends Thread {
 												}
 											}
 										}
-									}
+									
 									timeouts++;	//doubleWrite(toSend);+room.players.size()+"%0%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%\""+mode+"\"%"+nm+"%%%%%"
 								}else 
 								hydar=true;
@@ -298,7 +296,6 @@ class ServerThread extends Thread {
 								ArrayList<Boolean> readyList=new ArrayList<Boolean>();
 								room.players.forEach(x->{playerNames.add("\""+x.name+"\"");playerRanks.add(x.rank);readyList.add(x.ready);});
 								//toSend+="\0"+"%xt%25%"+time+"%%1%"+room.players.size()+"%"+this.myPlayerNum+"%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.mapURL+"%"+room.nm+"%"+room.nm;
-								synchronized(room.players){
 										for(ServerThread x:room.players){
 											try{
 												toSend="\0"+"%xt%25%"+time+"%%1%"+room.players.size()+"%"+x.myPlayerNum+"%"+playerNames+"%"+playerRanks+"%"+readyList+"%1%"+mode+"%"+(mode)+"%"+room.mapURL+"%"+room.nm+"%"+room.nm;
@@ -307,7 +304,7 @@ class ServerThread extends Thread {
 													e.printStackTrace();
 												}	
 										}
-								}
+								
 										//room.writeAll(toSend);
 								
 							}
@@ -412,12 +409,14 @@ class ServerThread extends Thread {
 				output.close();
 				this.client.close();
 				ioe_.printStackTrace();
-				return;
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 		this.alive = false;
+		if(room!=null){
+			room.dropPlayer(id);
+		}
 		return;
 	}
 }
@@ -433,6 +432,8 @@ class WaveStartTask extends TimerTask{
 	@Override
 	public void run(){
 		//send WaveStrtCommand
+		if(!room.alive)
+			return;
 		room.writeAll("\0"+"%xt%17%-1%"+0+"%"+room.wave+"%"+room.waveTotal+"%");
 		room.wave++;
 		room.timer.schedule(new SpawnTask(room),5000);
@@ -511,6 +512,9 @@ class SpawnTask extends TimerTask{
 			room.writeAll(spawnCmd);
 		}
 		room.p1++;
+		
+		if(!room.alive)
+			return;
 		if(room.p1 < 24)
          {
 			/**if(this.§]3§(§3H§.§-O§,3))
@@ -523,17 +527,31 @@ class SpawnTask extends TimerTask{
 			 }
 			 this.§60§.reset();
 			 this.§60§.start();*/
-			 room.timer.schedule(new SpawnTask(room),2500);
+			 room.timer.schedule(new SpawnTask(room),1800);
          }
          else
          {
 			 if(room.init && room.p1 >=24)
 			
 			 {
-				room.writeAll("\0"+"%xt%18%-1%"+0+"%"+room.wave+"%"+room.waveTotal+"%");
-				room.timer.schedule(new WaveStartTask(room),2500);
+				
+				room.timer.schedule(new WaveEndTask(room),30000);
+				
 			 }
          }
+	}
+}
+class WaveEndTask extends TimerTask{
+	public Room room;
+	public WaveEndTask(Room room){
+		this.room = room;
+	}
+	@Override
+	public void run(){
+		if(!room.alive)
+			return;
+		room.writeAll("\0"+"%xt%18%-1%"+0+"%"+room.wave+"%"+room.waveTotal+"%");
+		room.timer.schedule(new WaveStartTask(room),5000);
 	}
 }
 class Zombie{
@@ -593,7 +611,7 @@ class PowerupTask extends TimerTask{
 	}
 }
 class Room {
-	public volatile ArrayList<ServerThread> players;
+	public volatile CopyOnWriteArrayList<ServerThread> players;
 	public int mode;
 	public int nm;
 	public int id;
@@ -610,7 +628,7 @@ class Room {
 	public volatile float p3=0f;//§5-§
 	public volatile int wave=0;
 	public volatile int waveTotal;
-	
+	public volatile boolean alive=true;
 	public static final String[] MAP_URLS=new String[]{"http://sas3maps.ninjakiwi.com/sas3maps/FarmhouseMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/AirbaseMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/KarnivaleMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/VerdammtenstadtMap.swf","http://sas3maps.ninjakiwi.com/sas3maps/BlackIsleMap.swf"};
 	public int[] spawns(){
 		switch(this.map){
@@ -626,6 +644,19 @@ class Room {
 				return new int[]{43,42,41,40,47,7,46,44,9,17,4,45};
 			default:
 				return new int[]{};
+		}
+	}
+	public void dropPlayer(int id){
+		
+		for(ServerThread t:players){
+			if(t.id==id){
+				writeAll("\0"+"%xt%21%-1%"+0+"%"+t.myPlayerNum+"%");
+				players.remove(t);
+				if(players.size()==0){
+					this.alive=false;
+					S3Server.games.remove(this);
+				}
+			}
 		}
 	}
 	public float dashL(float param1){
@@ -669,7 +700,7 @@ class Room {
 		return (float)this.rankSum + ((float)this.p1 + 24f * (float)this.waveTotal) / (24f * (float)this.waveTotal) * 10f * ((float)(this.waveTotal - 4) / 12f + 1f);
 	}
 	public Room(ServerThread p1, int mode, int nm) {
-		players = new ArrayList<ServerThread>();
+		players = new CopyOnWriteArrayList<ServerThread>();
 		players.add(p1);
 		this.mode=mode;
 		this.nm=nm;
@@ -705,32 +736,30 @@ class Room {
 			this.waveTotal=6;
 		else 
 			this.waveTotal=5;
-		timer.schedule(new WaveStartTask(this),1000);
+		//writeAll("\0"+"%xt%18%-1%"+0+"%"+wave+"%"+waveTotal+"%");
+		timer.schedule(new WaveStartTask(this),5000);
 	}
 	public void writeFrom(int id, String toWrite){
-		synchronized(players){
-			players.forEach(x->{
-				if(x.id!=id){
-					try{
-						x.doubleWrite(toWrite);
-					}catch(Exception e){
-						e.printStackTrace();
-					}
+		players.forEach(x->{
+			if(x.id!=id){
+				try{
+					x.doubleWrite(toWrite);
+				}catch(Exception e){
+					e.printStackTrace();
 				}
 			}
-			);
 		}
+		);
+		
 	}
 	public int indexOf(int id2){
-		synchronized(players){
 			for(int i=0;i<players.size();i++){
 					if(players.get(i).id==id2)
 						return i;
 			}
-		}return -1;
+		return -1;
 	}
 	public void writeAll(String toWrite){
-		synchronized(players){
 			players.forEach(x->{
 				try{
 					x.doubleWrite(toWrite);
@@ -739,7 +768,7 @@ class Room {
 				}
 			}
 			);
-		}
+		
 	}
 	public void h(){
 		
