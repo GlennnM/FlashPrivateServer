@@ -18,6 +18,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.net.ServerSocket;
 
 /**
@@ -316,7 +317,7 @@ class GameServer extends Thread {
 	public volatile ServerSocket server;
 	public volatile int port;
 	public volatile boolean alive = true;
-	public volatile List<GameServerThread> playerThreads;
+	public volatile CopyOnWriteArrayList<GameServerThread> playerThreads;
 	public volatile int mode;
 	public volatile int code;
 	public volatile int actualCode;
@@ -342,18 +343,15 @@ class GameServer extends Thread {
 	}
 	public boolean can101(){
 		try{
-			synchronized(playerThreads){
 				for(GameServerThread g:playerThreads){
 					if(!g.bot&&g.player.level<96)
 						return false;
 				}
-			}
 		}catch(Exception e){
 			
 		}return true;
 	}
 	public void flushAll(){
-		synchronized(playerThreads){
 			for(GameServerThread g:playerThreads){
 				try{
 				g.flushAll();
@@ -361,23 +359,22 @@ class GameServer extends Thread {
 				e.printStackTrace();
 				}
 			}
-		}
+		
 	}
 	
 	public void toggleNoDelay(){
 		
-		synchronized(playerThreads){
 			this.tcpNoDelay=!this.tcpNoDelay;
 			for(GameServerThread g:playerThreads){
 				try{
 				g.client.setTcpNoDelay(this.tcpNoDelay);
 				}catch(Exception e){continue;}
 			}
-		}
+		
 	}
 	
 	public GameServer(int port, int mode, int code, short auto, int actualCode) {
-		playerThreads = new ArrayList<GameServerThread>();
+		playerThreads = new CopyOnWriteArrayList<GameServerThread>();
 		this.nextId = 0;
 		this.host = 0;
 		this.startTime = -1;
@@ -454,7 +451,6 @@ class GameServer extends Thread {
 	public void chat(String s) {
 		byte first=(byte)-1;
 		byte[] msg;
-		synchronized(playerThreads){
 			for(GameServerThread g:playerThreads){
 				if(first==(byte)-1){
 					first=g.id;
@@ -476,7 +472,7 @@ class GameServer extends Thread {
 					//g.output.flush();
 				}catch(IOException e){continue;}
 			}
-		}
+		
 		flushAll();
 		//this.writeAll(msg, 0, msg.length);
 	}
@@ -500,7 +496,6 @@ class GameServer extends Thread {
 	public void unboost() {
 		int i = 0;
 		
-		synchronized(playerThreads){
 			for (i = 0; i < this.playerThreads.size(); i++)
 				if (playerThreads.get(i).bot) {
 					chat("Removed 1 bot!");
@@ -508,7 +503,7 @@ class GameServer extends Thread {
 					i--;
 					return;
 				}
-		}
+		
 		//chat("No bots to remove");
 	}
 	// Accept connections and route to GameServerThreads.
@@ -535,12 +530,11 @@ class GameServer extends Thread {
 			Socket client = null;
 			int ready = 0;
 			
-			synchronized(playerThreads){
 				for (GameServerThread g : playerThreads) {
 					if ((g.built && g.started && !g.ingame)||g.vs)
 						ready++;
 				}
-			}
+			
 			if (ready == playerThreads.size()) {
 				long time = (new Date()).getTime()/1000 + 3;
 				byte[] pl = new byte[5];
@@ -553,12 +547,11 @@ class GameServer extends Thread {
 				chat("All players built(hopefully)\nStarting game!");
 				long hydar = (new Date()).getTime();
 				
-				synchronized(playerThreads){
 					for (GameServerThread g : playerThreads){
 						g.ingame = true;
 						g.ingameSince=hydar;
 					}
-				}
+				
 			}
 			try {
 				client = server.accept();
@@ -586,17 +579,16 @@ class GameServer extends Thread {
 		pl[1] = ((byte) ((map >> 8) & 0xff));
 		pl[2] = (byte) (map & 0xff);
 		
-		synchronized(playerThreads){
 			for (GameServerThread g : playerThreads)
 				g.map = this.map;
-		}
+		
 		this.writeAll(pl, 0, 5);
 	}
 
 	// Forward a message to all players except the one specified by id.
 	public void writeFrom(byte id, byte[] data) {
 		
-		synchronized(playerThreads){
+		
 			for (GameServerThread h : playerThreads)
 				if (h.id != id) {
 					try {
@@ -606,13 +598,13 @@ class GameServer extends Thread {
 						continue;
 					}
 				}
-		}
+		
 	}
 
 	// same function different arguments
 	public void writeFrom(byte id, byte[] data, int offset, int length) {
 		
-		synchronized(playerThreads){
+		
 			for (GameServerThread h : playerThreads)
 				if (h.id != id) {
 					try {
@@ -622,13 +614,13 @@ class GameServer extends Thread {
 						continue;
 					}
 				}
-		}
+		
 	}
 
 	// Forward a message to all players.
 	public void writeAll(byte[] data, int off, int length) {
 		
-		synchronized(playerThreads){
+		
 			for (GameServerThread g : playerThreads) {
 				try {
 					// System.out.println(data.length);
@@ -638,7 +630,7 @@ class GameServer extends Thread {
 					continue;
 				}
 			}
-		}
+		
 	}
 
 	// Add a player, alert them of all the existing players and alert all the
@@ -646,7 +638,6 @@ class GameServer extends Thread {
 	// See playerData() for protocol information.
 	public void newPlayer(byte id) {
 		
-		synchronized(playerThreads){
 			for (GameServerThread g : playerThreads) {
 				try {
 					if (g.id == id) {
@@ -678,7 +669,7 @@ class GameServer extends Thread {
 					continue;
 				}
 			}
-		}
+		
 		this.flushAll();
 		//for (GameServerThread g : playerThreads) {
 			
@@ -755,7 +746,6 @@ class GameServer extends Thread {
 	// needed
 	public void dropPlayer(byte id) {
 		
-		synchronized(playerThreads){
 			int prev = playerThreads.size();
 			playerThreads.removeIf(x -> (x.id == id));
 			if(playerThreads.size()==prev)
@@ -787,7 +777,7 @@ class GameServer extends Thread {
 				this.host = playerThreads.get(first).id;
 				this.writeAll(pl2, 0, 3);
 			}
-		}
+		
 	}
 
 	// start building(start game button), or automatically in event/quickmatch
@@ -798,12 +788,11 @@ class GameServer extends Thread {
 		this.flushAll();
 		this.started = true;
 		
-		synchronized(playerThreads){
 			for (GameServerThread g : playerThreads) {
 				g.started = true;
 				g.pingSinceBuild = 0;
 			}
-		}
+		
 	}public boolean allLoaded(){
 		for(GameServerThread g:playerThreads)
 			if(!g.loaded)
@@ -1448,8 +1437,8 @@ public class S4Server {
 	public static boolean verbose=false;//printing
 	public static volatile String ip="";
 	public static final short[] EVENT_MAPS=new short[]{1092,1093,1094,1095,1096,1099,1100,1111,1113,1114,1115,1116,1117,1118,1119};
-	public static final short[][] EVENT_MAP_SETS=new short[][]{EVENT_MAPS,new short[]{1092,1093,1094,1095,1099,1100,1113,1114,1116,1117,1118,1119},new short[]{1092,1093,1095,1099,1113,1114,1116,1117,1119},new short[]{1092,1093,1099,1116}};
-	public static String[] EVENT_MAP_DESC=new String[]{"All","All except Ice(8),VIP(5),Highway(11)","1, 2, 4, 6, 9, 10, 12, 13, 15","Ons(1), Vac(2), PO(6), Crash Site(12)"};
+	public static final short[][] EVENT_MAP_SETS=new short[][]{EVENT_MAPS,new short[]{1092,1093,1094,1095,1099,1100,1113,1114,1116,1117,1118,1119},new short[]{1092,1093,1095,1099,1113,1114,1116,1117,1119},new short[]{1092,1093,1099,1116},new short[]{1092,1094,1095,1099,1100,1113,1114,1115,1116,1117,1118,1119}};
+	public static String[] EVENT_MAP_DESC=new String[]{"All","All except Ice(8),VIP(5),Highway(11)","1, 2, 4, 6, 9, 10, 12, 13, 15","Ons(1), Vac(2), PO(6), Crash Site(12)","??? VS maps or something"};
 	public static int getPlayerCount(){
 		int x=0;
 		for(String s:games.keySet())
@@ -1517,7 +1506,7 @@ public class S4Server {
 			case 15:
 			case 17:
 			case 19:
-				return EVENT_MAP_SETS[0][(int)(x.nextDouble()*EVENT_MAP_SETS[0].length)];
+				return EVENT_MAP_SETS[4][(int)(x.nextDouble()*EVENT_MAP_SETS[4].length)];
 			case 14:
 				return 3;
 			case 16:
