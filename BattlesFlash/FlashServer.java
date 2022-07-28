@@ -118,16 +118,17 @@ class ServerThread extends Thread {
 						// if(msgs.length>0&&!msgs.
 						// if(!toSend.equals(""))
 						toSend += "\n";
-						if (msg[0].equals("Hello")) {
+						switch (msg[0]) {
+						case "Hello":
 							toSend += "ServerMessage";
-						}
-						if (msg[0].equals("FindMeAQuickBattle")) {
+							break;
+						case "FindMeAQuickBattle":
 							toSend += "GimmeUrPlayerInfo";
 							shouldQueue = true;
 							assault = (Integer.parseInt(msg[3]) == 0);
 							// doubleWrite(toSend);toSend="";
-						}
-						if (msg[0].equals("HeresMyPlayerInfo")) {
+							break;
+						case "HeresMyPlayerInfo":
 							this.player = new Player(Integer.parseInt(msg[1]), msg[2], Integer.parseInt(msg[3]), 0, 0,
 									msg[5], this.output, Integer.parseInt(msg[4]));
 							// set player info, add to queue
@@ -216,8 +217,8 @@ class ServerThread extends Thread {
 
 								}
 							}
-						}
-						if (msg[0].equals("ILeftGame")) {
+							break;
+						case "ILeftGame":
 							// remove from queue
 							shouldQueue = false;
 							queued = false;
@@ -231,30 +232,23 @@ class ServerThread extends Thread {
 							ir.close();
 							this.client.close();
 							return;
-						}
-						if (msg[0].equals("CreateMeACustomBattle")) {
+						case "CreateMeACustomBattle":
 							shouldQueue = false;
 							toSend += "GimmeUrPlayerInfo,";
-
-							// toSend+="FoundYouAGame,localhost,"+p+","+1234567+",4480\n";
-						}
-						if (msg[0].equals("FindMyCustomBattle")) {
+							break;
+						case "FindMyCustomBattle":
 							// System.out.println(FlashServer.privateMatches.keySet());
 							shouldQueue = false;
 							// remove from queue
-
 							if (FlashServer.privateMatches.containsKey(msg[2])) {
 								joinCode = msg[2];
 								toSend += "GimmeUrPlayerInfo,";
 							} else {
 								toSend += "CouldntFindYourCustomBattle";
 							}
-
-						}
-						if (msg[0].equals("FindMyGame")) {
-							// int p=4481+87*FlashServer.games.size();
-							// System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-
+							break;
+						case "FindMyGame":
+							break;
 						}
 					}
 					try {
@@ -576,8 +570,11 @@ class GameServerThread extends Thread {
 					 headers="";
 					 line="";
 				}
+				int count;
+				ArrayList<String> x;
 				if (line.length() > 0) {
 					timeouts = 0;
+					
 					toSend = "";
 					if(FlashServer.verbose)
 						System.out.println("#incoming: " + headers);
@@ -609,78 +606,79 @@ class GameServerThread extends Thread {
 								tail = m.substring(m.indexOf(','));
 							else
 								tail = "";
-							if (msg[0].equals("IChangedMyTowerLoadout")) {
+							switch (msg[0]) {
+							case "IChangedMyTowerLoadout":
 								toSend += "OpponentChangedTowerLoadout" + tail;
-							}
-							if (msg[0].equals("IRequestYourTowerLoadout")) {
+								break;
+							case "IRequestYourTowerLoadout":
 								toSend += "OpponentRequestsMyTowerLoadout" + tail;
-							}
-							if (msg[0].equals("IChangedBattleOptions")) {
+								break;
+							case "IChangedBattleOptions":
 								toSend += "OpponentChangedBattleOptions" + tail;
-								parent.map=FlashServer.MAPIDS.indexOf(msg[1]);
-							}
-							if (msg[0].equals("MyReadyToPlayStatus")) {
+								parent.map = FlashServer.MAPIDS.indexOf(msg[1]);
+								break;
+							case "MyReadyToPlayStatus":
 								toSend += "OpponentReadyStatus" + tail;
-							}
-							if (msg[0].equals("MyGameIsLoaded")) {
+								break;
+							case "MyGameIsLoaded":
 								System.out.println("player ready");
 								toSend += "OpponentHasLoaded" + tail;
-							}
-							if (msg[0].equals("GimmeOpponentSyncData")) {
+								break;
+							case "GimmeOpponentSyncData":
 								toSend += "OpponentRequestsSync" + tail;
-							}
-							if (msg[0].equals("IBuiltATower")) {
+								break;
+							case "IBuiltATower":
 								toSend += "OpponentBuiltATower" + tail;
-							}
-							if (msg[0].equals("ISoldATower")) {
+								break;
+							case "ISoldATower":
 								toSend += "OpponentSoldATower" + tail;
-							}
-							if (msg[0].equals("IUpgradedATower")) {
+								break;
+							case "IUpgradedATower":
 								toSend += "OpponentUpgradedATower" + tail;
-							}
-							if (msg[0].equals("ISentABloonWave")) {
+								break;
+							case "ISentABloonWave":
 								if (tail.contains("Cerem")) {
-									doubleWrite("RelayMsg,SentChatMsg," + FlashServer.encode("they WILL die,\n(only you can see this)"));
+									doubleWrite("RelayMsg,SentChatMsg,"
+											+ FlashServer.encode("they WILL die,\n(only you can see this)"));
 								}
 								toSend += "OpponentSentABloonWave" + tail;
-							}
-							if (msg[0].equals("IRemovedABloonWave")) {
+								break;
+							case "IRemovedABloonWave":
 								toSend += "OpponentRemovedABloonWave" + tail;
-							}
-							if (msg[0].equals("ILived")) {
+								break;
+							case "ILived":
 								this.win = 2;
 								toSend += "OpponentLived" + tail;
-							}
-							if (msg[0].equals("IDied")) {
+								break;
+							case "IDied":
 								System.out.println("game ended probably");
 								this.win = 1;
 								this.reason = "Player died";
 								toSend += "OpponentDied" + tail;
-							}
-							if (msg[0].equals("ISurrender")) {
+								break;
+							case "ISurrender":
 								System.out.println("game ended probably");
 								this.win = 1;
 								this.reason = "Player surrendered";
 								toSend += "OpponentSurrendered" + tail;
-							}
-							if (msg[0].equals("IChangedATowerTarget")) {
+								break;
+							case "IChangedATowerTarget":
 								toSend += "OpponentTowerTargetChanged" + tail;
-							}
-							if (msg[0].equals("IChangedAcePath")) {
+								break;
+							case "IChangedAcePath":
 								toSend += "OpponentChangedAcePath" + tail;
-							}
-							if (msg[0].equals("IChangedTargetReticle")) {
+								break;
+							case "IChangedTargetReticle":
 								toSend += "OpponentChangedTargetReticle" + tail;
-							}
-							if (msg[0].equals("IUsedAnAbility")) {
+								break;
+							case "IUsedAnAbility":
 								toSend += "OpponentUsedAnAbility" + tail;
-							}
-							if (msg[0].equals("YouDidntRespondToMySyncs")) {
+								break;
+							case "YouDidntRespondToMySyncs":
 								// toSend+="OpponentDidntGetMySyncResponses"+tail;
 								toSend += "OpponentRequestsSync" + tail;
-
-							}
-							if (msg[0].equals("RelayMsg")) {
+								break;
+							case "RelayMsg":
 								this.relays++;
 								if (msg.length > 1 && msg[1].equals("SentChatMsg")) {
 									try {
@@ -689,16 +687,20 @@ class GameServerThread extends Thread {
 										if (cmd.length > 1)
 											param = FlashServer.decode(msg[2]).trim()
 													.substring(FlashServer.decode(msg[2]).trim().indexOf(' ') + 1);
-										if (cmd[0].equals("!help"))
+										switch (cmd[0]) {
+										case "!help":
 											doubleWrite("RelayMsg,SentChatMsg," + FlashServer.encode(
 													"\nCommands:\n!help - displays this\n!history - displays your most recent 10 matches\n!source - view the source code on GitHub\n!profile <url> - set a profile picture for your opponents to see(140x140)\n!random <count> - generates random tower(s)\n!map <count> - generates random map(s)\n!lagtest - tests game timer vs real time\n!bugs - displays known bugs"));
-										else if (cmd[0].equals("!history"))
+											break;
+										case "!history":
 											doubleWrite("RelayMsg,SentChatMsg,"
 													+ FlashServer.encode(FlashServer.getHistory(player.id)));
-										else if (cmd[0].equals("!source"))
+											break;
+										case "!source":
 											doubleWrite("RelayMsg,SentChatMsg,"
 													+ FlashServer.encode("https://github.com/GlennnM/NKFlashServers"));
-										else if (cmd[0].equals("!profile")) {
+											break;
+										case "!profile":
 											if (cmd.length == 1)
 												doubleWrite("RelayMsg,SentChatMsg,"
 														+ FlashServer.encode("Current profile picture: "
@@ -708,13 +710,14 @@ class GameServerThread extends Thread {
 														+ FlashServer.encode("Set profile picture to: " + param));
 												FlashServer.setProfile(player.id, param);
 											}
-										} else if (cmd[0].equals("!random")) {
-											int count = 0;
+											break;
+										case "!random":
+											count = 0;
 											if (param == null)
 												count = 4;
 											else
 												count = Math.min(Integer.parseInt(param), 10);
-											ArrayList<String> x = new ArrayList<String>();
+											x = new ArrayList<String>();
 											for (int n = 0; n < count; n++) {
 												int q = (int) (Math.random() * FlashServer.TOWERS.length);
 												while (x.contains(FlashServer.TOWERS[q]))
@@ -723,13 +726,14 @@ class GameServerThread extends Thread {
 											}
 											doubleWrite("RelayMsg,SentChatMsg," + FlashServer
 													.encode(x.toString().substring(1, x.toString().length() - 1)));
-										} else if (cmd[0].equals("!map")) {
-											int count = 0;
+											break;
+										case "!map":
+											count = 0;
 											if (param == null)
 												count = 1;
 											else
 												count = Math.min(Integer.parseInt(param), 10);
-											ArrayList<String> x = new ArrayList<String>();
+											x = new ArrayList<String>();
 											for (int n = 0; n < count; n++) {
 												int q = (int) (Math.random() * FlashServer.MAPS.length);
 												while (x.contains(FlashServer.MAPS[q]))
@@ -738,18 +742,23 @@ class GameServerThread extends Thread {
 											}
 											doubleWrite("RelayMsg,SentChatMsg," + FlashServer
 													.encode(x.toString().substring(1, x.toString().length() - 1)));
-										} else if (cmd[0].equals("!bugs"))
+											break;
+										case "!bugs":
 											doubleWrite("RelayMsg,SentChatMsg," + FlashServer.encode(
 													"Known issues:\n-game disconnects sometimes\n-wins and losses aren't shown\n-wins, losses, battlescore don't update"));
-										else if (cmd[0].equals("!lagtest")) {
+											break;
+										case "!lagtest":
 											doubleWrite("RelayMsg,SentChatMsg,"
 													+ FlashServer.encode("Starting lag test..."));
 											opponent.doubleWrite("RelayMsg,SentChatMsg,"
 													+ FlashServer.encode("Starting lag test..."));
 											lastTest = new Date();
 											lastTime = this.time;
-										} else
+											break;
+										default:
 											toSend += m;
+											break;
+										}
 									} catch (Exception e) {
 										doubleWrite("RelayMsg,SentChatMsg," + FlashServer.encode(
 												"An error occurred while processing a chat message or command."));
@@ -757,25 +766,24 @@ class GameServerThread extends Thread {
 									}
 								} else
 									toSend += m;
-							}
-							if (msg[0].equals("HeresMySyncData")) {
+								break;
+							case "HeresMySyncData":
 								if (msg.length > 1) {
 									toSend += "OpponentSyncRetrieved" + tail;
 									time = (int) (Double.parseDouble(msg[1]));
 								}
-							}
-							if (msg[0].equals("ImReadyToStartARound")) {
+								break;
+							case "ImReadyToStartARound":
 								this.r = true;
-							}
-							if (msg[0].equals("ILeftGame")) {
+								break;
+							case "ILeftGame":
 								this.win = 1;
 								toSend += "OpponentDisconnected";
-							}
-
-							if (msg[0].equals("GiveMeDaBalance")) {
+								break;
+							case "GiveMeDaBalance":
 								doubleWrite("HeresDaBalance," + FlashServer.BALANCE);
+								break;
 							}
-							// ImReadyToStartARound
 						}
 					}
 				} else {
@@ -887,7 +895,7 @@ public class FlashServer {
 	public static volatile String log = "";
 	public static volatile String ip = "";
 	public static volatile int nextPort = 8129;
-	public static boolean verbose=false;
+	public static boolean verbose=true;
 	private static boolean checkPort(int p) {
 		for (GameServer g : games)
 			if (g.port == p)
@@ -949,42 +957,46 @@ public class FlashServer {
 		FileWriter fw = new FileWriter(filename, true);
 		for (String x : privateMatches.keySet())
 			if (!privateMatches.get(x).alive) {
-				int id1 = privateMatches.get(x).g1.player.id;
-				int id2 = privateMatches.get(x).g2.player.id;
-				ArrayList<String> entries1;
-				if (history.get(id1) == null)
-					entries1 = new ArrayList<String>();
-				else
-					entries1 = new ArrayList<String>(history.get(id1));
-				if (entries1.size() > 9)
-					entries1.remove(entries1.get(0));
-				entries1.add(privateMatches.get(x).toString() + "\nType: Private\n");
-				history.put(id1, entries1);
-				if (id2 != id1)
-					history.put(id2, entries1);
-				fw.write(privateMatches.get(x).toString() + "\nType: Private\n");
-				fw.flush();
+				if(privateMatches.get(x).round>1){
+					int id1 = privateMatches.get(x).g1.player.id;
+					int id2 = privateMatches.get(x).g2.player.id;
+					ArrayList<String> entries1;
+					if (history.get(id1) == null)
+						entries1 = new ArrayList<String>();
+					else
+						entries1 = new ArrayList<String>(history.get(id1));
+					if (entries1.size() > 9)
+						entries1.remove(entries1.get(0));
+					entries1.add(privateMatches.get(x).toString() + "\nType: Private\n");
+					history.put(id1, entries1);
+					if (id2 != id1)
+						history.put(id2, entries1);
+					fw.write(privateMatches.get(x).toString() + "\nType: Private\n");
+					fw.flush();
+				}
 				privateMatches.remove(x);
 				privateHosts.remove(x);
 				System.out.println("game finished");
 			}
 		for (GameServer q : games)
 			if (!q.alive) {
-				int id1 = q.g1.player.id;
-				int id2 = q.g2.player.id;
-				ArrayList<String> entries1;
-				if (history.get(id1) == null)
-					entries1 = new ArrayList<String>();
-				else
-					entries1 = new ArrayList<String>(history.get(id1));
-				if (entries1.size() > 9)
-					entries1.remove(entries1.get(0));
-				entries1.add(q.toString() + "\nType: Quick\n");
-				history.put(id1, entries1);
-				if (id2 != id1)
-					history.put(id2, entries1);
-				fw.write(q.toString() + "\nType: Quick\n");
-				fw.flush();
+				if(q.round>1){
+					int id1 = q.g1.player.id;
+					int id2 = q.g2.player.id;
+					ArrayList<String> entries1;
+					if (history.get(id1) == null)
+						entries1 = new ArrayList<String>();
+					else
+						entries1 = new ArrayList<String>(history.get(id1));
+					if (entries1.size() > 9)
+						entries1.remove(entries1.get(0));
+					entries1.add(q.toString() + "\nType: Quick\n");
+					history.put(id1, entries1);
+					if (id2 != id1)
+						history.put(id2, entries1);
+					fw.write(q.toString() + "\nType: Quick\n");
+					fw.flush();
+				}
 				games.remove(q);
 				System.out.println("game finished");
 			}
