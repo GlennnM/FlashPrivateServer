@@ -22,7 +22,7 @@ Fiddler allows you to replace the SWFs as they are being loaded. This allows for
 Paste the following line into the top text box:<br>
 <code>regex:^http(s|)://assets.nkstatic.com/Games/gameswfs/sas4/sas4.swf</code><br>
 and the SWF link in the bottom text box:<br>
-<code>https://cdn.jsdelivr.net/gh/GlennnM/NKFlashServers/SAS4/sas5.swf</code><br>
+<code>https://cdn.jsdelivr.net/gh/GlennnM/NKFlashServers/SAS4/sas4-new.swf</code><br>
 Click "Save".
 <img src =https://user-images.githubusercontent.com/77253453/174720990-cb685426-e353-4aad-af80-155e6c2765de.png>
 
