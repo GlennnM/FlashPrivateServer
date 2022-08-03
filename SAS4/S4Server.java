@@ -19,7 +19,6 @@ import java.util.TimeZone;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.net.ServerSocket;
 
 /**
@@ -88,8 +87,17 @@ class ServerThread extends Thread {
 					 * after this exchange this server isn't used as far as i'm aware
 					 */
 					timeouts = 0;
+					if(buffer[0]!=(byte)0x00||buffer[1]!=(byte)0xca){
+						this.alive=false;
+						break;
+					}
 					code = (((int) buffer[2] & 0xff) << 24) | (((int) buffer[3] & 0xff) << 16)
 							| (((int) buffer[4] & 0xff) << 8) | ((int) buffer[5] & 0xff);
+					if(code==2){
+						code=(int)(Math.random()*899999999)+100000000;
+						while(S4Server.games.get("" + code + "\n" + mode)!=null)
+							code=(int)(Math.random()*899999999)+100000000;
+					}
 					int length = ((int) buffer[10] & 0xff) << 24 + ((int) buffer[11] & 0xff) << 16
 							+ ((int) buffer[12] & 0xff) << 8 + ((int) buffer[13] & 0xff);
 					int[] data = new int[length];
@@ -116,7 +124,6 @@ class ServerThread extends Thread {
 					}
 					byte[] ip = S4Server.ip.getBytes(StandardCharsets.UTF_8);
 					
-					//byte[] ip = "154.53.49.118".getBytes(StandardCharsets.UTF_8);
 					byte[] pl = new byte[10 + ip.length];
 					pl[0] = (byte) (ip.length >> 8);
 					pl[1] = (byte) (ip.length & 0xff);
@@ -448,7 +455,7 @@ class GameServer extends Thread {
 		usage+="Allocated: " + instance.totalMemory() / mb+" MB";
 		usage+=("\nMax Memory: " + instance.maxMemory() / mb+" MB");
 		chat(usage);
-		chat("Connections since last restart: "+S4Server.connections);
+		chat("Connections since last restart: "+S4Server.connections+"\nGames started: "+S4Server.gamesStarted);
 	}
 	public void chat(String s) {
 		byte first=(byte)-1;
@@ -529,6 +536,7 @@ class GameServer extends Thread {
 					}
 				}
 				int first=-1;
+				/**
 				if(this.init){
 				for (int i = 0; i < playerThreads.size(); i++) {
 					if (!playerThreads.get(i).bot && playerThreads.get(i).alive)
@@ -536,6 +544,7 @@ class GameServer extends Thread {
 					}
 					if (first == -1) {
 						this.alive = false;
+						System.out.println("Game cleaned up");
 						try {
 							this.server.close();
 						} catch (Exception e) {
@@ -543,7 +552,7 @@ class GameServer extends Thread {
 						S4Server.games.remove("" + this.code + "\n" + this.mode);
 						return;
 					}
-				}
+				}*/
 			}
 			Socket client = null;
 			int ready = 0;
@@ -574,10 +583,9 @@ class GameServer extends Thread {
 			try {
 				client = server.accept();
 				client.setTcpNoDelay(this.tcpNoDelay);
-				this.init = true;
+				//this.init = true;
 				GameServerThread connection = new GameServerThread(client, this, this.nextId, this.host, 0);
-				this.nextId++;
-				playerThreads.add(connection);
+				
 				new Thread(connection).start();
 			} catch (Exception e) {
 				// e.printStackTrace();
@@ -779,6 +787,7 @@ class GameServer extends Thread {
 			}
 			if (first == -1) {
 				this.alive = false;
+				System.out.println("Game ended");
 				try {
 					this.server.close();
 				} catch (Exception e) {
@@ -802,6 +811,7 @@ class GameServer extends Thread {
 	public void start() {
 		chat("Starting building...");
 		System.out.println("-------STARTING GAME " + code + "@"+new Date()+"-------");
+		S4Server.gamesStarted++;
 		this.writeAll(new byte[] { (byte) -16 }, 0, 1);
 		this.flushAll();
 		this.started = true;
@@ -998,7 +1008,10 @@ class GameServerThread extends Thread {
 			System.out.print((buffer[0]));
 		switch((int)buffer[0]){
 			case 0:
-				if(buffer[1] == (byte) 202){
+				if(buffer.length>13&&buffer[1] == (byte) 202){
+					parent.nextId++;
+					parent.init=true;
+					parent.playerThreads.add(this);
 					int length = (((int) buffer[10] & 0xff) << 24) | (((int) buffer[11] & 0xff) << 16)
 						| (((int) buffer[12] & 0xff) << 8) | ((int) buffer[13] & 0xff);
 					int[] header = new int[length];
@@ -1011,6 +1024,7 @@ class GameServerThread extends Thread {
 					/**
 					 * auto boost codes(zzz, boost, 400)
 					 */
+					 /**
 					if (this.parent.actualCode == 254486284) {
 						this.parent.boost((byte)100, 0);
 					}
@@ -1025,8 +1039,9 @@ class GameServerThread extends Thread {
 					}else if (this.parent.actualCode == 0&&this.parent.playerThreads.size()<2) {
 						this.parent.boost((byte)100, 0);
 					}
-					else if (this.parent.actualCode == 400||Math.abs(this.parent.actualCode-2089076591)<20) {
-						this.parent.boost((byte)100, 0);
+					*/
+					this.parent.boost((byte)100, 0);
+					if (this.parent.actualCode == 400||Math.abs(this.parent.actualCode-2089076591)<20) {
 						this.parent.boost((byte)100, 0);
 						this.parent.boost((byte)100, 0);
 					}
@@ -1230,7 +1245,7 @@ class GameServerThread extends Thread {
 			}
 			break;
 		}
-		if(parent.autoFlush)
+		if(buffer[0]<(byte)0&&parent.autoFlush)
 			parent.flushAll();
 	}
 
@@ -1377,6 +1392,8 @@ class GameServerThread extends Thread {
 					while (x < actualSize) {
 						
 						byte opcode = buffer[x];
+						if(this.player==null&&opcode<(byte)0)
+							opcode=(byte)1;
 						int length = 1;
 						switch (opcode) {
 							case -9:
@@ -1399,8 +1416,13 @@ class GameServerThread extends Thread {
 								length += (((int) buffer[x + 1] & 0xff) << 24) | (((int) buffer[x + 2] & 0xff) << 16)
 										| (((int) buffer[x + 3] & 0xff) << 8) | ((int) buffer[x + 4] & 0xff) + 4;
 								break;
+							case 0:
+								length = (actualSize - x);
+								break;
 							default://print something maybe
 								length = (actualSize - x);
+								timeouts=(120+timeouts)/2;
+								timeouts+=10;
 								break;
 						}if(buffer.length>x+6&&buffer[x+6]==(byte)0x07&&buffer[x]==(byte)-2){
 							length+=2;
@@ -1486,6 +1508,7 @@ public class S4Server {
 	public static volatile String log = "";
 	public static volatile int nextPort = 8118;
 	public static volatile int connections=0;
+	public static volatile int gamesStarted=0;
 	public static volatile long window = 0;
 	public static boolean verbose=false;//printing
 	public static volatile String ip="";
