@@ -436,7 +436,7 @@ class GameServer extends Thread {
 					new Thread(g1).start();
 				}
 
-				else {
+				else if(this.g2==null){
 					g2 = connection;
 					g2.opponent = p1;
 					g2.side = 1;
@@ -895,7 +895,7 @@ public class FlashServer {
 	public static volatile String log = "";
 	public static volatile String ip = "";
 	public static volatile int nextPort = 8129;
-	public static boolean verbose=true;
+	public static boolean verbose=false;
 	private static boolean checkPort(int p) {
 		for (GameServer g : games)
 			if (g.port == p)
