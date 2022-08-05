@@ -481,8 +481,8 @@ class WaveStartTask extends TimerTask{
 		room.p1=0;
 		room.p2=0.0f;
 		room.p3=0f;
-		room.writeAll("\0"+"%xt%17%-1%"+(new Date().getTime()-room.players.get(0).startTime)+"%"+room.wave+"%"+room.waveTotal+"%");
 		room.wave++;
+		room.writeAll("\0"+"%xt%17%-1%"+(new Date().getTime()-room.players.get(0).startTime)+"%"+room.wave+"%"+room.waveTotal+"%");
 		room.timer.schedule(new SpawnTask(room),5000);
 		room.timer.schedule(new PowerupTask(room),30000);
 		room.init=true;
@@ -530,7 +530,7 @@ class SpawnTask extends TimerTask{
 			loc7 -= loc3.get(loc8_).chance / chanceSum;
 			loc8_--;
 		}
-		
+		System.out.println("dashL::param1="+loc2);
 		float loc6=room.dashL(loc2);
 		loc7=loc6*2500f/1000f;
 		room.p3+=loc7;
@@ -850,7 +850,7 @@ class Room {
 	public volatile int p1=0;//§[D§
 	public volatile float p2=0f;//§]?§
 	public volatile float p3=0f;//§5-§
-	public volatile int wave=1;
+	public volatile int wave=0;
 	public volatile int waveTotal;
 	public volatile boolean alive=true;
 	public volatile int nextSpawnNum=99;
@@ -1069,11 +1069,12 @@ class Room {
          float loc7 = loc4 / 18f;
          float loc8 = (float)Math.pow(loc6,loc7) * 1.2f;
          float loc9 = (float)Math.pow(loc5,1.5f) * 5.2f;
+		 System.out.println("$-L$"+((loc8 + loc9) / 4f * (float)(players.size()) * loc2 * loc3));
          return (loc8 + loc9) / 4f * (float)(players.size()) * loc2 * loc3;
 	}
 	
 	public float commaHash(){
-		return (float)this.rankSum + ((float)this.p1 + 24f * (float)this.waveTotal) / (24f * (float)this.waveTotal) * 10f * ((float)(this.waveTotal - 4) / 12f + 1f);
+		return (float)this.rankSum + ((float)this.p1 + 24f * (float)this.wave) / (24f * (float)this.waveTotal) * 10f * ((float)(this.waveTotal - 4) / 12f + 1f);
 	}
 	public Room(ServerThread p1, int mode, int nm) {
 		players = new CopyOnWriteArrayList<ServerThread>();
