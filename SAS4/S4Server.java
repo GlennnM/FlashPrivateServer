@@ -105,6 +105,9 @@ class ServerThread extends Thread {
 						data[i] = ((int) buffer[14 + 2 * i] & 0xff) << 8 + ((int) buffer[15 + 2 * i]);
 
 					short level = (short) (((buffer[6] & 0xff) << 8) | (buffer[7] & 0xff));
+					if(code==1855064479&&level<99){
+						code-=1000000000;
+					}
 					mode = (((int) buffer[8] & 0xff) << 8) | ((int) buffer[9] & 0xff);
 					String strCode = "" + code + "\n" + mode;
 					// System.out.println(strCode.hashCode());
@@ -1040,10 +1043,18 @@ class GameServerThread extends Thread {
 						this.parent.boost((byte)100, 0);
 					}
 					*/
-					this.parent.boost((byte)100, 0);
-					if (this.parent.actualCode == 400||Math.abs(this.parent.actualCode-2089076591)<20) {
-						this.parent.boost((byte)100, 0);
-						this.parent.boost((byte)100, 0);
+					if(this.parent.playerThreads.size()<2){
+						if(this.parent.mode!=7){
+							this.parent.boost((byte)100, 0);
+							if (this.parent.actualCode == 400||Math.abs(this.parent.actualCode-2089076591)<20) {
+								this.parent.boost((byte)100, 0);
+								this.parent.boost((byte)100, 0);
+							}
+						}else{
+							this.parent.boost((byte)100, 2);
+							this.parent.boost((byte)100, 1);
+							this.parent.boost((byte)100, 1);
+						}
 					}
 				}
 			break;
