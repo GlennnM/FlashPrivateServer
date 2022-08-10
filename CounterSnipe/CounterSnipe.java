@@ -490,7 +490,6 @@ class ServerThread extends Thread {
 								}
 								break;
 							case 5:
-								opponent.doubleWrite("\0%xt%17%-1%0%");
 								this.alive = false;
 								break;
 							case 14:
