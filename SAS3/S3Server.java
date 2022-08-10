@@ -314,7 +314,7 @@ class ServerThread extends Thread {
 					for (String m : msgs) {
 						// "extension message" - main protocol for the game. A message triggers a
 						// "command"(
-						if (m.startsWith("%xt%SAS3%%")) {
+						if (m.startsWith("%xt%S")) {
 							xt = true;
 							ArrayList<String> msg = new ArrayList<String>(Arrays.asList(m.split("%")));
 							if(msg.size()<6)
@@ -1614,7 +1614,6 @@ class Room {
 //class for main method
 public class S3Server {
 	//
-	public static volatile String ip = "";
 	public static boolean verbose = false;
 	public static volatile ConcurrentHashMap<InetAddress, Integer> ipThreads;
 	public static volatile ArrayList<Room> games;
@@ -1641,12 +1640,11 @@ public class S3Server {
 			// might already be running
 		}
 		try {
-			ip = Files.readString(Paths.get("./config.txt")).trim();
 
 			server = new ServerSocket(port);
 		} catch (IOException e) {
 			System.out.println(
-					"error. Please ensure the port is available and config.txt exists(put IP or \"localhost\" there)");
+					"error. Please ensure the port is available");
 			return;
 		}
 
