@@ -8,12 +8,12 @@ BTD5 Flash<br>
 as well as BTD Battles Flash, despite it not being mentioned in the original blog post.<br>
 <br>
 This project fully recreates these servers, built from scratch with Java TCP sockets.<br>
-Currently I am hosting BTD Battles, BTD5 challenges, BTD5 co-op, and SAS4. The guide to play on these servers is also available as a video(soon<br>
+Currently I am hosting all of these - BTD Battles, BTD5 challenges, BTD5 co-op, SAS3, Countersnipe, and SAS4. The guide to play on these servers is also available as a video(soon<br>
 When playing on these servers, some quality of life/easter egg features are added, but mostly they will play exactly as you would expect the game to play on Ninja Kiwi's servers, and any data or achievements from these games will register in your actual NK profile.<br>
 <h1>
 HOW TO PLAY<br></h1>
 1. Ensure you have Ninja Kiwi Archive installed(from ninja kiwi website or Steam)<br>
-2. Download FlashClient.ps1 from this page<a href = https://github.com/GlennnM/NKFlashServers/releases/tag/v2.0>(click)</a><br>
+2. Download FlashClient.ps1 from this page<a href = https://github.com/GlennnM/NKFlashServers/releases/tag/v3.0>(click)</a><br>
 3. Open the folder you downloaded it to, close all NK Archive windows(INCLUDING THE LAUNCHER), then run the script.<br>
 There are different methods of running the PowerShell script. The methods are as follows:<br>
 
@@ -42,7 +42,7 @@ Hosting your own server from source<br>
   </h1>
 Install java 10+ and run the .sh or .bat file for the game you wish to host after replacing the IP in config.txt with your ip(or localhost).<br>
 For hosting daily challenges, the "BTD5" folder should be the root directory of a jsp server on the port being accessed by the game. The one being deployed currently is custom and the source is not available here yet.<br>
-You can now play locally with one of the "localhost" SWFs<br> To load these, use the <a href=https://github.com/GlennnM/NKFlashServers/blob/main/FlashClient_localhost.ps1>localhost powershell script</a> or the <a href = https://github.com/GlennnM/NKFlashServers/blob/main/Fiddler-guide.md>fiddler guide</a>. <br>
+You can now play locally with one of the "localhost" SWFs<br> To load these, use the <a href=https://github.com/GlennnM/NKFlashServers/blob/main/FlashClient_localhost.ps1>localhost powershell script(outdated)</a> or the <a href = https://github.com/GlennnM/NKFlashServers/blob/main/Fiddler-guide.md>fiddler guide</a>. <br>
 If you want to host it for other people to play you will need to change the IP and make a new swf(instructions not provided here, but it is fairly simple)<br>
 <br>
 
