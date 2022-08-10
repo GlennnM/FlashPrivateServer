@@ -269,6 +269,7 @@ class ServerThread extends Thread {
 				if (match == 1) {
 					this.alive = false;
 					opponent.alive = false;
+					System.out.println("ending match");
 				}
 				round++;
 				opponent.round++;
@@ -482,7 +483,6 @@ class ServerThread extends Thread {
 							case 3:
 								// doubleWrite("\0%xt%6%-1%1%1%1%Hydar%Hydar2%1%1%1%1%1%1%");
 								// doubleWrite("\0%xt%7%1%1%");
-								System.out.println(opponent);
 								synchronized (this) {
 									synchronized (opponent) {
 										opponent.hit(Integer.parseInt(msg.get(6)), Integer.parseInt(msg.get(7)));
@@ -571,6 +571,7 @@ class ServerThread extends Thread {
 
 		}
 		timer.cancel();
+		System.out.println("ending thread");
 		return;
 	}
 }
