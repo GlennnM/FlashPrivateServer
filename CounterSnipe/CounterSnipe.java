@@ -19,7 +19,7 @@ import java.net.ServerSocket;
  * Countersnipe Server
  * 
  * The simplest server. It uses smartfox just like sas3, and the server still
- * has to verify hits, but the protocol is just much simple in general so it
+ * has to verify hits, but the protocol is just much simpler in general so it
  * doesn't matter
  *
  * Also features bots(they join after queue for 30s)
