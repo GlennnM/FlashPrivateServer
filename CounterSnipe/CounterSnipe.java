@@ -699,8 +699,7 @@ class DelayedWriteTask extends TimerTask {
 //class for main method
 public class CounterSnipe {
 	//
-	public static volatile String ip = "";
-	public static boolean verbose = true;
+	public static boolean verbose = false;
 	public static volatile ConcurrentHashMap<InetAddress, Integer> ipThreads;
 	public static volatile ArrayList<ServerThread> queue;
 	public static volatile ArrayList<Integer> names;
@@ -730,12 +729,10 @@ public class CounterSnipe {
 			// might already be running
 		}
 		try {
-			ip = Files.readString(Paths.get("./config.txt")).trim();
-
 			server = new ServerSocket(port);
 		} catch (IOException e) {
 			System.out.println(
-					"error. Please ensure the port is available and config.txt exists(put IP or \"localhost\" there)");
+					"error. Please ensure the port is available");
 			return;
 		}
 
