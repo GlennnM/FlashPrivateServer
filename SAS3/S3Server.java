@@ -132,8 +132,8 @@ class FilePolicyServerThread extends Thread {
 					char[] buffer = new char[1024];
 					int l4 = ir.read(buffer, 0, 1024);
 					if (l4 == 1024) {
-						ir.skip(999999999);
-						continue;
+						this.alive=false;
+						break;
 					}
 					line = new String(buffer).trim();
 					headers = new String(line);
@@ -1615,7 +1615,7 @@ class Room {
 public class S3Server {
 	//
 	public static volatile String ip = "";
-	public static boolean verbose = true;
+	public static boolean verbose = false;
 	public static volatile ConcurrentHashMap<InetAddress, Integer> ipThreads;
 	public static volatile ArrayList<Room> games;
 
