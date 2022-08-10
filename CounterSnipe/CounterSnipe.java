@@ -702,14 +702,12 @@ public class CounterSnipe {
 	public static volatile String ip = "";
 	public static boolean verbose = true;
 	public static volatile ConcurrentHashMap<InetAddress, Integer> ipThreads;
-	public static volatile ArrayList<ServerThread> games;
 	public static volatile ArrayList<ServerThread> queue;
 	public static volatile ArrayList<Integer> names;
 	public static Object lock = "";
 
 	public static void main(String[] args) {
 
-		CounterSnipe.games = new ArrayList<ServerThread>();
 		CounterSnipe.queue = new ArrayList<ServerThread>();
 		names = new ArrayList<Integer>();
 		// checks if a port is specified
