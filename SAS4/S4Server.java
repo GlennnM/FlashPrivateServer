@@ -354,22 +354,22 @@ class GameServer extends Thread {
 	}
 	public boolean can101(){
 		try{
-				for(GameServerThread g:playerThreads){
-					if(!g.bot&&g.player.level<96)
-						return false;
-				}
+			for(GameServerThread g:playerThreads){
+				if(!g.bot&&g.player.level<96)
+					return false;
+			}
 		}catch(Exception e){
 			
 		}return true;
 	}
 	public void flushAll(){
-			for(GameServerThread g:playerThreads){
-				try{
+		for(GameServerThread g:playerThreads){
+			try{
 				g.flushAll();
-				}catch(Exception e){
+			}catch(Exception e){
 				e.printStackTrace();
-				}
 			}
+		}
 		
 	}
 	
@@ -1011,7 +1011,7 @@ class GameServerThread extends Thread {
 			System.out.print((buffer[0]));
 		switch((int)buffer[0]){
 			case 0:
-				if(buffer.length>13&&buffer[1] == (byte) 202){
+				if(!parent.started&&buffer.length>13&&buffer[1] == (byte) 202){
 					parent.nextId++;
 					parent.init=true;
 					parent.playerThreads.add(this);
@@ -1052,8 +1052,8 @@ class GameServerThread extends Thread {
 							}
 						}else{
 							this.parent.boost((byte)100, 2);
-							this.parent.boost((byte)100, 1);
-							this.parent.boost((byte)100, 1);
+							//this.parent.boost((byte)100, 1);
+							//this.parent.boost((byte)100, 1);
 						}
 					}
 				}
@@ -1227,16 +1227,16 @@ class GameServerThread extends Thread {
 					this.built = true;
 				}
 				
-					for (int i = 7; i < actualSize; i++)
-						pl[i - 1] = buffer[i];
-					if(actualSize>10&&buffer[6] != (byte) 0x07){
-						time = (new Date()).getTime()/1000;
-						pl[6] = ((byte) (time >> 24));
-						pl[7] = ((byte) ((time >> 16) & 0xff));
-						pl[8] = ((byte) ((time >> 8) & 0xff));
-						pl[9] = ((byte) ((time) & 0xff));
-					}
-					parent.writeFrom(this.id, pl, 0, pl.length);
+				for (int i = 7; i < actualSize; i++)
+					pl[i - 1] = buffer[i];
+				if(actualSize>10&&buffer[6] != (byte) 0x07){
+					time = (new Date()).getTime()/1000;
+					pl[6] = ((byte) (time >> 24));
+					pl[7] = ((byte) ((time >> 16) & 0xff));
+					pl[8] = ((byte) ((time >> 8) & 0xff));
+					pl[9] = ((byte) ((time) & 0xff));
+				}
+				parent.writeFrom(this.id, pl, 0, pl.length);
 			break;
 			case -17:
 			if(buffer[0] == (byte) (-17) && !parent.started)
@@ -1303,7 +1303,9 @@ class GameServerThread extends Thread {
 				pl[10] = (byte) (parent.mode & 0xff);
 				pl[11] = ((byte) ((parent.seed >> 8) & (short)0xff));
 				pl[12] = (byte) (parent.seed & (short)0xff);
-				
+				/**
+				next 4 bytes are time until start in ms i think
+				 */
 				rawOutput.write(pl, 0, 17);
 				rawOutput.flush();
 				//this.flushAll();
@@ -1332,7 +1334,7 @@ class GameServerThread extends Thread {
 						parent.dropPlayer(this.id);
 						this.alive = false;
 						break;
-					}else if(this.vs==2&&(new Date().getTime())-this.ingameSince>300000){
+					}else if(this.vs==2&&(new Date().getTime())-this.ingameSince>240000){
 						parent.dropPlayer(this.id);
 						this.alive = false;
 						break;
@@ -1524,9 +1526,11 @@ public class S4Server {
 	public static boolean verbose=false;//printing
 	public static volatile String ip="";
 	public static final short[] EVENT_MAPS=new short[]{1092,1093,1094,1095,1096,1099,1100,1111,1113,1114,1115,1116,1117,1118,1119};
-	public static final short[][] EVENT_MAP_SETS=new short[][]{EVENT_MAPS,new short[]{1092,1093,1094,1095,1099,1100,1113,1114,1116,1117,1118,1119},new short[]{1092,1093,1095,1099,1113,1114,1116,1117,1119},new short[]{1092,1093,1099,1116},new short[]{1092,1094,1095,1099,1100,1113,1114,1115,1116,1117,1118,1119}};
+	public static final short[][] EVENT_MAP_SETS=new short[][]{EVENT_MAPS,new short[]{1092,1093,1094,1095,1099,1100,1113,1114,1116,1117,1118,1119},new short[]{1092,1093,1095,1099,1113,1114,1116,1117,1119},new short[]{1092,1093,1099,1116},new short[]{1092,1094,1095,1099,1100,1114,1119}};
 	public static String[] EVENT_MAP_DESC=new String[]{"All","All except Ice(8),VIP(5),Highway(11)","1, 2, 4, 6, 9, 10, 12, 13, 15","Ons(1), Vac(2), PO(6), Crash Site(12)","??? VS maps or something"};
 	
+	//	this.map=(new short[]{1092,1095,1094,1100,1093,1099,1096,1111,1113})[(int)(Math.random()*9)];
+	// onsl pods sur ls vac po vip is md
 	
 	public static int getPlayerCount(){
 		int x=0;
