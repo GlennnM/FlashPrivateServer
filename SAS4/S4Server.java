@@ -1059,8 +1059,10 @@ class GameServerThread extends Thread {
 				}
 			break;
 			case -14:
-				this.map = (short) ((((short) buffer[1] & 0xff) << 8) | ((short) buffer[2] & 0xff));
-				parent.setMap(this.map);
+				if(!parent.started){
+					this.map = (short) ((((short) buffer[1] & 0xff) << 8) | ((short) buffer[2] & 0xff));
+					parent.setMap(this.map);
+				}
 			break;
 			case -9:
 				if ((new Date()).getTime() - lastPinged > 1000) {
