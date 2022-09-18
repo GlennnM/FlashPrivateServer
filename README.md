@@ -37,6 +37,36 @@ There are different methods of running the PowerShell script. The methods are as
 <br>Since the games are fairly inactive, you can play "solo" multiplayer with the following methods:<br>
 join code 400 in SAS4 to play a boosted game with bots(works in any mode)<br>
 <a href = https://github.com/Kinnay/Bloons-Terminator>bots</a> for battles flash(will require some code changes to work)<br>
+<details>
+<summary>
+Stuck installing flash player?<br>
+</summary><br>
+If the links provided to you during archive installation don't work for you(make sure to read 'How to Play' first!) try one of the following methods:<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<details><summary><h2>Archive.org installer - requires admin<br></h2></summary> <a href=https://archive.org/download/flashplayerarchivedversions2/333/fp_29.0.0.171_archive.zip>https://archive.org/download/flashplayerarchivedversions2/333/fp_29.0.0.171_archive.zip</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;1. extract the zip file from the link above<br>
+&nbsp;&nbsp;&nbsp;&nbsp;2. run the correct installer(most likely winpep something)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;3. Restart the archive and it should load!<br></details>
+&nbsp;&nbsp;&nbsp;&nbsp;<details><summary><h2>Manual 'install' - no admin required</h2><br></summary>
+&nbsp;&nbsp;&nbsp;&nbsp;1. download "pepflashplayer.dll" for your system(just search for it on google)<br>
+<details>
+    &nbsp;&nbsp;&nbsp;&nbsp;<summary>How to verify a .dll from the internet is legit<br></summary>
+    &nbsp;&nbsp;&nbsp;&nbsp;1. right click on pepflashplayer.dll(the one extracted from the zip, not the zip itself) and click 'Properties'<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;2. click the 'Digital Signatures' tab(if it isn't there don't trust the file)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;3. click on the signature by 'Adobe Systens Incorporated'(if it isn't there don't trust the file)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;4. click 'Details', then 'Advanced'<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;5. verify that the 'Issuer' is something other than the 'Name of signer' in the original signature list. For instance:<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-Name of signer: Adobe Systems Incorporated<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-Issuer: DigiCert EV Code Signing CA (SHA2)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;However, if both say "Adobe Systems Incorporated" then it is a self signed certificate and you shouldn't trust the file.<br>
+    
+</details>
+&nbsp;&nbsp;&nbsp;&nbsp;2. navigate to %appdata%/Ninja Kiwi Archive/ in file explorer<br>
+&nbsp;&nbsp;&nbsp;&nbsp;3. open the folder there named "flash"(create it if it didn't exist)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;4. delete anything there previously<br>
+&nbsp;&nbsp;&nbsp;&nbsp;5. create a folder called "system"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;6. paste the pepflashplayer.dll there<br>
+&nbsp;&nbsp;&nbsp;&nbsp;7. restart the archive and it should load!<br>
+</details></details>
 <h1>
 Hosting your own server from source<br>
   </h1>
@@ -45,4 +75,7 @@ For hosting daily challenges, the "BTD5" folder should be the root directory of 
 You can now play locally with one of the "localhost" SWFs<br> To load these, use the <a href=https://github.com/GlennnM/NKFlashServers/blob/main/FlashClient_localhost.ps1>localhost powershell script(outdated)</a> or the <a href = https://github.com/GlennnM/NKFlashServers/blob/main/Fiddler-guide.md>fiddler guide</a>. <br>
 If you want to host it for other people to play you will need to change the IP and make a new swf(instructions not provided here, but it is fairly simple)<br>
 <br>
-
+<h1>
+Contact<br>
+</h1>
+If you have questions or concerns feel free to message me on discord: Glenn M#9606
