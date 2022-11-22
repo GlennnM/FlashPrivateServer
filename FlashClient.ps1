@@ -36,7 +36,7 @@ if (Test-Path -Path $cache) {
 	"Archive cache cleared!"
 	try {
 		"Checking version..."
-		$N.DownloadFile('https://github.com/GlennnM/NKFlashServers/raw/main/Installer/is_latest_v3.0.txt',$cache + '/test.txt')
+		$N.DownloadFile('https://github.com/GlennnM/NKFlashServers/raw/main/v3.1.txt',$cache + '/test.txt')
 		Remove-Item $cache'/test.txt'
 		"Version check successful!"
 	} catch {
