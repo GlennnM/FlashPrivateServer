@@ -36,7 +36,10 @@ There are different methods of running the PowerShell script. The methods are as
 <br>That's it! Next time you start BTD Battles, BTD5, SAS3, Countersnipe, or SAS4 on the archive they will be modded to link to the private server, allowing you to play.<br><b>Enjoy!!</b><br>
 <br>Since the games are fairly inactive, you can play "solo" multiplayer with the following methods:<br>
 join code 400 in SAS4 to play a boosted game with bots(works in any mode)<br>
-<a href = https://github.com/Kinnay/Bloons-Terminator>bots</a> for battles flash(will require some code changes to work)<br>
+<a href = https://github.com/Kinnay/Bloons-Terminator>bots</a> for battles flash(will require some code changes to work)<br><br>
+If you would like to run multiple instances of the same game, opening multiple archive launchers will not work with these mods.<br>
+However, you can run them from the same launcher using the following mod:<br>
+<a href=https://github.com/GlennnM/NKMultiArchive>NKMultiArchive</a><br>
 <details>
 <summary>
 Stuck installing flash player?<br>
