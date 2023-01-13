@@ -1,0 +1,199 @@
+mp rewrite:
+sas3/countersnipe, loadable config, multiple game server ip's, better logging, restart w/o killing connections, other stuff in TODOs
+
+other NK flash stuff: 
+1. downloading save as file with archive app.asar mod
+->bmc too
+2. sql setup for accounts
+3. AMF gateway and web-monkey-city.ninjakiwi or whatever
+4. actually working ui(login/register) with app.asar mod
+5. optional: battles stats/fd/tk
+
+notes on nk AMF services=========================
+"OBJ"=object(usually turned to map/jsonobject by most amf frameworks
+[X]=list
+uID is always a string
+num is always a double
+* = unknown
+** = unused/optional
+#long string=>probably breaks things, but isn''t used
+#multi serialize=>result: use multi body in same msg
+
+
+#data:
+#names: BTD4 BTD5 Battles SAS3 SAS4 MonkeyCity BSM2 "SAS TD" "Battle Panic" "Battle Blocks Defense" fd/tk
+
+#ui:
+#create/transfer acc
+#login etc, bmc, static api
+#new acc {gcash=null, data=null, transid=null, active=1.0, glevel=null, gxp=null, gnum=null}
+#currency/currencyinv null
+
+#rewards - 3=btd5 4=bsm2 5,6,7,8,*9,*10=sas4
+echo.echo
+	REQUEST:
+	[string "?"=bmc TESTCONN=btd5]
+	RESPONSE:
+	<<TESTCONN>>
+	
+game.get_data
+	REQUEST:
+	[user ID, game name]
+	RESPONSE:
+	[Obj{gcash:doubl data:STRING transid:NUM active:NUM glevel:NUM gxp:NUM gnum:NUM}]
+game.get_store
+	REQUEST:
+	[game name]
+	RESPONSE:
+	[Obj{salethumb:STR thumbnail:STR cost:NUM quantity:NUM hidden:NUM itemname:STR iscombo:NUM salecost:NUM description:STR id:NUM maxbuyable:NUM maxquantity:NUM}...]
+game.get_my_achievements
+	REQUEST:
+	[game,uID,token]
+	RESPONSE:
+	NULL
+game.save_data
+	REQUEST:
+	[uid, token, game, {important:bool gcash:num data:str transid:num glevel:num gxp:num gnum:num}]
+	RESPONSE:
+	transid(num)
+game.check_reward
+	REQUEST:
+	[uid, token, rewardNum:(3 for daily)]
+	RESPONSE:
+	[rewardNum:NUM, unclaimed(bool),(0.0(num) if true, hh:mm:ss if false)]
+game.claim_reward
+	REQUEST:
+	[uid, token, rewardNum:(3 for daily)]
+	RESPONSE:
+	[rewardNum:STRING, success:BOOL]
+game.consecutive_logins
+	REQUEST:
+	[uid, token, gameName]
+	RESPONSE:
+	logins:num
+game.save_score
+	REQUEST:
+	[uid,token,number,score:number,username]
+	RESPONSE:
+	it was the first number(112), either lb id/transaction/rank
+game.get_server_time
+	REQUEST:
+	[]
+	RESPONSE:
+	time:num
+**game.track - ignore
+	???
+	RESPONSE:
+	json{"send":true,"error":""}
+
+user.get_avatar
+	REQUEST:
+	[user ID, token]
+	RESPONSE:
+	Obj{avatar:String}
+user.get_koins
+	REQUEST:
+	[user ID, token]
+	RESPONSE:
+	Obj{koins:double, points:double}
+user.get_clan
+	REQUEST:
+	[user ID]
+	RESPONSE:
+	Obj{name:String, id:double}
+user.get_avatar
+	REQUEST:
+	[user ID, token]
+	RESPONSE:
+	Obj{avatar:String}
+user.get_inventory
+	REQUEST:
+	[game,uID,token,username]
+	RESPONSE:
+	[Obj{thumbnail:STR cost:NUM quantity:NUM hidden:NUM itemname:STR iscombo:NUM salecost:NUM description:STR id:NUM maxbuyable:NUM maxquantity:NUM}...]
+user.get_my_achievements -> might not exist
+	REQUEST:
+	[uID,token,game]
+	RESPONSE:
+	[Obj{perc:NUM hidden:NUM thumb:STR ach_name:STR desc:STR id:NUM uid:NUM cred:NUM pts:NUM}]
+user.set_achievement
+	REQUEST:
+	[uID,token,game,ach_id:num,perc:num,username]
+	RESPONSE:
+	[ach_id:num,perc:num,("n"=not update "u"=update)]
+*user.buy_items
+	???
+*user.add_awesome
+	???
+prem.getBalance
+	REQUEST:
+	[user ID, token, game name,currencyID:?,int,int,str]
+	RESPONSE:
+	NULL
+prem.getCurrency
+	REQUEST:
+	[user ID, token, game name]
+	RESPONSE:
+	NULL
+prem.get_game_currency_inventory
+	REQUEST:
+	[game,uID,token]
+	RESPONSE:
+	NULL
+*prem.buy_items
+	???
+	
+	amf "v2"
++ = same as v1
+.....
+v2.game.get_data
+	REQUEST:
+	see v1
+	RESPONSE:
+	bmc==> NULL
++v2.game.get_my_achievements
++v2.game.get_store
+*v2.game.track
+	???
+	RESPONSE:
+	json{"send":true,"error":""}
++v2.game.check_reward
++v2.game.claim_reward - might not exist
+	???
+
+	
+	
+	
+v2.user.get_inventory
+	REQUEST:
+	see v1
+	RESPONSE:
+	obj{success:bool items:[?]}
++v2.user.get_koins
++v2.user.get_avatar
++v2.user.get_clan
+*v2.game.get_def_highscores_day
+*v2.game.get_def_highscores_week
+*v2.game.get_def_highscores_month
+*v2.game.get_def_highscores_all
+*v2.game.get_def_score
++v2.user.add_awesome
+	
+v2.prem.getBalance
+	REQUEST:
+	see v1
+	RESPONSE:
+	obj{currency:num currid:num}
+*v2.prem.buyNeoPremItem
+	???
+*v2.prem.consumeNeoPremItem
+	???
+*v2.user.buy_items
+	???
+*v2.user.consume_item
+	???
+v2.prem.getNeoPremInventory
+	REQUEST:
+	[id, token, game name, 7.0???????????????????]
+	RESPONSE:
+	obj{success:bool items:[?]}
