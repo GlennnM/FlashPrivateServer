@@ -1,4 +1,4 @@
-# NKFlashServers
+# FlashPrivateServer
 On April 29, 2022, Ninja Kiwi shut down their multiplayer servers for the following games:<br>
 <br>
 SAS4 Flash<br>
