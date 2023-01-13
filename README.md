@@ -13,7 +13,7 @@ When playing on these servers, some quality of life/easter egg features are adde
 <h1>
 HOW TO PLAY<br></h1>
 1. Ensure you have Ninja Kiwi Archive installed(from ninja kiwi website or Steam)<br>
-2. Download FlashClient.ps1 from this page<a href = https://github.com/GlennnM/NKFlashServers/releases/tag/v3.2>(click)</a><br>
+2. Download FlashClient.ps1 from this page<a href = https://github.com/GlennnM/FlashPrivateServer/releases/tag/v3.2>(click)</a><br>
 3. Open the folder you downloaded it to, close all NK Archive windows(INCLUDING THE LAUNCHER), then run the script.<br>
 There are different methods of running the PowerShell script. The methods are as follows:<br>
 
@@ -75,7 +75,7 @@ Hosting your own server from source<br>
   </h1>
 Install java 10+ and run the .sh or .bat file for the game you wish to host after replacing the IP in config.txt with your ip(or localhost).<br>
 For hosting daily challenges, the "BTD5" folder should be the root directory of a jsp server on the port being accessed by the game. The one being deployed currently is custom and the source is not available here yet.<br>
-You can now play locally with one of the "localhost" SWFs<br> To load these, use the <a href=https://github.com/GlennnM/NKFlashServers/blob/main/FlashClient_localhost.ps1>localhost powershell script(outdated)</a> or the <a href = https://github.com/GlennnM/NKFlashServers/blob/main/Fiddler-guide.md>fiddler guide</a>. <br>
+You can now play locally with one of the "localhost" SWFs<br> To load these, use the <a href=https://github.com/GlennnM/FlashPrivateServer/blob/main/FlashClient_localhost.ps1>localhost powershell script(outdated)</a> or the <a href = https://github.com/GlennnM/FlashPrivateServer/blob/main/Fiddler-guide.md>fiddler guide</a>. <br>
 If you want to host it for other people to play you will need to change the IP and make a new swf(instructions not provided here, but it is fairly simple)<br>
 <br>
 <h1>
