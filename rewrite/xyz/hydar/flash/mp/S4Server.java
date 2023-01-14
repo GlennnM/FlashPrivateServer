@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -39,7 +40,7 @@ record S4Player(short level, byte[] data){}
 class S4GameServer extends ServerContext{
 	public final int code;
 	public final short mode;
-	public final short seed;
+	public short seed;
 	public final boolean autostart;
 	public final Set<S4GameServerThread> players = new CopyOnWriteArraySet<>();
 	public final int mapSet;
@@ -94,8 +95,6 @@ class S4GameServer extends ServerContext{
 		Scheduler.schedule(this::checkAlive,30000);
 		
 	}
-	// Add a player, alert them of all the existing players and alert all the
-	// existing players of them.
 	/**Runs at most once a second when players send a ping or time packet(-9 or -3)<br>
 	 * Performs tasks that need to be performed continuously before the game starts, such as updating the auto-start timer and level ranges.<br>Public lobbies(code=0) only.*/
 	public void autoTick() throws IOException {
@@ -165,7 +164,6 @@ class S4GameServer extends ServerContext{
 	}
 	/**Runs 30 seconds after server is created. If no one has connected yet, close the server*/
 	public void checkAlive() {
-		if(!alive)return;
 		if(players.isEmpty()) {
 			alive=false;
 			end();
@@ -191,6 +189,8 @@ class S4GameServer extends ServerContext{
 	}
 	@Override
 	public void onClose() {
+
+		//System.out.println("parent onClose "+this);
 		S4Server.games.computeIfPresent(((long)code<<32)|(mode&-1L),(k,v)->{
 			v.remove(this);
 			if(v.isEmpty())
@@ -225,6 +225,7 @@ class S4GameServerThread extends ClientContext {
 	private float load=0f;
 	private short ping=0;
 	private short frameTime=1000;
+	private boolean valid=false;
 	protected ByteBuffer local;//write to self
 	protected ByteBuffer remote;//write to peers
 	//dummy constructor for bots
@@ -243,7 +244,7 @@ class S4GameServerThread extends ClientContext {
 		this.loaded=welcomed=built=true;
 	}
 	static final ClientOptions OPTIONS=ClientOptions.builder()
-			.timeout(180000).input(8192,16384).tickDelay(50).outputLocked(true).build();
+			.timeout(180000).input(8192,16384).inputDirect().mspt(50).outputLocked().build();
 	/**Initializes the client context.*/
 	public S4GameServerThread(S4GameServer parent) throws IOException {
 		super(OPTIONS);
@@ -476,7 +477,8 @@ class S4GameServerThread extends ClientContext {
 							//parent.boost((byte)100, 1);
 						}
 					}
-					if(parent.code==0&&!validate(data)) {
+					valid=validate(data);
+					if(parent.code==0&&!valid) {
 						chat("You can't join this lobby.\nTry a private/sandbox lobby(code apoc, lms, samp) instead",false);
 						flushLocal();flushRemote();
 						FlashUtils.sleep(2000);
@@ -598,12 +600,22 @@ class S4GameServerThread extends ClientContext {
 			if(grade>12||(recent&&mult>11) ||(!recent&&mult>21))
 				return false;
 		}
+		if(dis.available()<1||dis.available()<2*(count=dis.read()))return false;
+		int total=0;
+		for(int i=0;i<count;i++) {
+			dis.read();
+			int pts=dis.read();
+			if(pts>25||(total+=pts)>108)return false;
+		}
 		return true;
 	}
 
 	/**Add a bot, if possible. {@code vs} is 0 for normal bots, 1 for vs bots, and 2 for deadtabs*/
 	public void boost(short level,int vs) throws IOException {
-		if (level>101||(level==101&&!parent.can101())||parent.players.size() > 3||parent.started||(parent.mode>2&&level<1)||(vs>1&&parent.mode!=7&&parent.mode!=3)) {
+		if ((level>101&&(parent.code==0||valid))||(level==101&&!parent.can101())||
+				parent.players.size() > 3||parent.started||
+				(parent.mode>2&&(parent.code==0||valid)&&level<1)||
+				(vs>1&&parent.mode!=7&&parent.mode!=3)) {
 			chat("Unable to boost.",false);
 			return;
 		}
@@ -704,6 +716,13 @@ class S4GameServerThread extends ClientContext {
 			}
 		};
 	}
+	/**Returns a non-bot other than this player*/
+	public S4GameServerThread getPeer() {
+		for(var thread:parent.players)
+			if(thread.id!=id&&!thread.bot) 
+				return thread;
+		return null;
+	}
 	/**Send a chat message.
 	 * @param all - whether the message should be seen by all players, or only this player
 	 * @param s - the message*/
@@ -742,10 +761,19 @@ class S4GameServerThread extends ClientContext {
 			case "!source"->"https://github.com/GlennnM/NKFlashServers";
 			case "!help"->"Flash Private Server by Glenn M#9606.\nCommands:\n!boost <lvl>, !vsboost, !deadtab, !unboost\n!start, !unlock, !ping, !source, !seed, !stats, !code, !range, !disconnect";
 			case "!seed"->"Current seed: "+parent.seed+"\nMap ID: "+parent.map+"\nMode: "+parent.mode;
-			case "!code"->"Current code: "+parent.code+"\nMap ID: "+parent.map+"\nMode: "+parent.mode;
+			case "!code"->"Current code: "+parent.code+"\nMap ID: "+parent.map+"\nMode: "+parent.mode+"\nSpecial codes: 400, apoc, lms, avs, samp";
 			case "!range"->"Accepting levels "+parent.minLvl+"-"+parent.maxLvl;
 			case "!host"->"You are "+(id==parent.host?"":"not ")+"the host.";
 			case "!ping"->"Ping: %dms, %d reported FPS".formatted(ping,(1000/(0xffff&frameTime)));
+			case "!setseed"->{
+				if(!valid&&parent.code!=0&&getPeer()==null) {
+					if(msg.length>1&&FlashUtils.isShort(msg[1])) {
+						parent.seed=Short.parseShort(msg[1]);
+						onOpen();//TODO: try using this to make lobby merging?
+						register();
+					}
+				}yield null;
+			}
 			case "!boost","!b"->{
 				if(msg.length==1)
 					boost((short)100, 0);
@@ -758,7 +786,7 @@ class S4GameServerThread extends ClientContext {
 				else if(FlashUtils.isShort(msg[1]))
 					boost(Short.parseShort(msg[1]), 1);
 				yield null;
-			}case "!deadtab"->{
+			}case "!deadtab"->{//TODO: dead dead tab
 				if(msg.length==1)
 					boost((byte)100, 2);
 				else if(FlashUtils.isShort(msg[1]))
@@ -837,8 +865,8 @@ class S4GameServerThread extends ClientContext {
 		usage.append("Allocated: ").append(instance.totalMemory() / mb).append(" MB");
 		usage.append("\nMax Memory: ").append(instance.maxMemory() / mb).append(" MB");
 		announce(usage.toString());
-		announce("Connections since last restart: "+S4Server.connections+"\nGames started: "+S4Server.gamesStarted);
-	}
+
+		announce("Uptime: "+(Duration.ofMillis(FlashUtils.now()-S4Server.START).toString().toLowerCase().substring(2))+"\nGames started: "+S4Server.gamesStarted);	}
 
 	/**
 	 * Create a new bot and returns it. Uses a private constructor to avoid allocating byte buffers.
@@ -885,6 +913,7 @@ class S4GameServerThread extends ClientContext {
 
 /**The lobby server, which directs clients to game servers.*/
 public class S4Server extends ServerContext{
+	public static final long START = FlashUtils.now();
 	public static final byte[] bot;
 	public static final byte[] vsbot;
 	public static final byte[] deadtab;
@@ -1052,9 +1081,11 @@ public class S4Server extends ServerContext{
 					.sorted(Comparator.comparingInt(x->-x.players.size()))
 					.findFirst()
 					.orElseGet(()->new S4GameServer(S4Server.nextPort(), mode, code, autostart));
+				//list.forEach(x->System.out.println(""+x.code+" "+x.alive+" "+x.started+" "+x.players+" "+x.port));
 				if(list.add(g)) {
 					g.start(S4Server.this);
 				}
+				//System.out.println(games);
 				//byte[] data = new byte[arrayLength*2];
 				//src.get(14,data);//"the array"(discard)
 				byte[] ip = S4Server.ip.getBytes(StandardCharsets.UTF_8);

@@ -12,6 +12,8 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -194,6 +196,7 @@ public abstract class ClientContext{
 				inBuffer=ByteBuffer.allocate(ctx.opt.in().min());
 				outBuffer=ctx.opt.out().max()<=0?null:ByteBuffer.allocate(ctx.opt.out().min());
 				outLock=ctx.opt.out().locked()?new ReentrantLock():NULL_LOCK;
+				client.setSoTimeout(ctx.opt.timeout());
 				this.ctx=ctx;
 				this.factory=factory;
 			}
@@ -223,14 +226,13 @@ public abstract class ClientContext{
 						}catch(SocketTimeoutException ste) {
 							ctx.onTimeout();
 						}
-						if(ctx.opt.tickDelay()>0)
+						if(ctx.opt.mspt()>0)
 							try{
-								Thread.sleep(ctx.opt.tickDelay());
+								Thread.sleep(ctx.opt.mspt());
 							}catch(InterruptedException iee) {
 								Thread.currentThread().interrupt();
 							}
 					}
-					ctx.onClose();
 				}catch(Exception e) {
 					//TODO: logging
 				}finally {
@@ -241,7 +243,8 @@ public abstract class ClientContext{
 			}
 			@Override
 			public void flush() {
-				if(output==null)return;
+				System.out.println("hydr");
+				if(outBuffer==null)return;
 				outLock.lock();
 				try {
 					if(outBuffer.position()==0)return;
@@ -325,10 +328,13 @@ public abstract class ClientContext{
 			protected volatile ByteBuffer input;
 			protected volatile ByteBuffer output;
 			private final Lock sendLock;
+			private final ScheduledExecutorService ses;
 			private final Lock bufferLock;
+			private ScheduledFuture<?> nextTimeout;
 			public OfNio(ClientContext ctx, AsynchronousSocketChannel asc) throws IOException{
 				this.client=asc;
 				this.ctx=ctx;
+				this.ses=ctx.opt.timeoutSvc();
 				input=alloc(ctx.opt.in().min());
 				output=ctx.opt.out().max()>0?allocW(ctx.opt.out().min()):null;
 				sendLock=ctx.opt.out().locked()?new ReentrantLock():NULL_LOCK;
@@ -344,11 +350,32 @@ public abstract class ClientContext{
 				return ctx.opt.out().direct()?
 						ByteBuffer.allocateDirect(len):ByteBuffer.allocate(len);
 			}
+			private final void onTimeout() {
+				if(ctx.alive) {
+					ctx.onTimeout();
+					if(ctx.alive)
+						nextTimeout=ses.schedule(this::onTimeout,ctx.opt.timeout(), TimeUnit.MILLISECONDS);
+				}
+			}
+			private void readWithTimeout(ByteBuffer input, CompletionHandler<Integer, Void> handler) {
+				if(ses==null) {
+					client.read(input,ctx.opt.timeout(),TimeUnit.MILLISECONDS,null,handler);
+				}else {
+					client.read(input,null,handler);
+				}
+			}
 			@Override
 			public void start() throws IOException{
-				client.read(input,ctx.opt.timeout(),TimeUnit.MILLISECONDS,null,new CompletionHandler<Integer, Void>() {
+				if(ses!=null) {
+					onTimeout();
+				}
+				readWithTimeout(input,new CompletionHandler<Integer, Void>() {
 					@Override
 					public void completed(Integer result, Void attachment) {
+						if(ses!=null&&nextTimeout!=null) {
+							nextTimeout.cancel(false);
+							nextTimeout=ses.scheduleWithFixedDelay(ctx::onTimeout,ctx.opt.timeout(),ctx.opt.timeout(), TimeUnit.MILLISECONDS);
+						}
 						try {
 							if(ctx.alive) {
 								ctx.onData(input,result);
@@ -367,41 +394,40 @@ public abstract class ClientContext{
 									ctx.alive=false;
 								}
 							if(ctx.alive) {//realloc can fail, resulting in alive=false
-								if(ctx.opt.tickDelay()>0)
+								if(ctx.opt.mspt()>0)
 									try{
-										Thread.sleep(ctx.opt.tickDelay());
+										Thread.sleep(ctx.opt.mspt());
 									}catch(InterruptedException iee) {
 										Thread.currentThread().interrupt();
 									}
-								client.read(input,ctx.opt.timeout(),TimeUnit.MILLISECONDS,null,this);
+								readWithTimeout(input,this);
 								return;
 							}
-						}
-						ctx.alive=false;
-						ctx.onClose();
-						if(client.isOpen())
-						try {
-							client.close();
-						}catch(IOException ioe) {}
+						}else close();
 					}
 					//TODO: make sure onCLose not called more than once
 					@Override
 					public void failed(Throwable exc, Void attachment) {
-						ctx.alive=false;
-						ctx.onClose();
-						if(client.isOpen())
-							try {
-								client.close();
-							}catch(IOException ioe) {}
+						close();
 					}
 				});
+			}
+			private void close() {
+				ctx.alive=false;
+				if(nextTimeout!=null)nextTimeout.cancel(false);
+				ctx.onClose();
+				if(client.isOpen())
+					try {
+						client.close();
+					}catch(IOException ioe) {}
 			}
 			@Override
 			public void flush() {
 				if(output==null)return;
 				bufferLock.lock();
 				try {
-				sendImpl(output);
+				sendImpl(output.flip());
+				output.clear();
 				}finally {
 					bufferLock.unlock();
 				}
@@ -431,7 +457,6 @@ public abstract class ClientContext{
 						};
 					}
 				} catch (InterruptedException | ExecutionException e) {
-					e.printStackTrace();
 					ctx.alive=false;
 				} finally {
 					sendLock.unlock();

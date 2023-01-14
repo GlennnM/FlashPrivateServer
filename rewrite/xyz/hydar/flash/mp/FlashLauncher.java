@@ -10,8 +10,8 @@ public class FlashLauncher {
 		}catch(IOException ioe) {
 			ioe.printStackTrace();
 		}
-	//	new FlashServer(4480).start(false);
-		//new CoopServer(5577).start(false);
+		new FlashServer(4480).start(true);
+		new CoopServer(5577).start(true);
 		//Thread.ofPlatform().start(new CoopServer(5577));
 		new S4Server(8124).start(true);
 		while(true)

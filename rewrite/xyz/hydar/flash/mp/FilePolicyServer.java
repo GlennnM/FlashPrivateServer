@@ -25,7 +25,7 @@ public class FilePolicyServer extends ServerContext.Basic {
 		<site-control permitted-cross-domain-policies="master-only"/>
 		<allow-access-from domain="*" to-ports="*"/>
 	</cross-domain-policy>\0""".getBytes();
-	private static final ClientOptions OPTIONS=ClientOptions.builder().timeout(5000).input(64).tickDelay(500).build();
+	private static final ClientOptions OPTIONS=ClientOptions.builder().timeout(5000).input(64).mspt(500).build();
 	public FilePolicyServer(int port) throws IOException {
 		super(port);
 	}

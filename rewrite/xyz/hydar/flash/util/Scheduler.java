@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Scheduler{
 	private Scheduler() {}
-	private static final ScheduledExecutorService scheduler=Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+	public static final ScheduledExecutorService ses=Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
 		
 		@Override
 		public Thread newThread(Runnable r) {
@@ -16,6 +16,6 @@ public class Scheduler{
 	});
 
 	public static void schedule(Runnable task, int millis) {
-		scheduler.schedule(task,millis,TimeUnit.MILLISECONDS);
+		ses.schedule(task,millis,TimeUnit.MILLISECONDS);
 	}
 }

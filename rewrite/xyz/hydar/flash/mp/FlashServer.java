@@ -41,7 +41,7 @@ class ServerThread extends LineClientContext {
 	private String code = null;
 	private String joinCode = null;
 	private int timeouts=0;
-	static final ClientOptions OPTIONS=ClientOptions.builder().timeout(5000).tickDelay(50).outputLocked().build();
+	static final ClientOptions OPTIONS=ClientOptions.builder().timeout(1000,Scheduler.ses).mspt(100).outputLocked().build();
 	// constructor initializes socket
 	public ServerThread() throws IOException {
 		super(StandardCharsets.ISO_8859_1,true,OPTIONS);
@@ -85,6 +85,7 @@ class ServerThread extends LineClientContext {
 			opp.sendln("ServerMessage,please wait a few seconds to prevent desync...");
 			FlashUtils.sleep(5000);
 		}
+		opp.thread.flush();
 		sendln("FoundYouAGame," + FlashServer.ip + "," + gs.port + "," + 0 + ",4480");
 		matched=true;
 		queued=false;
@@ -233,7 +234,7 @@ class GameServer extends ServerContext{
 			full=true;
 		}
 	}
-	public void checkAlive() {//TODO
+	public void checkAlive() {
 		if((p1==null || !(p1.thread instanceof GameServerThread))&&
 				(p2==null || !(p2.thread instanceof GameServerThread))) {
 			this.alive=false;
@@ -356,7 +357,7 @@ class GameServerThread extends LineClientContext {
 	private int actionParam = 0;
 	public int time = 0;//in game time
 	public volatile boolean syncFailed=false;
-	static final ClientOptions OPTIONS=ClientOptions.builder().timeout(45000).tickDelay(50).output(1024).outputLocked().build();
+	static final ClientOptions OPTIONS=ClientOptions.builder().timeout(120000).mspt(50).output(1024).outputLocked().build();
 	public GameServerThread(GameServer parent) throws IOException {
 		super(StandardCharsets.ISO_8859_1,OPTIONS);
 		this.parent=parent;
@@ -374,6 +375,8 @@ class GameServerThread extends LineClientContext {
 	public void onData(ByteBuffer input, int length) throws IOException {
 		super.onData(input,length);
 		flush();
+		if(opponent!=null&&opponent.thread!=null)
+			opponent.thread.flush();
 	}
 	@Override
 	public void onOpen() {
@@ -394,12 +397,6 @@ class GameServerThread extends LineClientContext {
 		}finally {
 			if(opponent==null||opponent.thread==null||!opponent.thread.alive)
 				parent.alive=false;
-		}
-	}
-	@Override
-	public void onTimeout() {
-		if (++timeouts > 120) {
-			alive=false;
 		}
 	}
 	@Override

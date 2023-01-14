@@ -2,6 +2,7 @@ package xyz.hydar.flash.mp;
 import static java.lang.Integer.parseInt;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -46,7 +47,7 @@ class CoopServerThread extends LineClientContext {
 	
 	*/
 	// constructor initializes socket
-	static final ClientOptions OPTIONS=ClientOptions.builder().outputLocked().timeout(45000).tickDelay(50).build();
+	static final ClientOptions OPTIONS=ClientOptions.builder().outputLocked().timeout(1000,Scheduler.ses).mspt(100).build();
 	public CoopServerThread(CoopServer parent) throws IOException {
 		super(StandardCharsets.ISO_8859_1,OPTIONS);
 		this.parent=parent;
@@ -68,13 +69,13 @@ class CoopServerThread extends LineClientContext {
 	}
 	public void connect(CoopGameServer gs, CoopPlayer p) throws IOException{
 		gs.start(parent);
-		p.sendln("13,"+"localhost"+","+gs.port+",0,13042641,"+player.id+","+player.name+","+gs.map+","+gs.mode+","+gs.reverse+",0");
-		
+		p.sendln("13,"+"localhost"+","+gs.port+",843,13042641,"+player.id+","+player.name+","+gs.map+","+gs.mode+","+gs.reverse+",0");
+		if(p.thread!=null)p.thread.flush();
 		//If players cannot be distinguished, we have to 
 		if(Objects.equals(player,p)) {
 			FlashUtils.sleep(5000);
 		}
-		sendln("13,"+"localhost"+","+gs.port+",0,13042641,"+p.id+","+p.name+","+gs.map+","+gs.mode+","+gs.reverse+",1");
+		sendln("13,"+"localhost"+","+gs.port+",843,13042641,"+p.id+","+p.name+","+gs.map+","+gs.mode+","+gs.reverse+",1");
 		queued=false;
 		matched=true;
 	}
@@ -85,6 +86,9 @@ class CoopServerThread extends LineClientContext {
 			System.out.println("incoming: "+line);
 		String[] msg = line.split(",");
 		switch (msg[0]) {
+		case "<policy-file-request/>":
+			send(FilePolicyServer.POLICY);
+			break;
 		case "12":
 			if(queued)break;
 			//store data and add to q
@@ -117,7 +121,7 @@ class CoopServerThread extends LineClientContext {
 				int port=CoopServer.nextPort();
 				var gs=new CoopGameServer(player,port,code,map,mode,reverse);
 				CoopServer.privateMatches.put(code,gs);
-				sendln("4,"+"localhost"+","+port+",0");
+				sendln("4,"+"localhost"+","+port+",0");//TODO ???
 				gs.start(parent);
 			}else{
 				sendln("5");
@@ -145,7 +149,7 @@ class CoopServerThread extends LineClientContext {
 	}
 	
 	@Override
-	public void onTimeout(){//TODO:how???
+	public void onTimeout(){
 		
 		timeouts++;
 		int max=45;
@@ -248,7 +252,7 @@ class GameCoopServerThread extends LineClientContext {
 	private double lastTime = 0;
 	private long lastTest = 0;
 
-	static final ClientOptions OPTIONS=ClientOptions.builder().output(1024,32768).outputLocked().timeout(45000).tickDelay(50).build();
+	static final ClientOptions OPTIONS=ClientOptions.builder().output(1024,4096).outputLocked().timeout(1000,Scheduler.ses).mspt(50).build();
 	public GameCoopServerThread(CoopGameServer parent) throws IOException {
 		super(OPTIONS);
 		this.parent=parent;
@@ -258,13 +262,19 @@ class GameCoopServerThread extends LineClientContext {
 		this.opponent=opponent;
 		sendln(opponent.forOpponent(player));//FoundYourGame packet
 	}
+	@Override
+	public void onData(ByteBuffer src, int len) throws IOException {
+		super.onData(src,len);
+		if(opponent!=null&&opponent.thread!=null)
+			opponent.thread.flush();
+		flush();
+	}
 	public void chat(String msg) throws IOException{
 		sendln("106,214,"+FlashUtils.encode(msg));
 	}
 	@Override
 	public void onMessage(String line) throws IOException{
 		timeouts=0;
-		FlashUtils.sleep(50);//TODO: tick rate
 		if (lastTest>0) {
 			long delta=FlashUtils.now()-lastTest;
 			if(delta>5000) {
@@ -289,6 +299,9 @@ class GameCoopServerThread extends LineClientContext {
 		}
 		if(!parent.full)return;
 		switch (msg[0]) {
+		case "<policy-file-request/>":
+			send(FilePolicyServer.POLICY);
+			break;
 		case "101":
 			break;
 		case "103":
@@ -327,8 +340,10 @@ class GameCoopServerThread extends LineClientContext {
 	@Override
 	public void onClose() {
 		try {
-			if(opponent!=null)
+			if(opponent!=null) {
 				opponent.sendln("107");
+				opponent.thread.flush();
+			}
 		}catch(IOException ioe) {
 			
 		}finally {
@@ -355,7 +370,7 @@ class GameCoopServerThread extends LineClientContext {
 
 	@Override
 	public void onOpen() {
-		
+		System.out.println("hydar h");
 	}
 }
 enum Constraint{
@@ -417,7 +432,7 @@ class CoopPlayer {
 		x.setConstraints(msg[1]);
 		return x;
 	}
-	private CoopPlayer(int id, String name, int rank, int clan,String premiums, int specId, int specLvl, LineClientContext o) {
+	private CoopPlayer(int id, String name, int rank, int clan, String premiums, int specId, int specLvl, LineClientContext o) {
 		this.name = name;
 		this.id = id;
 		this.thread = o;
@@ -474,6 +489,9 @@ public class CoopServer extends ServerContext.Basic{
 				return n;
 		queue.add(x);
 		return null;
+	}
+	public void onOpen() {
+		System.out.println("Coop server started! ");
 	}
 	public static int nextPort() {//TODO
 		do {

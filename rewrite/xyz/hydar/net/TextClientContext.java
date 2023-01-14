@@ -226,9 +226,11 @@ public abstract class TextClientContext extends ClientContext {
 		}
 	}
 	public void send(String msg) throws IOException{
+		System.out.println(msg);
 		send(msg.getBytes(decoder.ch));
 	}
 	public void sendln(String msg) throws IOException{
+		System.out.println(msg);
 		send((msg+"\n").getBytes(decoder.ch));
 	}
 }

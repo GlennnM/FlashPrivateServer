@@ -1,16 +1,19 @@
 package xyz.hydar.net;
-/**Client options. Use the builder to construct. Note that locked input doesn't actually mean anything*/
-public record ClientOptions(int timeout, int tickDelay, BufferOptions in, BufferOptions out) {
 
-	public static final ClientOptions DEFAULT = new ClientOptions(15000, 0, BufferOptions.DEFAULT,BufferOptions.NONE);
+import java.util.concurrent.ScheduledExecutorService;
+
+/**Client options. Use the builder to construct. Note that locked input doesn't actually mean anything*/
+public record ClientOptions(int timeout, int mspt, ScheduledExecutorService timeoutSvc, BufferOptions in, BufferOptions out) {
+
+	public static final ClientOptions DEFAULT = new ClientOptions(15000, 0, null, BufferOptions.DEFAULT,BufferOptions.NONE);
 	public ClientOptions() {
 		this(DEFAULT.timeout());
 	}
 	public ClientOptions(int timeout) {
-		this(timeout, DEFAULT.tickDelay, DEFAULT.in, DEFAULT.out);
+		this(timeout, DEFAULT.mspt,null,DEFAULT.in, DEFAULT.out);
 	}
 	public ClientOptions(int timeout, int tickDelay) {
-		this(timeout, tickDelay, DEFAULT.in, DEFAULT.out);
+		this(timeout, tickDelay, null,DEFAULT.in, DEFAULT.out);
 	}
 	
 	public static Builder builder() {
@@ -18,7 +21,8 @@ public record ClientOptions(int timeout, int tickDelay, BufferOptions in, Buffer
 	}
 	public static class Builder{
 		int timeout=DEFAULT.timeout();
-		int tickDelay=DEFAULT.tickDelay();
+		int mspt=DEFAULT.mspt();
+		ScheduledExecutorService timeoutSvc=DEFAULT.timeoutSvc();
 		
 		int inputMin=DEFAULT.in.min();
 		int inputMax=DEFAULT.in.max();
@@ -35,8 +39,13 @@ public record ClientOptions(int timeout, int tickDelay, BufferOptions in, Buffer
 			this.timeout=timeout;
 			return this;
 		}
-		public Builder tickDelay(int tickDelay) {
-			this.tickDelay=tickDelay;
+		public Builder timeout(int timeout, ScheduledExecutorService timeoutSvc) {
+			this.timeout=timeout;
+			this.timeoutSvc=timeoutSvc;
+			return this;
+		}
+		public Builder mspt(int mspt) {
+			this.mspt=mspt;
 			return this;
 		}
 		public Builder input(int fixedSize) {
@@ -101,7 +110,7 @@ public record ClientOptions(int timeout, int tickDelay, BufferOptions in, Buffer
 		}
 		public ClientOptions build() {
 			return new ClientOptions(
-				timeout,tickDelay,
+				timeout,mspt,timeoutSvc,
 				new BufferOptions(inputMin,inputMax,inputDirect,inputLock),
 				new BufferOptions(outputMin,outputMax,outputDirect,outputLock)
 			);

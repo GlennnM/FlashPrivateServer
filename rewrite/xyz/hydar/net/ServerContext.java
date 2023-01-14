@@ -84,6 +84,7 @@ public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 							}
 							if(ctx.alive)
 								server.accept(null,this);
+							else ctx.onClose();
 						}
 
 						@Override
