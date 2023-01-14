@@ -531,7 +531,8 @@ class S4GameServerThread extends ClientContext {
 							finishBuild(true);
 					}
 					return;
-				}/**else if(actualSize>10 && (subop==5||subop==7||subop==2||subop==9)){
+				}else if(subop==0x09)return;
+				/**else if(actualSize>10 && (subop==5||subop==7||subop==2||subop==9)){
 					buffer.putInt(offset+7,parent.flashTime());
 				}*/
 				if(parent.players.size()==1)return;
@@ -757,7 +758,7 @@ class S4GameServerThread extends ClientContext {
 	}
 	/**Process a chat message (array representing a space-delimited chat message) for commands.*/
 	public void processChat(String[] msg) throws IOException{
-		announce(switch (msg[0]) {
+		announce(switch (msg[0].toLowerCase()) {
 			case "!source"->"https://github.com/GlennnM/NKFlashServers";
 			case "!help"->"Flash Private Server by Glenn M#9606.\nCommands:\n!boost <lvl>, !vsboost, !deadtab, !unboost\n!start, !unlock, !ping, !source, !seed, !stats, !code, !range, !disconnect";
 			case "!seed"->"Current seed: "+parent.seed+"\nMap ID: "+parent.map+"\nMode: "+parent.mode;
@@ -855,9 +856,9 @@ class S4GameServerThread extends ClientContext {
 		int mb = 1024 * 1024;
 		// get Runtime instance
 		Runtime instance = Runtime.getRuntime();
-		StringBuilder usage = new StringBuilder();
+		StringBuilder usage = new StringBuilder(100);
 		// available memory
-		usage.append("Games: ").append(S4Server.games.size()).append(", Players: ").append(S4Server.getS4PlayerCount());
+		usage.append("Games: ").append(S4Server.getGameCount()).append(", Players: ").append(S4Server.getS4PlayerCount());
 		usage.append(", Threads: ").append(Thread.activeCount()).append("\n");
 		// used memory
 		usage.append("Used Memory: ").append((instance.totalMemory() - instance.freeMemory()) / mb).append(" MB, ");
@@ -961,6 +962,9 @@ public class S4Server extends ServerContext{
 	
 	public S4Server(int port) {
 		super(port);
+	}
+	public static int getGameCount() {
+		return games.values().stream().mapToInt(Set::size).sum();
 	}
 	public static int getS4PlayerCount(){
 		return games.values().stream().flatMap(Set::stream).mapToInt(x->x.players.size()).sum();//TODO remove on start

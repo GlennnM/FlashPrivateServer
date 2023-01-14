@@ -10,7 +10,6 @@ import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.nio.channels.InterruptedByTimeoutException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -361,7 +360,7 @@ public abstract class ClientContext{
 				if(ses==null) {
 					client.read(input,ctx.opt.timeout(),TimeUnit.MILLISECONDS,null,handler);
 				}else {
-					client.read(input,null,handler);
+					client.read(input,null,handler); 
 				}
 			}
 			@Override
@@ -369,7 +368,7 @@ public abstract class ClientContext{
 				if(ses!=null) {
 					onTimeout();
 				}
-				readWithTimeout(input,new CompletionHandler<Integer, Void>() {
+				readWithTimeout(input, new CompletionHandler<Integer, Void>() {
 					@Override
 					public void completed(Integer result, Void attachment) {
 						if(ses!=null&&nextTimeout!=null) {
@@ -451,9 +450,10 @@ public abstract class ClientContext{
 			private void sendImpl(ByteBuffer msg) {
 				sendLock.lock(); 
 				try {
-					while(msg.hasRemaining()) {
+					while(msg.hasRemaining()&&ctx.alive) {
 						if(!client.isOpen()||client.write(msg).get()==0) {
 							ctx.alive=false;
+							return;
 						};
 					}
 				} catch (InterruptedException | ExecutionException e) {
