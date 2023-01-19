@@ -2,7 +2,13 @@ package xyz.hydar.net;
 
 import java.util.concurrent.ScheduledExecutorService;
 
-/**Client options. Use the builder to construct. Note that locked input doesn't actually mean anything*/
+/**Client options. Use the builder to construct in most cases. <br>
+ * timeout: socket timeout(ms). Calls onTimeout if in IO mode OR if timeoutSvc is provided. Default behavior closes the connection. Default 15000<br>
+ * mspt: Time between server ticks(ms). Can be set to zero for no delay(default).<br>
+ * timeoutSvc: if in NIO mode and not null, this service will be used to schedule timeouts. Default null<br>
+ * in: BufferOptions describing input buffer. Locked input doesn't actually mean anything. Default false<br>
+ * out: BufferOptions describing output buffer. If max<=0(default), it will not be present at all, but the lock will still be used for direct sends.<br>
+ * */
 public record ClientOptions(int timeout, int mspt, ScheduledExecutorService timeoutSvc, BufferOptions in, BufferOptions out) {
 
 	public static final ClientOptions DEFAULT = new ClientOptions(15000, 0, null, BufferOptions.DEFAULT,BufferOptions.NONE);
@@ -15,10 +21,35 @@ public record ClientOptions(int timeout, int mspt, ScheduledExecutorService time
 	public ClientOptions(int timeout, int tickDelay) {
 		this(timeout, tickDelay, null,DEFAULT.in, DEFAULT.out);
 	}
-	
+	/**Returns a new Builder.*/
 	public static Builder builder() {
 		return new Builder();
 	}
+	/**Load from a string. Examples: <br>
+	 * in=(1024,1024,direct,locked);out=(1024,locked);timeout=1000<br>
+	 * */
+	public static ClientOptions from(String src) {
+		return from(src,null);
+	}
+	/**Load from a string as in load(String), with a provided timeoutSvc.
+	 * */
+	public static ClientOptions from(String src, ScheduledExecutorService timeoutSvc) {
+		var builder=builder();
+		String[] cmds=src.trim().toLowerCase().split(";");
+		for(String cmd:cmds) {
+			String k=cmd.substring(0,cmd.indexOf("=")).trim();
+			String v=cmd.substring(cmd.indexOf("=")+1).trim();
+			builder=switch(k) {
+				case "in"->builder.input(BufferOptions.from(v,BufferOptions.DEFAULT));
+				case "out"->builder.output(BufferOptions.from(v,BufferOptions.NONE));
+				case "timeout"->builder.timeout(Integer.parseInt(v));
+				case "mspt"->builder.mspt(Integer.parseInt(v));
+				default->builder;
+			};
+		}
+		return builder.timeout(builder.timeout,timeoutSvc).build();
+	}/**A builder for ClientOptions objects.
+	 * */
 	public static class Builder{
 		int timeout=DEFAULT.timeout();
 		int mspt=DEFAULT.mspt();

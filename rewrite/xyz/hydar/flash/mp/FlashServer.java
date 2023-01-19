@@ -6,7 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -53,7 +52,7 @@ class ServerThread extends LineClientContext {
 		do{
 			code=FlashUtils.upperNoise("B2GARB",14);
 		}while (FlashServer.privateMatches.containsKey(code));
-		GameServer gs = new GameServer(player,FlashServer.nextPort(),code);
+		GameServer gs = new GameServer(player,code);
 		FlashServer.privateMatches.put(code, gs);
 		sendln("FindingYouAMatch," + code);
 	}
@@ -71,14 +70,14 @@ class ServerThread extends LineClientContext {
 		if (opp==null) {
 			queue.add(this);
 		} else {
-			GameServer gs = new GameServer(opp.player,FlashServer.nextPort());
+			GameServer gs = new GameServer(opp.player);
 			this.connect(gs, opp.player);
 		}
 		queued = true;
 	}
 	public void connect(GameServer gs, Player opp) throws IOException{
-		gs.start(true);//TODO:
-		opp.sendln("FoundYouAGame," + FlashServer.ip + "," + gs.port + "," + 0 + ",4480");
+		gs.start(FlashServer.nextPort(),true);//TODO:
+		opp.sendln("FoundYouAGame," + FlashServer.ip + "," + gs.getPort() + "," + 0 + ",4480");
 		//If players cannot be distinguished, we have to 
 		if(Objects.equals(player,opp)) {
 			sendln("ServerMessage,please wait a few seconds to prevent desync...");
@@ -86,7 +85,7 @@ class ServerThread extends LineClientContext {
 			FlashUtils.sleep(5000);
 		}
 		opp.thread.flush();
-		sendln("FoundYouAGame," + FlashServer.ip + "," + gs.port + "," + 0 + ",4480");
+		sendln("FoundYouAGame," + FlashServer.ip + "," + gs.getPort() + "," + 0 + ",4480");
 		matched=true;
 		queued=false;
 	}
@@ -168,8 +167,7 @@ class ServerThread extends LineClientContext {
 		player=null;
 	}
 	@Override
-	public void onTimeout(){//TODO: this doesn't get called in nio(have to use scheduler)
-		System.out.println("onTimeout "+timeouts);
+	public void onTimeout(){
 		timeouts++;
 		if (FlashServer.queue1.contains(this) || FlashServer.queue2.contains(this)) {
 			timeouts--;
@@ -203,11 +201,11 @@ class GameServer extends ServerContext{
 	public static final byte[] HELP = ("RelayMsg,SentChatMsg," + FlashUtils.encode(
 			"\nCommands:\n!help - displays this\n!history - displays your most recent 10 matches\n!source - view the source code on GitHub\n!profile <url> - set a profile picture for your opponents to see(140x140)\n!random <count> - generates random tower(s)\n!map <count> - generates random map(s)\n!lagtest - tests game timer vs real time\n!bugs - displays known bugs")+"\n")
 			.getBytes();
-	public GameServer(Player p1,int port) throws IOException{
-		this(p1,port,null);
+	public GameServer(Player p1) throws IOException{
+		this(p1,null);
 	}
-	public GameServer(Player p1, int port, String code) throws IOException{
-		super(port);//TODO args(clients too)
+	public GameServer(Player p1, String code) throws IOException{
+		super();//TODO args(clients too)
 		this.p1 = p1;
 		this.code=code;
 		Scheduler.schedule(this::checkAlive,30000);
@@ -397,7 +395,7 @@ class GameServerThread extends LineClientContext {
 		}finally {
 			if(opponent==null||opponent.thread==null||!opponent.thread.alive)
 				parent.alive=false;
-		}
+		} 
 	}
 	@Override
 	public void onMessage(String line) throws IOException {
@@ -542,11 +540,8 @@ class GameServerThread extends LineClientContext {
 	private String handleRelay(String[] msg, String line) throws IOException {
 		if (msg.length > 1 && msg[1].equals("SentChatMsg")) {
 			try {
-				String[] cmd = FlashUtils.decode(msg[2]).trim().split(" ");
+				String[] cmd = FlashUtils.decode(msg[2]).trim().split(" ",2);
 				String param = null;
-				if (cmd.length > 1)
-					param = Arrays.stream(cmd,1,cmd.length)
-						.collect(Collectors.joining(" "));
 				switch (cmd[0]) {
 				case "!help":
 					send(GameServer.HELP);
@@ -566,19 +561,11 @@ class GameServerThread extends LineClientContext {
 					}
 					break;
 				case "!random":
-					int numTowers = 0;
-					if (param == null)
-						numTowers = 4;
-					else
-						numTowers = Integer.parseInt(param);
+					int numTowers = param==null?4:Integer.parseInt(param);
 					chat(uniqueRandom(FlashServer.TOWERS,numTowers,10));
 					break;
 				case "!map":
-					int numMaps = 0;
-					if (param == null)
-						numMaps = 1;
-					else
-						numMaps = Integer.parseInt(param);
+					int numMaps = param==null?1:Integer.parseInt(param);
 					chat(uniqueRandom(FlashServer.MAPS,numMaps,10));
 					break;
 				case "!bugs":
@@ -705,8 +692,7 @@ public class FlashServer extends ServerContext.Basic{
 	public static final Map<Integer, String> profiles = BasicCache.synced(1024);
 	public static final Map<Integer, List<String>> history = BasicCache.synced(1024);
 	public static String ip;
-	public FlashServer(int port) throws IOException {
-		super(port);
+	public FlashServer() throws IOException {
 		ip=Files.readString(Paths.get("./config.txt")).trim();
 		System.out.printf("Flash server started! (%s)\n",ip);
 	}
@@ -735,8 +721,8 @@ public class FlashServer extends ServerContext.Basic{
 			boolean win=(lines[0].contains("" + uid));
 			String[] opponent=(win?lines[1]:lines[0]).split(",");
 			if(opponent.length<2)return h;
-			compact.append((lines[3] + "|%s|" + lines[2] + "|" + "Opponent: "
-					+ opponent[0] + '\n').formatted(win?"win":"lose"));
+			compact.append((lines[3] + "|"+(win?"win":"lose")+"|" + lines[2] + "|" + "Opponent: "
+					+ opponent[0] + '\n'));
 		}
 		return compact.toString();
 	}

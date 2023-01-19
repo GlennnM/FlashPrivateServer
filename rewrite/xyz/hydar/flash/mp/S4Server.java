@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import xyz.hydar.flash.util.FlashUtils;
 import xyz.hydar.flash.util.Scheduler;
@@ -58,8 +59,7 @@ class S4GameServer extends ServerContext{
 	/**
 	 * Initializes the game server. This does not bind any port until start() is called.
 	 * */
-	public S4GameServer(int port, short mode, int code, short auto){
-		super(port);
+	public S4GameServer(short mode, int code, short auto){
 		this.started = false;
 		this.autostart = (auto >= 0);
 		if (this.autostart) {
@@ -98,6 +98,10 @@ class S4GameServer extends ServerContext{
 	/**Runs at most once a second when players send a ping or time packet(-9 or -3)<br>
 	 * Performs tasks that need to be performed continuously before the game starts, such as updating the auto-start timer and level ranges.<br>Public lobbies(code=0) only.*/
 	public void autoTick() throws IOException {
+		for(var player:players) {
+			if(player.bot)
+				player.send((ByteBuffer)null);
+		}
 		if(started||!autostart)
 			return;
 		int t = flashTime();
@@ -244,7 +248,7 @@ class S4GameServerThread extends ClientContext {
 		this.loaded=welcomed=built=true;
 	}
 	static final ClientOptions OPTIONS=ClientOptions.builder()
-			.timeout(180000).input(8192,16384).inputDirect().mspt(50).outputLocked().build();
+			.timeout(180000).input(8192,16384).inputDirect().mspt(50).outputLocked().outputDirect().build();
 	/**Initializes the client context.*/
 	public S4GameServerThread(S4GameServer parent) throws IOException {
 		super(OPTIONS);
@@ -258,7 +262,7 @@ class S4GameServerThread extends ClientContext {
 	}
 	/**Returns a new byte buffer of size {@code length}, which might be direct depending on settings.*/
 	private ByteBuffer alloc(int length) {
-		if(isNio()) {
+		if(opt.out().direct()) {
 			return ByteBuffer.allocateDirect(length);
 		}else return ByteBuffer.allocate(length);
 	}
@@ -505,14 +509,19 @@ class S4GameServerThread extends ClientContext {
 			case -2:
 				if (actualSize<=5)
 					return;
-				
 				byte subop=buffer.get(offset+6);
-				if ((subop == (byte) 0x05) && (actualSize > 25&&buffer.get(offset+13)==(byte)0x03)) {
+				/**if(subop==5||subop==6) {
+					var slice=buffer.slice(offset+11,actualSize-11);
+					var copy=ByteBuffer.allocate(slice.limit());
+					copy.put(slice);
+					//System.out.println(""+subop+":"+HexFormat.of().formatHex(copy.array()));
+				}*/
+				if ((subop == (byte) 0x05) && (actualSize > 25&&buffer.getInt(offset+11)==0x3e7)) {
 					byte chat_length = buffer.get(offset+23);
-					if(actualSize>=offset+24+chat_length && chat_length>=0) {
+					if(actualSize>=24+chat_length && chat_length>=0) {
 						byte[] chars=new byte[chat_length];
 						buffer.get(offset+24,chars);
-						String[] msg=new String(chars, StandardCharsets.UTF_8).split(" ");
+						String[] msg=new String(chars, StandardCharsets.UTF_8).split(" ",2);
 						processChat(msg);
 					}
 					
@@ -531,11 +540,12 @@ class S4GameServerThread extends ClientContext {
 							finishBuild(true);
 					}
 					return;
-				}else if(subop==0x09)return;
-				/**else if(actualSize>10 && (subop==5||subop==7||subop==2||subop==9)){
+				}//else if(subop==0x09)return;
+				//if only bots, dont bother copying buffer
+				else if(getPeer()==null) return;
+				else if(actualSize>10 && (subop==5||subop==7||subop==2||subop==9)){
 					buffer.putInt(offset+7,parent.flashTime());
-				}*/
-				if(parent.players.size()==1)return;
+				}
 				int len = actualSize - 6;
 				remote(len+5)
 					.put((byte)-2)
@@ -708,11 +718,12 @@ class S4GameServerThread extends ClientContext {
 				yield req;
 			}
 			default->{
-				//System.out.println("help :((( "+opcode);
+				System.out.println("help :((( "+opcode);
 				//announce("Invalid packet[%d]. Buffer will be cleared".formatted(opcode));
 				//System.out.println(HexFormat.of().formatHex(input.array()));
-				input.clear();
-				FlashUtils.sleep(2000);
+				//alive=false;
+				//input.clear();
+				//FlashUtils.sleep(2000);
 				yield -2;
 			}
 		};
@@ -738,11 +749,11 @@ class S4GameServerThread extends ClientContext {
 			}
 		}
 		if(peer==null||msg.length>256)return;
-		long time = parent.flashTime();
+		int time = parent.flashTime();
 		int len = msg.length + 26;
 		local(msg.length+31).put((byte)-2)
 			.putInt(len).put((byte) 0x05)
-			.putInt((int)time).putInt(0x3e7)
+			.putInt(time).putInt(0x3e7)
 			.putInt(-1).putShort((short) 0x100)
 			.put(peer.id)
 			.putShort((short) (msg.length))
@@ -765,7 +776,7 @@ class S4GameServerThread extends ClientContext {
 			case "!code"->"Current code: "+parent.code+"\nMap ID: "+parent.map+"\nMode: "+parent.mode+"\nSpecial codes: 400, apoc, lms, avs, samp";
 			case "!range"->"Accepting levels "+parent.minLvl+"-"+parent.maxLvl;
 			case "!host"->"You are "+(id==parent.host?"":"not ")+"the host.";
-			case "!ping"->"Ping: %dms, %d reported FPS".formatted(ping,(1000/(0xffff&frameTime)));
+			case "!ping"->"Ping: "+ping+"ms, "+(1000/(0xffff&frameTime))+" reported FPS";
 			case "!setseed"->{
 				if(!valid&&parent.code!=0&&getPeer()==null) {
 					if(msg.length>1&&FlashUtils.isShort(msg[1])) {
@@ -883,6 +894,21 @@ class S4GameServerThread extends ClientContext {
 				long delta;
 				//leave after building+4 minutes(deadtab, not alpha virus), building+6 seconds(vs bot),
 				//or right away(normal)
+				/**if(parent.ingame&&(parent.flashTime()-parent.ingameSince)>5000&&vs==2&&welcomed) {
+					welcomed=false;
+					//var die=ByteBuffer.allocate(39).put((byte)-2).putInt(34)
+					//		.put((byte)5).putInt(parent.ingameSince).putInt(0x42c2497).
+					//		putInt(-1).put(id).putInt(-1).putLong(0).putLong(0);
+					//just dc when a player die or dc
+					var die=ByteBuffer.allocate(27).put((byte)-2).putInt(22)
+							.put((byte)5).putInt(parent.flashTime()).putInt(id).putInt(-1).
+							put((byte)0x14).putLong(0);
+					var die2=ByteBuffer.allocate(27).put((byte)-2).putInt(22)
+							.put((byte)5).putInt(parent.flashTime()).putInt(id).putInt(-1).
+							put((byte)0x04).putLong(0);
+					parent.players.forEach(x->x.send(die.flip()));
+					parent.players.forEach(x->x.send(die2.flip()));
+				}*/
 				if (parent.started&&(this.vs==0)||
 					((delta=parent.flashTime()-parent.ingameSince)>6000&&this.vs==1)||
 					(delta>240000&&parent.mode!=3&&this.vs==2)){
@@ -959,10 +985,6 @@ public class S4Server extends ServerContext{
 	}
 	//	this.map=(new short[]{1092,1095,1094,1100,1093,1099,1096,1111,1113})[(int)(Math.random()*9)];
 	// onsl pods sur ls vac po vip is md
-	
-	public S4Server(int port) {
-		super(port);
-	}
 	public static int getGameCount() {
 		return games.values().stream().mapToInt(Set::size).sum();
 	}
@@ -1003,14 +1025,7 @@ public class S4Server extends ServerContext{
 		
 	}
 	public static int nextPort(){
-		int max=100;
-		do {
-			nextPort += 5;
-			if (nextPort > 32000)
-				nextPort = 8128;
-			if(max--<0)throw new RuntimeException("Service unavailable");
-		} while (FlashUtils.checkPort(nextPort));
-		return nextPort;
+		return nextPort=(nextPort>32000?8123:nextPort+5);
 	}
 	@Override
 	public void onOpen() {System.out.println("SAS4 server started!");}
@@ -1084,19 +1099,20 @@ public class S4Server extends ServerContext{
 					.filter(x->x.allows(level))
 					.sorted(Comparator.comparingInt(x->-x.players.size()))
 					.findFirst()
-					.orElseGet(()->new S4GameServer(S4Server.nextPort(), mode, code, autostart));
+					.orElseGet(()->new S4GameServer(mode, code, autostart));
 				//list.forEach(x->System.out.println(""+x.code+" "+x.alive+" "+x.started+" "+x.players+" "+x.port));
 				if(list.add(g)) {
-					g.start(S4Server.this);
+					g.start(IntStream.generate(S4Server::nextPort).limit(100), isNio());
 				}
 				//System.out.println(games);
 				//byte[] data = new byte[arrayLength*2];
 				//src.get(14,data);//"the array"(discard)
 				byte[] ip = S4Server.ip.getBytes(StandardCharsets.UTF_8);
+				//System.out.println("Started GS on "+g.getPort());
 				var pl = ByteBuffer.allocate(10+ip.length)
 					.putShort((short)ip.length) 
 					.put(ip)
-					.putShort((short)g.port)
+					.putShort((short)g.getPort())
 					.putShort(mode)
 					.putInt(code);
 				send(pl.flip());

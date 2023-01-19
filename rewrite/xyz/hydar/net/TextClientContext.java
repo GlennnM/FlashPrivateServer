@@ -8,7 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
-abstract class Decoder{
+abstract class Decoder{//package-private
 	public final Charset ch;
 	public boolean skipLast=false;
 	public boolean skipLn=false;
@@ -126,8 +126,10 @@ abstract class Decoder{
  * *If the charset requires a BOM and isn't UTF-16, UTF-32BE-BOM, or UTF-32LE-BOM, it will most likely fail.
  * */
 public abstract class TextClientContext extends ClientContext {
-	private final Decoder decoder;
-
+	private Decoder decoder;
+	private boolean reading=false;
+	private boolean eos=false;
+	private static final char[] EMPTY=new char[0];
 	public TextClientContext(Decoder decoder){
 		super();
 		this.decoder=decoder;
@@ -158,13 +160,31 @@ public abstract class TextClientContext extends ClientContext {
 		super(options);
 		decoder=Decoder.newInstance(ch,delimiters);
 	}
+	/**Remove all delimiters. onMessage will be called only by finishRead().*/
+	public void noDelimiters() throws IOException {
+		decoder=Decoder.newInstance(decoder.ch,EMPTY);
+	}
+	/**Change the delimiters.*/
+	public void setDelimiter(char delimiter) throws IOException {
+		decoder=Decoder.newInstance(decoder.ch,delimiter);
+	}
+	/**Change the delimiters.*/
+	public void setDelimiters(char[] delimiters) throws IOException {
+		decoder=Decoder.newInstance(decoder.ch,delimiters);
+	}
+	/**Called when a delimited string, msg, is read.*/
 	public abstract void onMessage(String msg) throws IOException;
 	private int primaryOffset;
+	/**Call to read the remaining characters as a delimited block. Can be used before switching to a binary protocol.<br>
+	 * No line indices or terminator checks are retained after calls.*/
 	public void finishRead() throws IOException{
-		onData(client.buffer(),-1);
+		if(reading)eos=true;
+		else onData(client.buffer(),-1);
 	}
+	/**Calls onMessage on delimited blocks of the provided buffer.*/
 	@Override
 	public void onData(ByteBuffer data, int length) throws IOException{
+		reading=true;
 		data.flip();
 		Charset ch=decoder.ch;
 		ByteBuffer oldData=null;
@@ -205,6 +225,7 @@ public abstract class TextClientContext extends ClientContext {
 					str=oneByte?(data.hasArray()?new String(data.array(),start,size,ch):ch.decode(data.slice(start,size)).toString())
 							:charData.slice(start,size).toString();
 					onMessage(str);
+					if(eos)length=-1;
 				}
 				start+=len;
 				decoder.skipLast=false;
@@ -224,13 +245,15 @@ public abstract class TextClientContext extends ClientContext {
 		if(oldData!=null) {
 			oldData.position(data.position()+(decoder.utf16BOM?2:4));
 		}
+		eos=false;
+		reading=false;
 	}
+	/**Sends the given string.*/
 	public void send(String msg) throws IOException{
-		System.out.println(msg);
 		send(msg.getBytes(decoder.ch));
 	}
+	/**Sends the given string with \n appended to it.*/
 	public void sendln(String msg) throws IOException{
-		System.out.println(msg);
 		send((msg+"\n").getBytes(decoder.ch));
 	}
 }

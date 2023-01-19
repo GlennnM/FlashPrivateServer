@@ -29,11 +29,11 @@ import java.util.concurrent.locks.ReentrantLock;
 *	4. If we read >=1 packets, compact the buffer to the last packet start before pos=end+continuing
  * */
 public abstract class ClientContext{
-	
+	/**Whether this client is alive. Setting to false will always end the connection and call onClose, if not already closed.*/
 	public volatile boolean alive=true;
-	public volatile Client client=Client.NULL_CLIENT;
+	volatile Client client=Client.NULL_CLIENT;
 	public final ClientOptions opt;
-	public static final ThreadFactory DEFAULT_FACTORY=new ThreadFactory() {
+	private static final ThreadFactory DEFAULT_FACTORY=new ThreadFactory() {//TODO
 		@Override
 		public Thread newThread(Runnable r) {
 			return Thread.ofVirtual().unstarted(r);
@@ -45,54 +45,143 @@ public abstract class ClientContext{
 	public ClientContext(ClientOptions opt) {
 		this.opt=opt;
 	}
+	/**Starts this context given an AsynchronousSocketChannel.*/
 	public final void start(AsynchronousSocketChannel socket) throws IOException {
 		if(client!=Client.NULL_CLIENT)throw new UnsupportedOperationException("already init");
 		this.client = new Client.OfNio(this,socket);
 		onOpen();
 		client.start();
 	}
+	/**Starts this context by connecting to the given remote address.
+	 * @throws IOException */
+	public void start(InetSocketAddress remote, boolean nio) throws IOException {
+		if(nio) {
+			startNio(remote);
+		}else startIo(remote,DEFAULT_FACTORY);
+	}
+	/**Starts this context by connecting to the given remote address. Will use the provided factory if in IO mode.
+	 * @throws IOException */
+	public void start(InetSocketAddress remote, boolean nio, ThreadFactory factory) throws IOException {
+		if(nio) {
+			startNio(remote);
+		}else startIo(remote,factory);
+	}
+	private void startIo(InetSocketAddress isa, ThreadFactory factory) throws IOException{
+		factory.newThread(()->{
+			var socket=new Socket();
+			try{
+				socket.connect(isa);
+				start(socket);
+				
+			} catch (IOException e) {
+				try {
+					onClose();
+				} catch (IOException e1) {}
+				if(!socket.isClosed())
+					try {
+						socket.close();
+					} catch (IOException ee) {}
+				throw new RuntimeException(e);
+			}
+		}).start();
+	}
+	private void startNio(InetSocketAddress isa) throws IOException {
+		var channel=AsynchronousSocketChannel.open();
+		channel.connect(isa, null, new CompletionHandler<Void, Void>() {
+			private void close() {
+				try {
+					onClose();
+				} catch (IOException e1) {}
+				if(channel.isOpen())
+					try {
+						channel.close();
+					} catch (IOException e) {}
+			}
+			@Override
+			public void completed(Void result, Void attachment) {
+				try {
+					start(channel);
+				} catch (IOException e) {
+					close();
+				}
+			}
+
+			@Override
+			public void failed(Throwable exc, Void attachment) {
+				close();
+			}
+		});
+	}
+	/**Starts this context given a Socket. It will run on a new thread.*/
 	public final void start(Socket socket) throws IOException {
 		start(socket,DEFAULT_FACTORY);
 	}
-	public final void start(Socket socket,ThreadFactory factory) throws IOException {
+	/**Starts this context given a Socket. It will run on a new thread from the provided factory.*/
+	public final void start(Socket socket, ThreadFactory factory) throws IOException {
 		if(client!=Client.NULL_CLIENT)throw new UnsupportedOperationException("already init");
 		this.client = new Client.OfIo(this,socket,factory);
 		onOpen();
 		client.start();
 	}
-	public abstract void onOpen();
-	public abstract void onClose();
+	/**Runs after the socket is opened, as a result of a successful start() call.*/
+	public abstract void onOpen() throws IOException;
+	/**Runs when the socket is closed. The socket may or may not be open at this point.*/
+	public abstract void onClose() throws IOException;
+	/**Runs when a timeout occurs. Default behavior closes the connection. Will not be run in NIO mode with no ScheduledExectorService provided.*/
 	public void onTimeout() {alive=false;}
+	/**Runs when data is received. The buffer's position will be at the end of the input it received, which will be of length bytes.*/
 	public abstract void onData(ByteBuffer data, int length) throws IOException;
+	/**Sends the contents of the provided ByteBuffer(from position to limit).*/
 	public void send(ByteBuffer msg){
 		client.send(msg);
 	}
+	/**Sends the contents of the provided byte[]. Equivalent to send(msg,0,msg.length)*/
 	public void send(byte[] msg){ 
 		client.send(msg);
 	}
+	/**Sends {@code length} bytes of the provided byte[], starting at {@code off}.*/
 	public void send(byte[] msg,int off, int length){
 		client.send(msg,off,length);
 	}
+	/**Flushes the output buffer, if enabled. Otherwise does nothing.*/
 	public void flush() throws IOException{
 		client.flush();
 	}
-	public InetAddress getInetAddress() throws IOException {
-		return client.getInetAddress();
+	/**Returns the remote IP address.*/
+	public InetAddress getInetAddress(){
+		try {
+			return client.getInetAddress();
+		} catch (IOException e) {
+			return null;
+		}
 	}
+	/**Returns the remote port.*/
+	public int getPort(){
+		try {
+			return client.getPort();
+		} catch (IOException e) {
+			return -1;
+		}
+	}
+	/**Returns the socket associated with this client, if in IO mode, otherwise null.*/
 	public Socket getSocket() {
 		return client.getSocket();
 	}
+	/**Returns the AsynchronousSocketChannel associated with this client, if in NIO mode, otherwise null.*/
 	public AsynchronousSocketChannel getChannel() {
 		return client.getChannel();
 	}
+	/**Returns whether this socket is in NIO mode.*/
 	public boolean isNio(){
 		return getChannel()!=null;
 	}
+	/**Returns a ByteBuffer containing the same contents as input, with at least {@code length} capacity.<br>Return null if impossible.*/
 	public ByteBuffer ensureInputLength(ByteBuffer input, int length) throws IOException {
 		if(length>input.remaining())
 			return resizeInput(input,length);
 		else return input;
 	}
+	/**Returns a ByteBuffer containing the same contents as output, with at least {@code length} capacity.<br>Return null if impossible.*/
 	public ByteBuffer ensureOutputLength(ByteBuffer output, int length) throws IOException {
 		if(length>output.capacity())
 			return resizeOutput(output,length);
@@ -101,12 +190,14 @@ public abstract class ClientContext{
 			return output;
 		}else return output;
 	}
+	/**Resize the buffer to hold at least length bytes.<br>Return null if impossible.*/
 	public ByteBuffer resizeInput(ByteBuffer input, int length) {
 		if(input.capacity()+length>opt.in().max()) {
 			return null;
 		}
 		return resizeImpl(input, opt.in().max());
 	}
+	/**Resize the buffer to hold at least length bytes.<br>Return null if impossible.*/
 	public ByteBuffer resizeOutput(ByteBuffer output,int length) {
 		if(output.capacity()+length>opt.out().max()) {
 			return null;
@@ -121,6 +212,7 @@ public abstract class ClientContext{
 			return null;
 		}
 	}
+	//package-private
 	final boolean prepareOut(ByteBuffer outBuffer, int length) throws IOException {
 		if(outBuffer!=null) {
 			if((outBuffer=ensureOutputLength(outBuffer,length))!=null) {
@@ -132,11 +224,13 @@ public abstract class ClientContext{
 		}
 		return false;
 	}
+	//package-private
 	static interface Client{
 		public void start() throws IOException;
 		public Socket getSocket();
 		public AsynchronousSocketChannel getChannel();
 		public InetAddress getInetAddress() throws IOException;
+		public int getPort() throws IOException;
 		public ByteBuffer buffer();
 		public void send(ByteBuffer msg);
 		public void flush();
@@ -165,6 +259,10 @@ public abstract class ClientContext{
 			@Override
 			public ByteBuffer buffer() {
 				return null;
+			}
+			@Override
+			public int getPort() {
+				return 0;
 			}
 		};
 		static final Lock NULL_LOCK=new ReentrantLock(){
@@ -210,10 +308,11 @@ public abstract class ClientContext{
 					while(ctx.alive) {
 						try {
 							if(inBuffer.remaining()==0) {
-								if((inBuffer=ctx.ensureInputLength(inBuffer,1))==null) {
+								var resized=ctx.ensureInputLength(inBuffer,1);
+								if(resized==null) {
 									ctx.alive=false;
 									break;
-								}
+								}else inBuffer=resized;
 							}
 							int count=input.read(inBuffer.array(),inBuffer.position(),inBuffer.remaining());
 							if(count<0) {
@@ -235,14 +334,14 @@ public abstract class ClientContext{
 				}catch(Exception e) {
 					//TODO: logging
 				}finally {
-					ctx.onClose();
+					try {
+						ctx.onClose();
+					} catch (IOException e1) {}
 					ctx.alive=false;
-					
 				}
 			}
 			@Override
 			public void flush() {
-				System.out.println("hydr");
 				if(outBuffer==null)return;
 				outLock.lock();
 				try {
@@ -252,6 +351,10 @@ public abstract class ClientContext{
 				}finally {
 					outLock.unlock();
 				}
+			}
+			@Override
+			public int getPort() {
+				return client.getPort();
 			}
 			private void sendImpl(ByteBuffer b, boolean direct) {
 				try {
@@ -378,7 +481,8 @@ public abstract class ClientContext{
 						try {
 							if(ctx.alive) {
 								ctx.onData(input,result);
-							}if(result<0)ctx.alive=false;
+							}if(result<0)
+							ctx.alive=false;
 						} catch (Exception e) {
 							ctx.alive=false;
 						}
@@ -386,11 +490,12 @@ public abstract class ClientContext{
 							
 							if(input.remaining()==0)
 								try {
-									if((input=ctx.ensureInputLength(input,1))==null) {
-										ctx.alive=false;
-									}
+									var resized=ctx.ensureInputLength(input,1);
+									if(resized==null) {
+										close();
+									}else input=resized;
 								}catch(IOException ioe) {
-									ctx.alive=false;
+									close();
 								}
 							if(ctx.alive) {//realloc can fail, resulting in alive=false
 								if(ctx.opt.mspt()>0)
@@ -414,7 +519,9 @@ public abstract class ClientContext{
 			private void close() {
 				ctx.alive=false;
 				if(nextTimeout!=null)nextTimeout.cancel(false);
-				ctx.onClose();
+				try {
+					ctx.onClose();
+				} catch (IOException e1) {}
 				if(client.isOpen())
 					try {
 						client.close();
@@ -461,6 +568,12 @@ public abstract class ClientContext{
 				} finally {
 					sendLock.unlock();
 				}
+			}
+			@Override
+			public int getPort() throws IOException {
+				if(client.getRemoteAddress() instanceof InetSocketAddress isa)
+					return isa.getPort();
+				return 0;
 			}
 			@Override
 			public InetAddress getInetAddress() throws IOException {

@@ -61,21 +61,20 @@ class CoopServerThread extends LineClientContext {
 			String map=ms.substring(0,ms.length()-1);
 			int mode = parseInt(ms.substring(ms.length()-1));
 			int reverse=ThreadLocalRandom.current().nextInt(2);
-			int port = CoopServer.nextPort();
-			CoopGameServer gs = new CoopGameServer(opp,port,null,map,mode,reverse);
+			CoopGameServer gs = new CoopGameServer(opp,null,map,mode,reverse);
 			connect(gs,opp);
 		}
 		queued = true;
 	}
 	public void connect(CoopGameServer gs, CoopPlayer p) throws IOException{
-		gs.start(parent);
-		p.sendln("13,"+"localhost"+","+gs.port+",843,13042641,"+player.id+","+player.name+","+gs.map+","+gs.mode+","+gs.reverse+",0");
+		gs.start(CoopServer.nextPort(),parent.isNio());
+		p.sendln("13,"+"localhost"+","+gs.getPort()+",843,13042641,"+player.id+","+player.name+","+gs.map+","+gs.mode+","+gs.reverse+",0");
 		if(p.thread!=null)p.thread.flush();
 		//If players cannot be distinguished, we have to 
 		if(Objects.equals(player,p)) {
 			FlashUtils.sleep(5000);
 		}
-		sendln("13,"+"localhost"+","+gs.port+",843,13042641,"+p.id+","+p.name+","+gs.map+","+gs.mode+","+gs.reverse+",1");
+		sendln("13,"+"localhost"+","+gs.getPort()+",843,13042641,"+p.id+","+p.name+","+gs.map+","+gs.mode+","+gs.reverse+",1");
 		queued=false;
 		matched=true;
 	}
@@ -118,11 +117,10 @@ class CoopServerThread extends LineClientContext {
 					alive=false;
 					return;
 				}
-				int port=CoopServer.nextPort();
-				var gs=new CoopGameServer(player,port,code,map,mode,reverse);
+				var gs=new CoopGameServer(player,code,map,mode,reverse);
 				CoopServer.privateMatches.put(code,gs);
-				sendln("4,"+"localhost"+","+port+",0");//TODO ???
-				gs.start(parent);
+				gs.start(CoopServer.nextPort(),parent.isNio());
+				sendln("4,"+"localhost"+","+gs.getPort()+",0");//TODO ???
 			}else{
 				sendln("5");
 			}
@@ -141,7 +139,7 @@ class CoopServerThread extends LineClientContext {
 				gs.p1.sendln("9,"+""+0+","+",0");
 				if(Objects.equals(player,gs.p1)) {
 					FlashUtils.sleep(5000);
-				}sendln("1,"+"localhost"+","+gs.port+",0,13042641,"+gs.p1.id+","+gs.p1.name+","+gs.map+","+gs.mode+","+gs.reverse);
+				}sendln("1,"+"localhost"+","+gs.getPort()+",0,13042641,"+gs.p1.id+","+gs.p1.name+","+gs.map+","+gs.mode+","+gs.reverse);
 				queued=true;
 			}
 			break;
@@ -194,8 +192,7 @@ class CoopGameServer extends ServerContext.Basic {
 	public volatile boolean welcome=false;
 	public final String code;
 	public static final byte[] WELCOME=("106,214,"+FlashUtils.encode("\nWelcome to Flash Private Server!\nType !help for a list of commands, and report any bugs to Glenn M#9606")+"\n").getBytes();
-	public CoopGameServer(CoopPlayer p1, int port, String code, String map, int mode, int reverse) throws IOException {
-		super(port);
+	public CoopGameServer(CoopPlayer p1, String code, String map, int mode, int reverse) throws IOException {
 		this.p1 = p1;
 		this.map=map;
 		this.mode=mode;
@@ -476,9 +473,6 @@ class CoopPlayer {
 }
 //class for main method
 public class CoopServer extends ServerContext.Basic{
-	public CoopServer(int port) throws IOException {
-		super(port);
-	}
 	public static boolean verbose=true;
 	public static final List<CoopPlayer> queue=new CopyOnWriteArrayList<>();
 	public static final Map<String, CoopGameServer> privateMatches=new ConcurrentHashMap<>();
@@ -490,6 +484,7 @@ public class CoopServer extends ServerContext.Basic{
 		queue.add(x);
 		return null;
 	}
+	@Override
 	public void onOpen() {
 		System.out.println("Coop server started! ");
 	}
