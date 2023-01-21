@@ -11,7 +11,7 @@ public class Scheduler{
 		
 		@Override
 		public Thread newThread(Runnable r) {
-			return Thread.ofVirtual().name("Scheduler thread").unstarted(r);
+			return Thread.ofPlatform().name("Scheduler thread").unstarted(r);
 		}
 	});
 

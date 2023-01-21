@@ -35,17 +35,19 @@ public record ClientOptions(int timeout, int mspt, ScheduledExecutorService time
 	 * */
 	public static ClientOptions from(String src, ScheduledExecutorService timeoutSvc) {
 		var builder=builder();
-		String[] cmds=src.trim().toLowerCase().split(";");
-		for(String cmd:cmds) {
-			String k=cmd.substring(0,cmd.indexOf("=")).trim();
-			String v=cmd.substring(cmd.indexOf("=")+1).trim();
-			builder=switch(k) {
-				case "in"->builder.input(BufferOptions.from(v,BufferOptions.DEFAULT));
-				case "out"->builder.output(BufferOptions.from(v,BufferOptions.NONE));
-				case "timeout"->builder.timeout(Integer.parseInt(v));
-				case "mspt"->builder.mspt(Integer.parseInt(v));
-				default->builder;
-			};
+		if(src!=null) {
+			String[] cmds=src.trim().toLowerCase().split(";");
+			for(String cmd:cmds) {
+				String k=cmd.substring(0,cmd.indexOf("=")).trim();
+				String v=cmd.substring(cmd.indexOf("=")+1).trim();
+				builder=switch(k) {
+					case "in"->builder.input(BufferOptions.from(v,BufferOptions.DEFAULT));
+					case "out"->builder.output(BufferOptions.from(v,BufferOptions.NONE));
+					case "timeout"->builder.timeout(Integer.parseInt(v));
+					case "mspt"->builder.mspt(Integer.parseInt(v));
+					default->builder;
+				};
+			}
 		}
 		return builder.timeout(builder.timeout,timeoutSvc).build();
 	}/**A builder for ClientOptions objects.

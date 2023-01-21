@@ -19,31 +19,36 @@ public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 	//TODO: close() called automatically & made private
 	public volatile boolean alive=true;
 	volatile Server server;
-	/**Utility class that overrides onOpen and onClose to do nothing.*/
-	public abstract static class Basic extends ServerContext{
-		@Override public void onOpen(){}
-		@Override public void onClose() {}
+
+	/**Equivalent to {@code start(port,50,nio)}.*/
+	public void start(int port, boolean nio) throws IOException {
+		start(port,50,nio);
+	}
+
+	/**Equivalent to {@code start(ports,50,nio)}.*/
+	public void start(IntStream ports, boolean nio) throws IOException {
+		start(ports,50,nio);
+	}
+	/**Starts listening for connections using the specified connection strategy.*/
+	public void start(int port, int backlog, boolean nio) throws IOException {
+		if(nio) {
+			(server=new Server.OfNio(this, port, backlog)).start();
+		}else
+			(server=new Server.OfIo(this, port, backlog)).start();
 	}
 	/**Starts listening for connections using the first port in {@code ports} that successfully binds.*/
-	public void start(IntStream ports, boolean nio) throws IOException {
+	public void start(IntStream ports, int backlog, boolean nio) throws IOException {
 		ports.filter((port)->{
 			try {
 				if(nio) {
-					(server=new Server.OfNio(this, port)).start();
+					(server=new Server.OfNio(this, port, backlog)).start();
 				}else
-					(server=new Server.OfIo(this, port)).start();
+					(server=new Server.OfIo(this, port, backlog)).start();
 				return true;
 			}catch(IOException ioe) {
 				return false;
 			}
 		}).findFirst();
-	}
-	/**Starts listening for connections using the specified connection strategy.*/
-	public void start(int port, boolean nio) throws IOException {
-		if(nio) {
-			(server=new Server.OfNio(this, port)).start();
-		}else
-			(server=new Server.OfIo(this, port)).start();
 	}
 	/**Starts listening for connections using the specified already-bound server.*/
 	public void start(ServerSocket server) throws IOException {
@@ -80,10 +85,10 @@ public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 		alive=false;
 		server.close();
 	}
-	/**Called when the server is opened.*/
-	public abstract void onOpen();
-	/**Called when the server is closed. It may or may not still be bound*/
-	public abstract void onClose();
+	/**Called when the server is opened. Default implementation does nothing.*/
+	public void onOpen() {}
+	/**Called when the server is closed. It may or may not still be bound. Default implementation does nothing.*/
+	public void onClose() {};
 	/**Factory method for ClientContexts. They will often be constructed referencing this object.<br>
 	 * Regardless, this method will be called and the resulting clients will be started automatically<br> when connections are accepted.*/
 	public abstract ClientContext newClient() throws IOException;
@@ -100,9 +105,9 @@ public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 		public static class OfNio extends Server{
 
 			public final AsynchronousServerSocketChannel server;
-			public OfNio(ServerContext ctx, int port) throws IOException {
+			public OfNio(ServerContext ctx, int port, int backlog) throws IOException {
 				super(ctx);
-				server=AsynchronousServerSocketChannel.open().bind(new InetSocketAddress(port));
+				server=AsynchronousServerSocketChannel.open().bind(new InetSocketAddress(port),backlog);
 			}
 			public OfNio(ServerContext ctx, AsynchronousServerSocketChannel asc) throws IOException {
 				super(ctx);
@@ -159,9 +164,9 @@ public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 		}
 		public static class OfIo extends Server{
 			private final ServerSocket server;
-			public OfIo(ServerContext ctx, int port) throws IOException{
+			public OfIo(ServerContext ctx, int port, int backlog) throws IOException{
 				super(ctx);
-				this.server=new ServerSocket(port);
+				this.server=new ServerSocket(port,backlog);
 				server.setSoTimeout(10000);
 			}
 			public OfIo(ServerContext ctx, ServerSocket server) throws IOException {

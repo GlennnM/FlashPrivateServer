@@ -45,13 +45,6 @@ public abstract class ClientContext{
 	public ClientContext(ClientOptions opt) {
 		this.opt=opt;
 	}
-	/**Starts this context given an AsynchronousSocketChannel.*/
-	public final void start(AsynchronousSocketChannel socket) throws IOException {
-		if(client!=Client.NULL_CLIENT)throw new UnsupportedOperationException("already init");
-		this.client = new Client.OfNio(this,socket);
-		onOpen();
-		client.start();
-	}
 	/**Starts this context by connecting to the given remote address.
 	 * @throws IOException */
 	public void start(InetSocketAddress remote, boolean nio) throws IOException {
@@ -116,12 +109,21 @@ public abstract class ClientContext{
 	public final void start(Socket socket) throws IOException {
 		start(socket,DEFAULT_FACTORY);
 	}
+	/**Starts this context given an AsynchronousSocketChannel.*/
+	public final void start(AsynchronousSocketChannel socket) throws IOException {
+		if(client!=Client.NULL_CLIENT)throw new UnsupportedOperationException("already init");
+		this.client = new Client.OfNio(this,socket);
+		client.start();
+		onOpen();
+		if(!alive)((Client.OfNio)client).close();
+	}
 	/**Starts this context given a Socket. It will run on a new thread from the provided factory.*/
 	public final void start(Socket socket, ThreadFactory factory) throws IOException {
 		if(client!=Client.NULL_CLIENT)throw new UnsupportedOperationException("already init");
 		this.client = new Client.OfIo(this,socket,factory);
-		onOpen();
 		client.start();
+		onOpen();
+		if(!alive)((Client.OfIo)client).close();
 	}
 	/**Runs after the socket is opened, as a result of a successful start() call.*/
 	public abstract void onOpen() throws IOException;
@@ -144,7 +146,7 @@ public abstract class ClientContext{
 		client.send(msg,off,length);
 	}
 	/**Flushes the output buffer, if enabled. Otherwise does nothing.*/
-	public void flush() throws IOException{
+	public void flush(){
 		client.flush();
 	}
 	/**Returns the remote IP address.*/
@@ -195,34 +197,38 @@ public abstract class ClientContext{
 		if(input.capacity()+length>opt.in().max()) {
 			return null;
 		}
-		return resizeImpl(input, opt.in().max());
+		return resizeImpl(input, length, opt.in().max());
 	}
 	/**Resize the buffer to hold at least length bytes.<br>Return null if impossible.*/
 	public ByteBuffer resizeOutput(ByteBuffer output,int length) {
 		if(output.capacity()+length>opt.out().max()) {
 			return null;
 		}
-		return resizeImpl(output, opt.out().max());
+		return resizeImpl(output, length, opt.out().max());
 	}
-	private static ByteBuffer resizeImpl(ByteBuffer target, int max) {
-		int newLen=Integer.highestOneBit(target.position()<<1);
+	//TODO: scattering read/gathering write instead of resizing
+	private static ByteBuffer resizeImpl(ByteBuffer target, int length, int max) {
+		int newLen=Integer.highestOneBit((target.position()+length)<<1);
 		if(newLen<=max)
 			return (target.isDirect()?ByteBuffer.allocateDirect(newLen):ByteBuffer.allocate(newLen)).put(target.flip());
 		else {
 			return null;
 		}
 	}
+	/**Closes the context immediately, without waiting for a timeout as would setting alive=false.*/
+	public void close() {
+		client.close();
+	}
 	//package-private
-	final boolean prepareOut(ByteBuffer outBuffer, int length) throws IOException {
+	final ByteBuffer prepareOut(ByteBuffer outBuffer, int length) throws IOException {
 		if(outBuffer!=null) {
 			if((outBuffer=ensureOutputLength(outBuffer,length))!=null) {
-				return true;
+				return outBuffer;
 			}else {
 				alive=false;
-				return false;
 			}
 		}
-		return false;
+		return null;
 	}
 	//package-private
 	static interface Client{
@@ -233,6 +239,7 @@ public abstract class ClientContext{
 		public int getPort() throws IOException;
 		public ByteBuffer buffer();
 		public void send(ByteBuffer msg);
+		void close();
 		public void flush();
 		public default void send(byte[] msg){
 			send(ByteBuffer.wrap(msg));
@@ -263,6 +270,9 @@ public abstract class ClientContext{
 			@Override
 			public int getPort() {
 				return 0;
+			}
+			@Override
+			public void close() {
 			}
 		};
 		static final Lock NULL_LOCK=new ReentrantLock(){
@@ -341,6 +351,15 @@ public abstract class ClientContext{
 				}
 			}
 			@Override
+			public void close() {
+				ctx.alive=false;
+				try {
+					client.shutdownInput();//stop reading
+				} catch (IOException e) {
+					
+				}
+			}
+			@Override
 			public void flush() {
 				if(outBuffer==null)return;
 				outLock.lock();
@@ -356,9 +375,9 @@ public abstract class ClientContext{
 			public int getPort() {
 				return client.getPort();
 			}
-			private void sendImpl(ByteBuffer b, boolean direct) {
+			private void sendImpl(ByteBuffer b, boolean direct) {//TODO: flush instead of alive=false
 				try {
-					if(!direct&&ctx.prepareOut(outBuffer,b.remaining())) {
+					if(!direct&&(outBuffer=ctx.prepareOut(outBuffer,b.remaining()))!=null) {
 						outBuffer.put(b);
 						return;
 					}if(!ctx.alive)return;
@@ -382,12 +401,15 @@ public abstract class ClientContext{
 			public void send(byte[] b){
 				outLock.lock();
 				try {
-					if(ctx.prepareOut(outBuffer,b.length)) {
+					if((outBuffer=ctx.prepareOut(outBuffer,b.length))!=null) {
 						outBuffer.put(b);
 						return;
 					}if(!ctx.alive)return;
 					output.write(b);
 				}catch(IOException ioe) {
+					ctx.alive=false;
+				}catch(Exception e){
+					e.printStackTrace();
 					ctx.alive=false;
 				}finally {
 					outLock.unlock();
@@ -397,7 +419,7 @@ public abstract class ClientContext{
 			public void send(byte[] b, int off, int len){
 				outLock.lock();
 				try {
-					if(ctx.prepareOut(outBuffer,len)) {
+					if((outBuffer=ctx.prepareOut(outBuffer,len))!=null) {
 						outBuffer.put(b,off,len);
 						return;
 					}if(!ctx.alive)return;
@@ -412,7 +434,6 @@ public abstract class ClientContext{
 			}
 			@Override
 			public InetAddress getInetAddress() {
-				// TODO Auto-generated method stub
 				return null;
 			}
 			@Override
@@ -457,6 +478,7 @@ public abstract class ClientContext{
 					ctx.onTimeout();
 					if(ctx.alive)
 						nextTimeout=ses.schedule(this::onTimeout,ctx.opt.timeout(), TimeUnit.MILLISECONDS);
+					
 				}
 			}
 			private void readWithTimeout(ByteBuffer input, CompletionHandler<Integer, Void> handler) {
@@ -492,10 +514,10 @@ public abstract class ClientContext{
 								try {
 									var resized=ctx.ensureInputLength(input,1);
 									if(resized==null) {
-										close();
+										close2();
 									}else input=resized;
 								}catch(IOException ioe) {
-									close();
+									close2();
 								}
 							if(ctx.alive) {//realloc can fail, resulting in alive=false
 								if(ctx.opt.mspt()>0)
@@ -507,16 +529,23 @@ public abstract class ClientContext{
 								readWithTimeout(input,this);
 								return;
 							}
-						}else close();
+						}else close2();
 					}
 					//TODO: make sure onCLose not called more than once
 					@Override
 					public void failed(Throwable exc, Void attachment) {
-						close();
+						close2();
 					}
 				});
 			}
-			private void close() {
+			public void close() {
+				ctx.alive=false;
+				try {
+					client.shutdownInput();
+					client.shutdownOutput();
+				} catch (IOException e) {}
+			}
+			void close2() {
 				ctx.alive=false;
 				if(nextTimeout!=null)nextTimeout.cancel(false);
 				try {
@@ -525,7 +554,10 @@ public abstract class ClientContext{
 				if(client.isOpen())
 					try {
 						client.close();
-					}catch(IOException ioe) {}
+					} catch (IOException e) {
+						
+					}
+				
 			}
 			@Override
 			public void flush() {
@@ -542,11 +574,14 @@ public abstract class ClientContext{
 			public void send(ByteBuffer msg){
 				try {
 					bufferLock.lock();
-					if(ctx.prepareOut(output,msg.remaining())) {
+					if((output=ctx.prepareOut(output,msg.remaining()))!=null) {
 						output.put(msg);
 						return;
 					}
 				}catch(IOException ioe) {
+					ctx.alive=false;
+				}catch(Exception e){
+					e.printStackTrace();
 					ctx.alive=false;
 				}finally {
 					bufferLock.unlock();

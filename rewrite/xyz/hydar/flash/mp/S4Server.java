@@ -1,4 +1,6 @@
 package xyz.hydar.flash.mp;
+import static xyz.hydar.flash.mp.FlashLauncher.CONFIG;
+
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -26,7 +28,6 @@ import java.util.stream.IntStream;
 import xyz.hydar.flash.util.FlashUtils;
 import xyz.hydar.flash.util.Scheduler;
 import xyz.hydar.net.ClientContext;
-import xyz.hydar.net.ClientOptions;
 import xyz.hydar.net.ServerContext;
 
 
@@ -35,15 +36,15 @@ record S4Player(short level, byte[] data){}
 
 /**
  * Individual game server; can have up to 4 clients/bots connected. Each one
- * will have a S4GameServerThread Most of the multiplayer protocol is in here and
- * S4GameServerThread. See o2144, o14519, o7788
+ * will have a S4GameClient Most of the multiplayer protocol is in here and
+ * S4GameClient. See o2144, o14519, o7788
  */
 class S4GameServer extends ServerContext{
 	public final int code;
 	public final short mode;
 	public short seed;
 	public final boolean autostart;
-	public final Set<S4GameServerThread> players = new CopyOnWriteArraySet<>();
+	public final Set<S4GameClient> players = new CopyOnWriteArraySet<>();
 	public final int mapSet;
 	public final AtomicInteger nextId=new AtomicInteger();
 	public final long startedAt=FlashUtils.now();
@@ -124,7 +125,7 @@ class S4GameServer extends ServerContext{
 		if(!ingame&&started&&players.stream().allMatch(x->x.built)) {
 			var src=getNonBot();
 			if(src!=null)
-				src.finishBuild(false);
+				src.finishBuild();
 			return;
 		}else if(started)return;
 		if(players.size()==1) {
@@ -156,7 +157,7 @@ class S4GameServer extends ServerContext{
 	}
 	/**Returns true if all players are level 96 or higher, allowing for a level 101 boost according to the default rules.*/
 	public boolean can101(){
-		for(S4GameServerThread g:players){
+		for(S4GameClient g:players){
 			if(g!=null&&!g.bot&&g.player!=null&&g.player.level()<96)
 				return false;
 		}
@@ -170,7 +171,8 @@ class S4GameServer extends ServerContext{
 	public void checkAlive() {
 		if(players.isEmpty()) {
 			alive=false;
-			end();
+			close();
+			dequeue();
 		}
 	}
 	/**Returns whether the game mode of this lobby is an Active Event.*/
@@ -179,22 +181,19 @@ class S4GameServer extends ServerContext{
 	}
 
 	/**Returns the first non-bot player connected to the server*/
-	public S4GameServerThread getNonBot() {
-		for (S4GameServerThread player:players)
+	public S4GameClient getNonBot() {
+		for (S4GameClient player:players)
 			if (!player.bot) return player;
 		return null;
-	}
-	/**Closes the server and performs cleanup tasks. */
-	public void end(){
-		close();
 	}
 	@Override
 	public void onOpen() {
 	}
 	@Override
 	public void onClose() {
-
-		//System.out.println("parent onClose "+this);
+		
+	}
+	public void dequeue() {
 		S4Server.games.computeIfPresent(((long)code<<32)|(mode&-1L),(k,v)->{
 			v.remove(this);
 			if(v.isEmpty())
@@ -202,18 +201,17 @@ class S4GameServer extends ServerContext{
 			else return v;
 		});
 	}
-
 	public int flashTime() {
 		return (int)(FlashUtils.now()-startedAt);
 	}
 	/**Initializes a new connection context.*/
 	@Override
 	public ClientContext newClient() throws IOException {
-		return new S4GameServerThread(this);
+		return new S4GameClient(this);
 	}
 	
 }
-class S4GameServerThread extends ClientContext {
+class S4GameClient extends ClientContext {
 	public volatile S4Player player;
 	public final S4GameServer parent;
 	public final byte id;
@@ -233,7 +231,7 @@ class S4GameServerThread extends ClientContext {
 	protected ByteBuffer local;//write to self
 	protected ByteBuffer remote;//write to peers
 	//dummy constructor for bots
-	private S4GameServerThread(S4GameServer parent,short level,int vs) {
+	private S4GameClient(S4GameServer parent,short level,int vs) {
 		this.parent=parent;
 		this.id = (byte)parent.nextId.getAndIncrement();
 		this.bot=true;
@@ -247,11 +245,9 @@ class S4GameServerThread extends ClientContext {
 		this.remote=null;
 		this.loaded=welcomed=built=true;
 	}
-	static final ClientOptions OPTIONS=ClientOptions.builder()
-			.timeout(180000).input(8192,16384).inputDirect().mspt(50).outputLocked().outputDirect().build();
 	/**Initializes the client context.*/
-	public S4GameServerThread(S4GameServer parent) throws IOException {
-		super(OPTIONS);
+	public S4GameClient(S4GameServer parent) throws IOException {
+		super(CONFIG.SAS4_GAME);
 		this.parent = parent;
 		this.player = null;
 		this.vs=0;
@@ -270,7 +266,8 @@ class S4GameServerThread extends ClientContext {
 	protected ByteBuffer local(int length) {
 		//System.out.println(""+local.position()+"%"+local.remaining()+"%"+length);
 		if(length>=1024) {
-			 throw new IllegalArgumentException("buffer overflow(local, %d, %s)".formatted(length,local));
+			 System.out.println("buffer overflow(local, %d, %s)".formatted(length,local));
+			 alive=false;
 		}else if(length>=local.capacity()) {
 			 local=alloc(Integer.highestOneBit((local.position()+length)<<1)).put(local.flip());
 			// System.out.println("local buffer size increased to "+local.capacity());
@@ -283,8 +280,9 @@ class S4GameServerThread extends ClientContext {
 	/**Returns the remote buffer after ensuring it can hold {@code length} bytes, and expanding it or flushing it if not.*/
 	protected ByteBuffer remote(int length) {
 		 if(length>=32768) {
-			 throw new IllegalArgumentException("buffer overflow(remote, %d, %s)".formatted(length,remote));
-		 }else if(length>=remote.capacity()||(length>=remote.remaining()&&remote.remaining()<8192)) {
+			 System.out.println("buffer overflow(remote, %d, %s)".formatted(length,remote));
+			 alive=false;
+		 }else if(length>=remote.capacity()||(length>=remote.remaining()&&remote.remaining()<CONFIG.scaleEarly)) {
 			 remote=alloc(Integer.highestOneBit((remote.position()+length)<<1)).put(remote.flip());
 			 //System.out.println("remote buffer size increased to "+remote.capacity());
 		 }else if(length>=remote.remaining()) {//TODO:add minimum (config) or multiple buffers?
@@ -316,7 +314,7 @@ class S4GameServerThread extends ClientContext {
 	}
 	/**Registers this client, sending its player data to all peers and sending it all other players' data*/
 	public void register() {
-		for (S4GameServerThread g : parent.players) {
+		for (S4GameClient g : parent.players) {
 			if(!bot){ 
 				if(g.id==this.id)
 					playerData(g,WriteMode.REMOTE);
@@ -345,7 +343,7 @@ class S4GameServerThread extends ClientContext {
 		if(parent.mode==5&&parent.players.size()==3&&!bot)unboost();
 	}
 	/**Alert all players of the bot specified by target and then register it, since bots don't have output buffers.*/
-	public void registerBot(S4GameServerThread target) {
+	public void registerBot(S4GameClient target) {
 		playerData(target,WriteMode.ALL);
 		target.register();
 	}
@@ -400,6 +398,7 @@ class S4GameServerThread extends ClientContext {
 	@Override
 	public void onOpen() {
 		S4Server.connections++;
+		CONFIG.acquire(this);
 		local(17)
 			.put((byte)-4).put(parent.host).put(id)
 			.putInt(parent.flashTime())
@@ -417,6 +416,7 @@ class S4GameServerThread extends ClientContext {
 			flushRemote();
 		}finally {
 			leave();
+			CONFIG.release(this);
 		}
 	}
 
@@ -537,7 +537,7 @@ class S4GameServerThread extends ClientContext {
 					}else if(!parent.ingame &&!built) {
 						loadingState(load);
 						if(Math.abs(1.0f-load)<0.0001f)
-							finishBuild(true);
+							finishBuild();
 					}
 					return;
 				}//else if(subop==0x09)return;
@@ -575,7 +575,7 @@ class S4GameServerThread extends ClientContext {
 	 * type=bytearray |1| suboperation IF type -1 |data| - usually includes id and
 	 * level early on See o14519, o2144.
 	 */
-	public void playerData(S4GameServerThread source, WriteMode target) {
+	public void playerData(S4GameClient source, WriteMode target) {
 		int len = source.player.data().length+1;
 		int nameLen=len>2?ByteBuffer.wrap(source.player.data()).getShort():0;
 		byte loadPercent=source.bot?100:(byte) (source.load*100);
@@ -630,7 +630,7 @@ class S4GameServerThread extends ClientContext {
 			chat("Unable to boost.",false);
 			return;
 		}
-		S4GameServerThread bot = S4GameServerThread.newBot(parent, level, vs);
+		S4GameClient bot = S4GameClient.newBot(parent, level, vs);
 		parent.players.add(bot);
 		registerBot(bot);
 		announce((vs==0)?("Added 1 bot!"):((vs==1)?"Added 1 VS bot!":"Added 1 deadtab. Make sure to remove deadtabs with !unboost or !disconnect before the game ends!"));
@@ -638,7 +638,7 @@ class S4GameServerThread extends ClientContext {
 
 	/**Remove a bot, if possible.*/
 	public void unboost() {
-		for (S4GameServerThread player:parent.players)
+		for (S4GameClient player:parent.players)
 			if (player.bot) {
 				announce("Removed 1 bot!");
 				flushLocal();
@@ -654,7 +654,9 @@ class S4GameServerThread extends ClientContext {
 			return;
 		var source=parent.getNonBot();
 		if (source==null) {
-			parent.end();
+			if(parent.alive)
+				parent.close();
+			parent.dequeue();
 			return;
 		}
 		byte[] pl = { (byte) -6, id };
@@ -681,10 +683,10 @@ class S4GameServerThread extends ClientContext {
 		S4Server.gamesStarted++;
 		parent.players.forEach(x->x.send(new byte[] {(byte)-16}));
 		parent.started = true;
-		//parent.close();
+		parent.close();
 	}
 	/**Called when one player finishes building, attempting to finish the process and start the game.*/
-	public void finishBuild(boolean announce) {
+	public void finishBuild() {
 		this.built=true;
 		if(!parent.ingame && parent.started && parent.players.stream().allMatch(x->x.built)) {
 			parent.ingame=true;
@@ -718,7 +720,9 @@ class S4GameServerThread extends ClientContext {
 				yield req;
 			}
 			default->{
+				if(parent.ingame&&player!=null)
 				System.out.println("help :((( "+opcode);
+				else alive=false;
 				//announce("Invalid packet[%d]. Buffer will be cleared".formatted(opcode));
 				//System.out.println(HexFormat.of().formatHex(input.array()));
 				//alive=false;
@@ -729,7 +733,7 @@ class S4GameServerThread extends ClientContext {
 		};
 	}
 	/**Returns a non-bot other than this player*/
-	public S4GameServerThread getPeer() {
+	public S4GameClient getPeer() {
 		for(var thread:parent.players)
 			if(thread.id!=id&&!thread.bot) 
 				return thread;
@@ -742,7 +746,7 @@ class S4GameServerThread extends ClientContext {
 		if(this.bot||s==null)return;
 		String s2 = "\n[BEGINFONT face='Calibri' size='17' color='#21d91f' CLOSEFONT]"+s+"[ENDFONT]";
 		byte[] msg = s2.getBytes(StandardCharsets.UTF_8);
-		S4GameServerThread peer=null;
+		S4GameClient peer=null;
 		for(var thread:parent.players) {
 			if(thread.id!=id) {
 				peer=thread;break;
@@ -878,13 +882,17 @@ class S4GameServerThread extends ClientContext {
 		usage.append("\nMax Memory: ").append(instance.maxMemory() / mb).append(" MB");
 		announce(usage.toString());
 
-		announce("Uptime: "+(Duration.ofMillis(FlashUtils.now()-S4Server.START).toString().toLowerCase().substring(2))+"\nGames started: "+S4Server.gamesStarted);	}
+		announce("Uptime: "+(Duration.ofMillis(FlashUtils.now()-S4Server.START).toString().toLowerCase().substring(2))+"\nGames started: "+S4Server.gamesStarted);
+	}
 
+	public void dequeue() {
+		
+	}
 	/**
 	 * Create a new bot and returns it. Uses a private constructor to avoid allocating byte buffers.
 	 */
-	public static S4GameServerThread newBot(S4GameServer parent, short level, int vs) {
-		return new S4GameServerThread(parent,level, vs) {
+	public static S4GameClient newBot(S4GameServer parent, short level, int vs) {
+		return new S4GameClient(parent,level, vs) {
 			@Override
 			public void send(byte[] src) {}
 			@Override
@@ -946,11 +954,10 @@ public class S4Server extends ServerContext{
 	public static final byte[] deadtab;
 	public static final Map<Long, Set<S4GameServer>> games= new ConcurrentHashMap<>();
 	public static volatile String log = "";
-	public static volatile int nextPort = 8118;
 	public static volatile int connections=0;
 	public static volatile int gamesStarted=0;
 	public static boolean verbose=false;//printing
-	public static final String ip;
+	public static final String ip=CONFIG.HOST;
 	public static final short[] NORMAL_MAPS={1008, 1018, 1067, 1009, 1054, 1043, 1016, 1101, 1110};
 	public static final short[] NM_MAPS={1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1112};
 	public static final short[] EVENT_MAPS={1092,1093,1094,1095,1096,1099,1100,1111,1113,1114,1115,1116,1117,1118,1119};
@@ -961,30 +968,34 @@ public class S4Server extends ServerContext{
 	public static final String[] EVENT_MAP_DESC={"All","All except Ice(8),VIP(5),Highway(11)","1, 2, 4, 6, 9, 10, 12, 13, 15","Ons(1), Vac(2), PO(6), Crash Site(12)","??? VS maps or something"};
 	private static final ZoneId MINUS8=ZoneId.of("GMT-8");
 	private static final LocalDateTime FEB_16_2022;
+	private static final int MIN_PORT=CONFIG.sas4Ports.min();
+	private static final int MAX_PORT=CONFIG.sas4Ports.max();
+	private static final int PORT_STEP=CONFIG.sas4Ports.step();
+	public static volatile int nextPort = MIN_PORT;
+
 	static {
 		TimeZone MINUS8=TimeZone.getTimeZone("GMT-8");
 		Calendar c=Calendar.getInstance(MINUS8);
 		c.set(2022,1,16,0,0,0);
 		FEB_16_2022=LocalDateTime.ofInstant(c.toInstant(),ZoneId.of("GMT-8"));
 		byte[] tmp1,tmp2,tmp3;
-		String tmpIp;
 		try {
 			tmp1 = Files.readAllBytes(Paths.get("bot.bin"));
 			tmp2 = Files.readAllBytes(Paths.get("vs.bin"));
 			tmp3 = Files.readAllBytes(Paths.get("deadtab.bin"));
-			tmpIp=Files.readString(Paths.get("./config.txt")).trim();
 		} catch (Exception e) {
 			System.out.println("warning: bot data not found(bot.bin, vs.bin, deadtab.bin)");
 			tmp1=tmp2=tmp3=new byte[0];
-			tmpIp="localhost";//TODO: multiple game server ips
 		}
-		ip=tmpIp;
 		bot=tmp1;
 		vsbot=tmp2;
 		deadtab=tmp3;
 	}
 	//	this.map=(new short[]{1092,1095,1094,1100,1093,1099,1096,1111,1113})[(int)(Math.random()*9)];
 	// onsl pods sur ls vac po vip is md
+	public static int nextPort() {//8128
+		return nextPort=(nextPort>MAX_PORT?MIN_PORT:nextPort+PORT_STEP);
+	}
 	public static int getGameCount() {
 		return games.values().stream().mapToInt(Set::size).sum();
 	}
@@ -1024,9 +1035,6 @@ public class S4Server extends ServerContext{
 			//
 		
 	}
-	public static int nextPort(){
-		return nextPort=(nextPort>32000?8123:nextPort+5);
-	}
 	@Override
 	public void onOpen() {System.out.println("SAS4 server started!");}
 	@Override
@@ -1048,7 +1056,7 @@ public class S4Server extends ServerContext{
 	 */
 	@Override
 	public ClientContext newClient() throws IOException {
-		return new ClientContext() {
+		return new ClientContext(CONFIG.SAS4) {
 			@Override
 			public void onData(ByteBuffer src, int l4) throws IOException{
 				if(l4<0) {
@@ -1118,12 +1126,15 @@ public class S4Server extends ServerContext{
 				send(pl.flip());
 				alive=false;
 			}
-
 			@Override
-			public void onOpen() {connections++;}
-
+			public void onOpen() {
+				connections++;
+				CONFIG.acquire(this);
+			}
 			@Override
-			public void onClose() {}
+			public void onClose() {
+				CONFIG.release(this);
+			}
 		};
 	}
 }

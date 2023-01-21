@@ -1,5 +1,6 @@
 package xyz.hydar.flash.mp;
 import static java.lang.Integer.parseInt;
+import static xyz.hydar.flash.mp.FlashLauncher.CONFIG;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -13,15 +14,15 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.IntStream;
 
 import xyz.hydar.flash.util.FlashUtils;
 import xyz.hydar.flash.util.Scheduler;
 import xyz.hydar.net.ClientContext;
-import xyz.hydar.net.ClientOptions;
 import xyz.hydar.net.LineClientContext;
 import xyz.hydar.net.ServerContext;
 
-class CoopServerThread extends LineClientContext {
+class CoopClient extends LineClientContext {
 	private CoopPlayer player = null;
 	private int timeouts = 0;
 	private CoopGameServer gs = null;
@@ -47,9 +48,8 @@ class CoopServerThread extends LineClientContext {
 	
 	*/
 	// constructor initializes socket
-	static final ClientOptions OPTIONS=ClientOptions.builder().outputLocked().timeout(1000,Scheduler.ses).mspt(100).build();
-	public CoopServerThread(CoopServer parent) throws IOException {
-		super(StandardCharsets.ISO_8859_1,OPTIONS);
+	public CoopClient(CoopServer parent) throws IOException {
+		super(StandardCharsets.ISO_8859_1,CONFIG.BTD5);
 		this.parent=parent;
 	}
 	public void queuePublic() throws IOException{
@@ -67,14 +67,14 @@ class CoopServerThread extends LineClientContext {
 		queued = true;
 	}
 	public void connect(CoopGameServer gs, CoopPlayer p) throws IOException{
-		gs.start(CoopServer.nextPort(),parent.isNio());
-		p.sendln("13,"+"localhost"+","+gs.getPort()+",843,13042641,"+player.id+","+player.name+","+gs.map+","+gs.mode+","+gs.reverse+",0");
+		gs.start(IntStream.generate(CoopServer::nextPort).limit(100),parent.isNio());
+		p.sendln("13,"+CONFIG.HOST+","+gs.getPort()+",843,13042641,"+player.id+","+player.name+","+gs.map+","+gs.mode+","+gs.reverse+",0");
 		if(p.thread!=null)p.thread.flush();
 		//If players cannot be distinguished, we have to 
 		if(Objects.equals(player,p)) {
 			FlashUtils.sleep(5000);
 		}
-		sendln("13,"+"localhost"+","+gs.getPort()+",843,13042641,"+p.id+","+p.name+","+gs.map+","+gs.mode+","+gs.reverse+",1");
+		sendln("13,"+CONFIG.HOST+","+gs.getPort()+",843,13042641,"+p.id+","+p.name+","+gs.map+","+gs.mode+","+gs.reverse+",1");
 		queued=false;
 		matched=true;
 	}
@@ -119,7 +119,7 @@ class CoopServerThread extends LineClientContext {
 				}
 				var gs=new CoopGameServer(player,code,map,mode,reverse);
 				CoopServer.privateMatches.put(code,gs);
-				gs.start(CoopServer.nextPort(),parent.isNio());
+				gs.start(IntStream.generate(S4Server::nextPort).limit(100),parent.isNio());
 				sendln("4,"+"localhost"+","+gs.getPort()+",0");//TODO ???
 			}else{
 				sendln("5");
@@ -155,9 +155,7 @@ class CoopServerThread extends LineClientContext {
 			max=24*3600;
 		}else if(code!=null&&CoopServer.privateMatches.containsKey(code)) {
 			max=600;
-			try {
 			if(timeouts%15==0)sendln("hydar");
-			}catch(IOException ioe) {alive=false;};
 		}
 		if (timeouts > max) {
 			alive=false;
@@ -176,13 +174,14 @@ class CoopServerThread extends LineClientContext {
 		gs=null;
 		code=null;
 		matched=false;
+		CONFIG.release(this);
 	}
 	@Override
 	public void onOpen() {
-		
+		CONFIG.acquire(this);
 	}
 }
-class CoopGameServer extends ServerContext.Basic {
+class CoopGameServer extends ServerContext {
 	public volatile CoopPlayer p1;
 	public volatile CoopPlayer p2;
 	public final String map;
@@ -202,8 +201,8 @@ class CoopGameServer extends ServerContext.Basic {
 	}
 	
 	public void checkAlive() {
-		if((p1==null || !(p1.thread instanceof GameCoopServerThread))&&
-				(p2==null || !(p2.thread instanceof GameCoopServerThread))) {
+		if((p1==null || !(p1.thread instanceof CoopGameClient))&&
+				(p2==null || !(p2.thread instanceof CoopGameClient))) {
 			this.alive=false;
 		}
 	}
@@ -218,12 +217,13 @@ class CoopGameServer extends ServerContext.Basic {
 			throw new IOException("can't join");
 		}
 		if(p1!=null&&p2!=null&&p1.init&&p2.init) {
-			if(p1.thread instanceof GameCoopServerThread gst1 &&
-				p2.thread instanceof GameCoopServerThread gst2) {
+			if(p1.thread instanceof CoopGameClient gst1 &&
+				p2.thread instanceof CoopGameClient gst2) {
 				gst1.setOpponent(p2);
 				gst2.setOpponent(p1);
 			}
 			full=true;
+			close();
 		}
 	}
 	public void command(String command) throws IOException {
@@ -236,11 +236,11 @@ class CoopGameServer extends ServerContext.Basic {
 	}
 	@Override
 	public ClientContext newClient() throws IOException {
-		return new GameCoopServerThread(this);
+		return new CoopGameClient(this);
 	}
 }
 
-class GameCoopServerThread extends LineClientContext {
+class CoopGameClient extends LineClientContext {
 	public final CoopGameServer parent;
 	private volatile CoopPlayer player = null;
 	private volatile CoopPlayer opponent = null;
@@ -249,9 +249,8 @@ class GameCoopServerThread extends LineClientContext {
 	private double lastTime = 0;
 	private long lastTest = 0;
 
-	static final ClientOptions OPTIONS=ClientOptions.builder().output(1024,4096).outputLocked().timeout(1000,Scheduler.ses).mspt(50).build();
-	public GameCoopServerThread(CoopGameServer parent) throws IOException {
-		super(OPTIONS);
+	public CoopGameClient(CoopGameServer parent) throws IOException {
+		super(CONFIG.BTD5_GAME);
 		this.parent=parent;
 	}
 
@@ -346,6 +345,7 @@ class GameCoopServerThread extends LineClientContext {
 		}finally {
 			if(opponent==null||opponent.thread==null||!opponent.thread.alive)
 				parent.alive=false;
+			CONFIG.release(this);
 		}
 	}
 	@Override
@@ -354,11 +354,7 @@ class GameCoopServerThread extends LineClientContext {
 		int max=45;
 		if(parent.code!=null && CoopServer.privateMatches.containsKey(parent.code)) {
 			max=600;
-			try {
 			if(timeouts%15==0)sendln("hydar");
-			}catch(IOException ioe) {
-				alive=false;
-			}
 		}
 		if (timeouts > max) {
 			alive=false;
@@ -367,7 +363,7 @@ class GameCoopServerThread extends LineClientContext {
 
 	@Override
 	public void onOpen() {
-		System.out.println("hydar h");
+		CONFIG.acquire(this);
 	}
 }
 enum Constraint{
@@ -444,11 +440,7 @@ class CoopPlayer {
 		return "102,"+id+","+name+","+premiums+","+specId+","+specLvl;
 	}
 	public void sendln(String line) throws IOException{
-		try {
-			thread.sendln(line);
-		}catch(IOException ioe) {
-			thread.alive=false;
-		}
+		thread.sendln(line);
 	}
 	public void setConstraints(String cs){
 		this.constraints = cs==null?Constraints.ALL:new Constraints(cs);
@@ -472,11 +464,18 @@ class CoopPlayer {
 	}
 }
 //class for main method
-public class CoopServer extends ServerContext.Basic{
+public class CoopServer extends ServerContext{
 	public static boolean verbose=true;
 	public static final List<CoopPlayer> queue=new CopyOnWriteArrayList<>();
 	public static final Map<String, CoopGameServer> privateMatches=new ConcurrentHashMap<>();
-	public static volatile int nextPort = 8117;
+	private static final int MIN_PORT=CONFIG.btd5Ports.min();
+	private static final int MAX_PORT=CONFIG.btd5Ports.max();
+	private static final int PORT_STEP=CONFIG.btd5Ports.step();
+	public static volatile int nextPort = MIN_PORT;
+
+	public static int nextPort() {//8127
+		return nextPort=(nextPort>MAX_PORT?MIN_PORT:nextPort+PORT_STEP);
+	}
 	public static CoopPlayer checkQueue(CoopPlayer x){
 		for(CoopPlayer n:queue) 
 			if(n.getMap(x)!=null&&queue.remove(n)) 
@@ -488,16 +487,8 @@ public class CoopServer extends ServerContext.Basic{
 	public void onOpen() {
 		System.out.println("Coop server started! ");
 	}
-	public static int nextPort() {//TODO
-		do {
-			nextPort += 5;
-			if (nextPort > 32000)
-				nextPort = 8127;
-		} while (FlashUtils.checkPort(nextPort));
-		return nextPort;
-	}
 	@Override
 	public ClientContext newClient() throws IOException {
-		return new CoopServerThread(this);
+		return new CoopClient(this);
 	}
 }

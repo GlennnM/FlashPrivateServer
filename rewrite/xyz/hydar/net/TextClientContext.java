@@ -249,11 +249,11 @@ public abstract class TextClientContext extends ClientContext {
 		reading=false;
 	}
 	/**Sends the given string.*/
-	public void send(String msg) throws IOException{
+	public void send(String msg){
 		send(msg.getBytes(decoder.ch));
 	}
 	/**Sends the given string with \n appended to it.*/
-	public void sendln(String msg) throws IOException{
+	public void sendln(String msg){
 		send((msg+"\n").getBytes(decoder.ch));
 	}
 }

@@ -1,10 +1,10 @@
  package xyz.hydar.flash.mp;
+import static xyz.hydar.flash.mp.FlashLauncher.CONFIG;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,14 +15,14 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import xyz.hydar.flash.mp.GameServerThread.TimedAction;
+import xyz.hydar.flash.mp.BattlesGameClient.TimedAction;
 import xyz.hydar.flash.util.FlashUtils;
 import xyz.hydar.flash.util.FlashUtils.BasicCache;
 import xyz.hydar.flash.util.Scheduler;
 import xyz.hydar.net.ClientContext;
-import xyz.hydar.net.ClientOptions;
 import xyz.hydar.net.LineClientContext;
 import xyz.hydar.net.ServerContext;
 import xyz.hydar.net.TextClientContext;
@@ -30,7 +30,7 @@ import xyz.hydar.net.TextClientContext;
  * @TODO string builder?? no /done map, loadout, custom time?? no
  */
 
-class ServerThread extends LineClientContext {
+class BattlesClient extends LineClientContext {
 	private Player player = null;
 	private GameServer gs=null;
 	private boolean quickMatch = false;
@@ -40,10 +40,9 @@ class ServerThread extends LineClientContext {
 	private String code = null;
 	private String joinCode = null;
 	private int timeouts=0;
-	static final ClientOptions OPTIONS=ClientOptions.builder().timeout(1000,Scheduler.ses).mspt(100).outputLocked().build();
 	// constructor initializes socket
-	public ServerThread() throws IOException {
-		super(StandardCharsets.ISO_8859_1,true,OPTIONS);
+	public BattlesClient() throws IOException {
+		super(StandardCharsets.ISO_8859_1,true,CONFIG.BATTLES);
 		System.out.println("created thread");
 	}
 	public void createPrivate() throws IOException{
@@ -51,22 +50,22 @@ class ServerThread extends LineClientContext {
 		queued = true;
 		do{
 			code=FlashUtils.upperNoise("B2GARB",14);
-		}while (FlashServer.privateMatches.containsKey(code));
+		}while (BattlesServer.privateMatches.containsKey(code));
 		GameServer gs = new GameServer(player,code);
-		FlashServer.privateMatches.put(code, gs);
+		BattlesServer.privateMatches.put(code, gs);
 		sendln("FindingYouAMatch," + code);
 	}
 	private void joinPrivate(String joinCode)  throws IOException{
 		sendln("FindingYouAMatch," + joinCode);
-		if ((gs=FlashServer.privateMatches.remove(joinCode))!=null) {
+		if ((gs=BattlesServer.privateMatches.remove(joinCode))!=null) {
 			this.connect(gs,gs.p1);
 		} else {
 			sendln("CouldntFindYourCustomBattle");
 		}
 	}
 	public void queuePublic() throws IOException{
-		var queue = assault?FlashServer.queue1:FlashServer.queue2;
-		ServerThread opp=queue.poll();
+		var queue = assault?BattlesServer.queue1:BattlesServer.queue2;
+		BattlesClient opp=queue.poll();
 		if (opp==null) {
 			queue.add(this);
 		} else {
@@ -76,8 +75,8 @@ class ServerThread extends LineClientContext {
 		queued = true;
 	}
 	public void connect(GameServer gs, Player opp) throws IOException{
-		gs.start(FlashServer.nextPort(),true);//TODO:
-		opp.sendln("FoundYouAGame," + FlashServer.ip + "," + gs.getPort() + "," + 0 + ",4480");
+		gs.start(IntStream.generate(BattlesServer::nextPort).limit(100),true);//TODO:
+		opp.sendln("FoundYouAGame," + BattlesServer.ip + "," + gs.getPort() + "," + 0 + ",4480");
 		//If players cannot be distinguished, we have to 
 		if(Objects.equals(player,opp)) {
 			sendln("ServerMessage,please wait a few seconds to prevent desync...");
@@ -85,14 +84,14 @@ class ServerThread extends LineClientContext {
 			FlashUtils.sleep(5000);
 		}
 		opp.thread.flush();
-		sendln("FoundYouAGame," + FlashServer.ip + "," + gs.getPort() + "," + 0 + ",4480");
+		sendln("FoundYouAGame," + BattlesServer.ip + "," + gs.getPort() + "," + 0 + ",4480");
 		matched=true;
 		queued=false;
 	}
 	@Override
 	public void onMessage(String msg) throws IOException {
 		timeouts=0;
-		if (FlashServer.verbose)
+		if (BattlesServer.verbose)
 			System.out.println("incoming: " + msg);
 		String[] cmd = msg.split(",",-1);
 		switch (cmd[0]) {
@@ -135,7 +134,7 @@ class ServerThread extends LineClientContext {
 			sendln("GimmeUrPlayerInfo");
 			break;
 		case "FindMyCustomBattle":
-			if (FlashServer.privateMatches.containsKey(cmd[2])) {
+			if (BattlesServer.privateMatches.containsKey(cmd[2])) {
 				joinCode = cmd[2];
 				sendln("GimmeUrPlayerInfo");
 			} else {
@@ -154,10 +153,10 @@ class ServerThread extends LineClientContext {
 	@Override
 	public void onClose() {
 		//reset state
-		FlashServer.queue1.remove(this);
-		FlashServer.queue2.remove(this);
+		BattlesServer.queue1.remove(this);
+		BattlesServer.queue2.remove(this);
 		if(code!=null)
-			FlashServer.privateMatches.remove(code);
+			BattlesServer.privateMatches.remove(code);
 		matched=queued=quickMatch=false;
 		code=joinCode=null;
 		//check if we created a server but didn't connect to it
@@ -165,11 +164,12 @@ class ServerThread extends LineClientContext {
 			gs.alive=false;
 		}
 		player=null;
+		CONFIG.release(this);
 	}
 	@Override
 	public void onTimeout(){
 		timeouts++;
-		if (FlashServer.queue1.contains(this) || FlashServer.queue2.contains(this)) {
+		if (BattlesServer.queue1.contains(this) || BattlesServer.queue2.contains(this)) {
 			timeouts--;
 		}//TODO: timeout in pmatch lobby?
 		if (timeouts > 10) {
@@ -178,7 +178,9 @@ class ServerThread extends LineClientContext {
 		}
 	}
 	@Override
-	public void onOpen() {}
+	public void onOpen() {
+		CONFIG.acquire(this);
+	}
 }
 class GameServer extends ServerContext{
 	public volatile Player p1;
@@ -221,26 +223,28 @@ class GameServer extends ServerContext{
 			throw new IOException("can't join");
 		}
 		if(p1!=null&&p2!=null) {
-			command("OpponentChangedBattleOptions,"+FlashServer.MAPIDS.get(map)+",0");//ensure maps aren't desynced
-			if(p1.thread instanceof GameServerThread gst1 &&
-				p2.thread instanceof GameServerThread gst2) {
+			command("OpponentChangedBattleOptions,"+BattlesServer.MAPIDS.get(map)+",0");//ensure maps aren't desynced
+			if(p1.thread instanceof BattlesGameClient gst1 &&
+				p2.thread instanceof BattlesGameClient gst2) {
 				gst1.side=0;
 				gst2.side=1;
 				gst1.setOpponent(p2);
 				gst2.setOpponent(p1);
+				close();
 			}
 			full=true;
 		}
 	}
 	public void checkAlive() {
-		if((p1==null || !(p1.thread instanceof GameServerThread))&&
-				(p2==null || !(p2.thread instanceof GameServerThread))) {
+		if((p1==null || !(p1.thread instanceof BattlesGameClient))&&
+				(p2==null || !(p2.thread instanceof BattlesGameClient))) {
 			this.alive=false;
+			cleanup();
 		}
 	}
 	@Override
 	public ClientContext newClient() throws IOException{
-		return new GameServerThread(this);
+		return new BattlesGameClient(this);
 	}
 	public void command(String command) throws IOException {
 		p1.sendln(command);
@@ -267,8 +271,8 @@ class GameServer extends ServerContext{
 			p2.ready = false;
 		}
 	}
-	@Override
-	public void onClose() {
+	//not in onClose, since it continues after closed
+	public void cleanup() {
 		System.out.println("game finished");
 		String filename = "FlashLog.txt";
 		try(FileWriter fw = new FileWriter(filename, true)){
@@ -276,15 +280,15 @@ class GameServer extends ServerContext{
 			if(round>0){
 				int id1 = p1.id;
 				int id2 = p2.id;
-				List<String> entries1=FlashServer.history.get(id1);
-				List<String> entries2=FlashServer.history.get(id2);
+				List<String> entries1=BattlesServer.history.get(id1);
+				List<String> entries2=BattlesServer.history.get(id2);
 				if(entries1==null) {
 					entries1=new CopyOnWriteArrayList<>();
-					FlashServer.history.put(id1,entries1);
+					BattlesServer.history.put(id1,entries1);
 				}
 				if(entries2==null) {
 					entries2=new CopyOnWriteArrayList<>();
-					FlashServer.history.put(id2,entries2);
+					BattlesServer.history.put(id2,entries2);
 				}
 				if(entries1.size()>3)entries1.remove(0);
 				if(entries2.size()>3)entries2.remove(0);
@@ -298,8 +302,8 @@ class GameServer extends ServerContext{
 	}
 	@Override
 	public String toString() {
-		if (p1 == null || p2 == null || !(p1.thread instanceof GameServerThread gst1)
-				|| !(p2.thread instanceof GameServerThread gst2))
+		if (p1 == null || p2 == null || !(p1.thread instanceof BattlesGameClient gst1)
+				|| !(p2.thread instanceof BattlesGameClient gst2))
 			return "";
 		if (p1.win == 1) {
 			return p2.name + "," + p2.id + "," + "WIN\n" + p1.name + "," +p1.id + ","
@@ -313,8 +317,8 @@ class GameServer extends ServerContext{
 		return null;
 	}
 	public void forceSetRound(int newRound) throws IOException{
-		if (!(p1.thread instanceof GameServerThread gst1)
-				|| !(p2.thread instanceof GameServerThread gst2)) {
+		if (!(p1.thread instanceof BattlesGameClient gst1)
+				|| !(p2.thread instanceof BattlesGameClient gst2)) {
 			announce("Invalid game state.");
 			return;
 		}
@@ -340,7 +344,7 @@ class GameServer extends ServerContext{
 
 }
 
-class GameServerThread extends LineClientContext {
+class BattlesGameClient extends LineClientContext {
 	public final GameServer parent;
 	public volatile Player player;
 	public volatile Player opponent;
@@ -355,18 +359,17 @@ class GameServerThread extends LineClientContext {
 	private int actionParam = 0;
 	public int time = 0;//in game time
 	public volatile boolean syncFailed=false;
-	static final ClientOptions OPTIONS=ClientOptions.builder().timeout(120000).mspt(50).output(1024).outputLocked().build();
-	public GameServerThread(GameServer parent) throws IOException {
-		super(StandardCharsets.ISO_8859_1,OPTIONS);
+	public BattlesGameClient(GameServer parent) throws IOException {
+		super(StandardCharsets.ISO_8859_1,CONFIG.BATTLES_GAME);
 		this.parent=parent;
 		this.win = 0;
-		if(FlashServer.verbose)
+		if(BattlesServer.verbose)
 			System.out.println("GST create");
 	}
 	public void setOpponent(Player opponent) throws IOException{
 		this.opponent=opponent;
-		if (FlashServer.getProfile(opponent.id) != null)
-			opponent.profile = FlashServer.getProfile(opponent.id);
+		if (BattlesServer.getProfile(opponent.id) != null)
+			opponent.profile = BattlesServer.getProfile(opponent.id);
 		sendln(opponent.forOpponent(player));//FoundYourGame packet
 	}
 	@Override
@@ -378,7 +381,7 @@ class GameServerThread extends LineClientContext {
 	}
 	@Override
 	public void onOpen() {
-		
+		CONFIG.acquire(this);
 	}
 	@Override
 	public void onClose(){
@@ -393,8 +396,10 @@ class GameServerThread extends LineClientContext {
 		}catch(IOException ioe) {
 			
 		}finally {
-			if(opponent==null||opponent.thread==null||!opponent.thread.alive)
+			if(opponent==null||opponent.thread==null||!opponent.thread.alive) {
 				parent.alive=false;
+				parent.cleanup();
+			}CONFIG.release(this);
 		} 
 	}
 	@Override
@@ -420,7 +425,7 @@ class GameServerThread extends LineClientContext {
 			}
 		}
 		timeouts = 0;
-		if (FlashServer.verbose)
+		if (BattlesServer.verbose)
 			System.out.println("#incoming: " + line);
 		String[] msg = line.split(",",-1);
 		//handle messages that can be received before fully initialized
@@ -436,7 +441,7 @@ class GameServerThread extends LineClientContext {
 		}
 		if(!parent.full) {
 			if(msg[0].equals("IChangedBattleOptions")&&msg.length>1) {
-				parent.map = FlashServer.MAPIDS.indexOf(msg[1]);
+				parent.map = BattlesServer.MAPIDS.indexOf(msg[1]);
 			}
 			return;
 		}
@@ -481,7 +486,7 @@ class GameServerThread extends LineClientContext {
 			}
 			case "YouDidntRespondToMySyncs" ->{
 				syncFailed=false;
-				if(opponent.thread instanceof GameServerThread opp) {
+				if(opponent.thread instanceof BattlesGameClient opp) {
 					//if received twice without opponent sync, end connection
 					if(opp.syncFailed && opp.timeouts>2) {
 						opponent.thread.alive=false;
@@ -547,26 +552,26 @@ class GameServerThread extends LineClientContext {
 					send(GameServer.HELP);
 					break;
 				case "!history":
-					chat(FlashServer.getHistory(player.id));
+					chat(BattlesServer.getHistory(player.id));
 					break;
 				case "!source":
 					chat("https://github.com/GlennnM/NKFlashServers");
 					break;
 				case "!profile":
 					if (cmd.length == 1)
-						chat("Current profile picture: " + FlashServer.getProfile(player.id));
+						chat("Current profile picture: " + BattlesServer.getProfile(player.id));
 					else {
 						chat("Set profile picture to: " + param);
-						FlashServer.setProfile(player.id, param);
+						BattlesServer.setProfile(player.id, param);
 					}
 					break;
 				case "!random":
 					int numTowers = param==null?4:Integer.parseInt(param);
-					chat(uniqueRandom(FlashServer.TOWERS,numTowers,10));
+					chat(uniqueRandom(BattlesServer.TOWERS,numTowers,10));
 					break;
 				case "!map":
 					int numMaps = param==null?1:Integer.parseInt(param);
-					chat(uniqueRandom(FlashServer.MAPS,numMaps,10));
+					chat(uniqueRandom(BattlesServer.MAPS,numMaps,10));
 					break;
 				case "!bugs":
 					send(GameServer.BUGS);
@@ -580,7 +585,7 @@ class GameServerThread extends LineClientContext {
 					break;
 				case "!setround":
 					if(actionType!=TimedAction.NONE)break;
-					if(!(opponent.thread instanceof GameServerThread gst))
+					if(!(opponent.thread instanceof BattlesGameClient gst))
 						break;
 					if(gst.actionType==TimedAction.SETROUND) {
 						actionParam=0;
@@ -598,7 +603,7 @@ class GameServerThread extends LineClientContext {
 				}
 			} catch (Exception e) {
 				chat("An error occurred while processing a chat message or command.");
-				if(FlashServer.verbose)
+				if(BattlesServer.verbose)
 					e.printStackTrace();
 			}
 		} else
@@ -624,8 +629,8 @@ class Player {
 	public Player(TextClientContext thread, String[] playerInfo) {
 		this(Integer.parseInt(playerInfo[1]), playerInfo[2], Integer.parseInt(playerInfo[3]), playerInfo[5], thread,Integer.parseInt(playerInfo[4]));
 	}
-	//public GameServerThread gst() {
-	//	return thread instanceof GameServerThread gst?gst:null;
+	//public BattlesGameClient gst() {
+	//	return thread instanceof BattlesGameClient gst?gst:null;
 	//}
 	private Player(int id, String name, int bs, String profile, TextClientContext serverThread, int decal) {
 		this.name = name;
@@ -638,16 +643,12 @@ class Player {
 		this.decal = decal;
 	}
 	public void sendln(String s) throws IOException {
-		try {
-			thread.send(s+"\n");
-			if(FlashServer.verbose)
-				System.out.println("player.OUT: " + s);
-		}catch(IOException ioe) {
-			thread.alive=false;
-		}
+		thread.send(s+"\n");
+		if(BattlesServer.verbose)
+			System.out.println("player.OUT: " + s);
 	}
 	public String forOpponent(Player opponent) {
-		if(opponent.thread instanceof GameServerThread gst) {
+		if(opponent.thread instanceof BattlesGameClient gst) {
 			return Stream.of("FoundYourGame",id,name,bs,decal,profile,gst.parent.seed,gst.side,gst.parent.map,w,l)
 					.map(Object::toString)
 					.collect(Collectors.joining(","));
@@ -671,7 +672,7 @@ class Player {
 }
 
 //class for main method
-public class FlashServer extends ServerContext.Basic{
+public class BattlesServer extends ServerContext{
 
 	public static final String[] TOWERS = new String[] { "Banana Farm", "Bomb Tower", "Boomerang Thrower", "Dart Monkey",
 			"Dartling Gun", "Glue Gunner", "Ice Tower", "Monkey Ace", "Monkey Apprentice", "Monkey Buccaneer",
@@ -686,28 +687,25 @@ public class FlashServer extends ServerContext.Basic{
 	
 	//
 	
-	public static final Queue<ServerThread> queue1=new ConcurrentLinkedQueue<>();// assault
-	public static final Queue<ServerThread> queue2=new ConcurrentLinkedQueue<>();// defend
+	public static final Queue<BattlesClient> queue1=new ConcurrentLinkedQueue<>();// assault
+	public static final Queue<BattlesClient> queue2=new ConcurrentLinkedQueue<>();// defend
 	public static final Map<String, GameServer> privateMatches = new ConcurrentHashMap<>();
 	public static final Map<Integer, String> profiles = BasicCache.synced(1024);
 	public static final Map<Integer, List<String>> history = BasicCache.synced(1024);
-	public static String ip;
-	public FlashServer() throws IOException {
-		ip=Files.readString(Paths.get("./config.txt")).trim();
-		System.out.printf("Flash server started! (%s)\n",ip);
+	public static final String ip=CONFIG.HOST;
+	@Override
+	public void onOpen(){
+		System.out.println("Battles server started!");
 	}
-	public static volatile int nextPort = 8129;
 	public static boolean verbose=true;
-	
 
-	public static int nextPort() {
-		do {
-			nextPort += 5;
-			if (nextPort > 32000)
-				nextPort = 8129;
-		} while (FlashUtils.checkPort(nextPort));
-		return nextPort;
+	private static final int MIN_PORT=CONFIG.battlesPorts.min();
+	private static final int MAX_PORT=CONFIG.battlesPorts.max();
+	private static final int PORT_STEP=CONFIG.battlesPorts.step();
+	public static volatile int nextPort = MIN_PORT;
 
+	public static int nextPort() {//8129
+		return nextPort=(nextPort>MAX_PORT?MIN_PORT:nextPort+PORT_STEP);
 	}
 	public static String getHistory(int uid) {
 		String h = "\n====================\n";
@@ -738,7 +736,7 @@ public class FlashServer extends ServerContext.Basic{
 
 	@Override
 	public ClientContext newClient() throws IOException {
-		return new ServerThread();
+		return new BattlesClient();
 	}
 
 }
