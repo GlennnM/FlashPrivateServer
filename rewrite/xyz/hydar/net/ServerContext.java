@@ -14,9 +14,12 @@ import java.util.stream.IntStream;
 *Can use thread-per-connection with normal IO or async NIO interchangeably.<br>
 *Only newClient() needs to be implemented(should return implementations of ClientContext).<br>
 *Since servers usually start in daemon threads, make sure to keep the VM running
+ * <br>
+ * close() and alive=false differ in that close() stops listening immediately,<br>
+ * while alive=false waits for the server timeout.<br>
+ * The server timeout is 10 seconds and accepts are always looped.
 */
 public abstract class ServerContext{//TODO: options: ssl/thread factory for io
-	//TODO: close() called automatically & made private
 	public volatile boolean alive=true;
 	volatile Server server;
 
@@ -70,11 +73,7 @@ public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 	public int getPort(){
 		if(server==null)
 			return -1;
-		try {
-			return server.getPort();
-		} catch (IOException e) {
-			return -1;
-		}
+		return server.getPort();
 	}
 	/**Return whether this server context uses NIO.*/
 	public boolean isNio(){
@@ -97,7 +96,7 @@ public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 		public abstract void start() throws IOException;
 		public abstract void close();
 		public abstract ServerSocket serverSocket();
-		public abstract int getPort() throws IOException;
+		public abstract int getPort();
 		public abstract AsynchronousServerSocketChannel serverChannel();
 		public Server(ServerContext ctx) {
 			this.ctx=ctx;
@@ -114,9 +113,13 @@ public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 				server=asc;
 			}
 			@Override
-			public int getPort() throws IOException {
+			public int getPort() {
+				try {
 				if(server.getLocalAddress() instanceof InetSocketAddress isa)
 					return isa.getPort();
+				}catch(IOException ioe) {
+					
+				}
 				return -1;
 			}
 			@Override
@@ -126,30 +129,43 @@ public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 						new CompletionHandler<AsynchronousSocketChannel, Void>(){
 						@Override
 						public void completed(AsynchronousSocketChannel result, Void attachment) {
-							try {
-								ctx.newClient().start(result);
-							} catch (IOException e) {
-								
-							}
-							if(ctx.alive)
+							if(ctx.alive) {
+								try {
+									ctx.newClient().start(result);
+								} catch (IOException e) {
+									
+								}
 								server.accept(null,this);
-							else ctx.onClose();
+							}else close2();
 						}
 
 						@Override
 						public void failed(Throwable exc, Void attachment) {
-							ctx.alive=false;
-							ctx.onClose();
+							close2();
 							return;
 						}
 				});
 			}
+			void close2() {
+				ctx.alive=false;
+				
+				try{
+					ctx.onClose();
+				}finally {
+					if(server.isOpen())
+						try {
+							server.close();
+						}catch(IOException ioe) {}
+				}
+				
+			}
 			@Override
 			public final void close() {
 				ctx.alive=false;
-				try {
-					server.close();
-				}catch(IOException ioe) {}
+				if(server.isOpen())
+					try {
+						server.close();
+					}catch(IOException ioe) {}
 			}
 
 			@Override
@@ -191,15 +207,17 @@ public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 				}catch(IOException ioe) {
 					
 				}finally {
+					ctx.alive=false;
 					ctx.onClose();
 				}
 			}
 			@Override
 			public final void close() {
 				ctx.alive=false;
-				try {
-					server.close();
-				}catch(IOException ioe) {}
+				if(!server.isClosed())
+					try {
+						server.close();
+					}catch(IOException ioe) {}
 			}
 			@Override
 			public ServerSocket serverSocket() {
@@ -210,7 +228,7 @@ public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 				return null;
 			}
 			@Override
-			public int getPort() throws IOException {
+			public int getPort(){
 				return server.getLocalPort();
 			}
 		}

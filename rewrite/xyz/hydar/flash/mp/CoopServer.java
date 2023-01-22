@@ -86,7 +86,7 @@ class CoopClient extends LineClientContext {
 		String[] msg = line.split(",");
 		switch (msg[0]) {
 		case "<policy-file-request/>":
-			send(FilePolicyServer.POLICY);
+			send(PolicyFileServer.POLICY);
 			break;
 		case "12":
 			if(queued)break;
@@ -296,7 +296,7 @@ class CoopGameClient extends LineClientContext {
 		if(!parent.full)return;
 		switch (msg[0]) {
 		case "<policy-file-request/>":
-			send(FilePolicyServer.POLICY);
+			send(PolicyFileServer.POLICY);
 			break;
 		case "101":
 			break;
@@ -485,7 +485,7 @@ public class CoopServer extends ServerContext{
 	}
 	@Override
 	public void onOpen() {
-		System.out.println("Coop server started! ");
+		System.out.println("Coop server started! IP - "+CONFIG.HOST+":"+getPort());
 	}
 	@Override
 	public ClientContext newClient() throws IOException {

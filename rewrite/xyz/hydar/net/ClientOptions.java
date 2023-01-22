@@ -10,7 +10,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * out: BufferOptions describing output buffer. If max<=0(default), it will not be present at all, but the lock will still be used for direct sends.<br>
  * */
 public record ClientOptions(int timeout, int mspt, ScheduledExecutorService timeoutSvc, BufferOptions in, BufferOptions out) {
-
+	public static final ClientOptions NONE = new ClientOptions(0, 0, null, BufferOptions.NONE,BufferOptions.NONE);
 	public static final ClientOptions DEFAULT = new ClientOptions(15000, 0, null, BufferOptions.DEFAULT,BufferOptions.NONE);
 	public ClientOptions() {
 		this(DEFAULT.timeout());

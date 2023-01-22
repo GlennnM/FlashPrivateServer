@@ -1,4 +1,4 @@
-package xyz.hydar.flash.util;
+	package xyz.hydar.flash.util;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 

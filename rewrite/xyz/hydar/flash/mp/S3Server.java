@@ -73,18 +73,17 @@ class S3Client extends TextClientContext {
 	public volatile int kills=0, xp=0, damage=0, deaths=0, revives=0, cash=0;
 	//commands that should be sent to all players except self
 	private static final List<Integer> WRITE_FROM = List.of(1, 2, 13, 9, 7, 10, 23, 22, 20, 19, 12, 5, 6, 24, 14, 11, 26);
+	// constructor initializes socket
+	public S3Client() {
+		super(StandardCharsets.ISO_8859_1,'\0',CONFIG.SAS3);
+	}
 	public void doubleWrite(String s){
 		send(s);
 		if (S3Server.verbose)
 			System.out.println("OUT: " + s);
 	}
-	// constructor initializes socket
-	public S3Client() {
-		super(StandardCharsets.ISO_8859_1,'\0',CONFIG.SAS3);
-	}
-	
 	@Override
-	public void onMessage(String m) throws IOException {
+	public void onMessage(String m){
 		// "extension message" - main protocol for the game. A message triggers a
 		// "command"(
 		if (m.startsWith("%xt%S")) {
@@ -93,7 +92,7 @@ class S3Client extends TextClientContext {
 			int cmd = Integer.parseInt(msg.get(5));
 			switch (cmd) {
 			case 10:
-				if (msg.size() < 9)
+				if (msg.size() < 9||room==null)
 					return;
 				int health = Integer.parseInt(msg.get(8));
 				if (health <= 0) {
@@ -117,7 +116,7 @@ class S3Client extends TextClientContext {
 				}
 				break;
 			case 23:
-				if (msg.size() < 10)
+				if (msg.size() < 10||room==null)
 					return;
 				if (msg.get(9).equals("2")) {
 					room.raise(Integer.parseInt(msg.get(8)));
@@ -126,7 +125,7 @@ class S3Client extends TextClientContext {
 				}
 				break;
 			case 7:
-				if (msg.size() < 9)
+				if (msg.size() < 9||room==null)
 					return;
 				room.parseDamage(msg.get(8), this);
 				break;
@@ -232,16 +231,18 @@ class S3Client extends TextClientContext {
 		else flush();
 	}
 	@Override
-	public void onOpen() throws IOException {
+	public void onOpen(){
+		CONFIG.acquire(this);
 	}
 	@Override
-	public void onClose() throws IOException {
+	public void onClose(){
 		if (room != null) {
 			room.dropPlayer(this);
 		}
+		CONFIG.release(this);
 	}
 }
-
+/**Starts a wave, scheduling powerup and spawn tasks.*/
 class WaveStartTask implements Runnable{
 	private final Room room;
 	public WaveStartTask(Room room) {
@@ -266,7 +267,7 @@ class WaveStartTask implements Runnable{
 		room.r = false;
 	}
 }
-
+/**Spawns a set of mobs in a lobby when ran. If the wave changes while active, it will be cancelled.*/
 class SpawnTask implements Runnable {
 	private final Room room;
 	private final int wave;
@@ -335,7 +336,7 @@ class SpawnTask implements Runnable {
 		}
 	}
 }
-
+/**Spawns nests in a lobby when ran. If the wave changes while active, it will be cancelled.*/
 class SpawnNestTask implements Runnable{
 	private final Room room;
 	private final int wave;
@@ -352,7 +353,7 @@ class SpawnNestTask implements Runnable{
 		Room.timer.schedule(new SpawnTask(room), 1000,TimeUnit.MILLISECONDS);
 	}
 }
-
+/**Spawns a powerup in a lobby when ran. If the wave changes while active, it will be cancelled.*/
 class PowerupTask implements Runnable {
 	private final Room room;
 	private final int wave;
@@ -490,7 +491,7 @@ enum ZombieType {
 }
 
 class Zombie{
-	public ZombieType type;
+	public final ZombieType type;
 	public volatile int target;
 	public volatile int hp;
 	public Zombie(ZombieType type, int target, float SBEmult) {
@@ -568,13 +569,12 @@ class Room {
 		this.nm = nm;
 		Arrays.setAll(slots,x->new AtomicBoolean());
 	}
-	// starts the game, waves will begin after 5 seconds(constructor only
-	// initializes lobby data)
+	// starts the game, waves will begin after 5 seconds(constructor only initializes lobby data)
 	public void setup() {
 		System.out.println("Starting game...");
 		this.setup = true;
 		//(not a sum at all)
-		this.rankSum = players.stream().mapToInt(x->x.rank).max().orElse(0);
+		this.rankSum = (int)(players.stream().mapToInt(x->x.rank).average().orElse(0));
 		//this.rankSum /= (Math.pow((float)players.size(), 0.9f));
 		this.SBEmult = (1f + this.rankSum / 10f) / 2f * (nm==0?1f:10f);
 		this.barriHP = (int) (600f * this.SBEmult * this.SBEmult);
@@ -595,10 +595,10 @@ class Room {
 			else if (this.rankSum >= 9) this.waveTotal = 7;
 			else if (this.rankSum >= 5) this.waveTotal = 6;
 			else this.waveTotal = 5;
+			this.waveTotal--;//this is consistent with all the YT videos i could find
 			break;
 		}
 		timer.schedule(new WaveStartTask(this), 5000,TimeUnit.MILLISECONDS);
-		// timer.schedule(new WaveEndTask(this),5000);
 	}
 	public int nextPlayerNum(){
 		for(int i=0;i<slots.length;i++)
@@ -770,31 +770,28 @@ class Room {
 		StringBuilder hitCmd = null;
 		StringBuilder targetCmd = null;
 		StringBuilder spawnCmd=new StringBuilder();
-		boolean forgetAboutTarget=damages.length>10;
+		boolean forgetAboutTarget=damages.length>10||zombies.size()>2048;
 		boolean tryEndWave=false;
 		for (String s : damages) {
 			String[] params = s.split(":");
+			int znum=Integer.parseInt(params[0]);
 			int dmg=Integer.parseInt(params[1]);
 			player.damage += dmg;
 			if (params.length > 2 && params[2].equals("d")) {
-				player.xp += kill(Integer.parseInt(params[0]),spawnCmd);
 				tryEndWave=true;
+				player.xp += kill(znum,spawnCmd);
 				player.kills++;
 			} else {
-				int num = Integer.parseInt(params[0]);
-				Zombie z = zombies.get(num);
+				Zombie z = zombies.get(znum);
 				if (z != null) {
 					if ((z.hp -= dmg) <= 0) {
 						if (hitCmd == null)
 							hitCmd=new StringBuilder(damages.length * 9 + 25)
 								.append("%xt%7%-1%").append(flashTime()).append("%")
 								.append(playerNum).append("%");
-						zombies.remove(num);
-						hitCmd.append(num).append(":1:d,");
-						totalCapacity.add(-z.type.cap);
+						hitCmd.append(znum).append(":1:d,");
 						tryEndWave=true;
-						finishKill(z,num,spawnCmd);
-						player.xp += z.type.xp;
+						player.xp += kill(znum,spawnCmd);
 						player.kills++;
 					} else if(!forgetAboutTarget&&z.target!=playerNum){
 						if (targetCmd == null) 
@@ -802,7 +799,7 @@ class Room {
 								.append("%xt%22%-1%").append(flashTime()).append("%")
 								.append(playerNum).append("%[");
 						z.target=playerNum;
-						targetCmd.append(num).append(',');
+						targetCmd.append(znum).append(',');
 					}
 				}
 			}
@@ -829,7 +826,7 @@ class Room {
 		}
 		flushAll();
 	}
-	// used by parsedamage
+	//remove a zombie and add spawn commands for worms/mamushkas to spawnCmd
 	public int kill(int number, StringBuilder spawnCmd) {
 		Zombie z1 = zombies.remove(number);
 		if (z1!=null) {
@@ -839,7 +836,7 @@ class Room {
 		}
 		return 0;
 	}
-	// used by parsedamage
+	//add spawn commands for worms/mamushkas to spawnCmd
 	public void finishKill(Zombie zombie, int znum, StringBuilder spawnCmd) {
 		switch(zombie.type) {
 			case BLOATER:
@@ -870,7 +867,7 @@ class Room {
 	public boolean bracket3(int max) {
 		return totalCapacity.sum()> max;
 	}
-	// see $[Q$/$0$
+	//Locations where a mob can spawn on each map. see $[Q$/$0$
 	public static int[] spawns(int map) {
 		return switch (map) {
 		case 1 -> new int[] { 9, 6, 5, 8, 11, 10, 4 };
@@ -882,7 +879,7 @@ class Room {
 		};
 	}
 
-	// see $[Q$/$0$
+	//Locations where a powerup or nest can spawn on each map. see $[Q$/$0$
 	public static int[] powerups(int map) {
 		return switch (map) {
 		case 1 -> new int[] { 0, 1, 2, 3 };
@@ -894,10 +891,7 @@ class Room {
 		default -> new int[0];
 		};
 	}
-	public void flushAll(){
-		for(var player:players)
-			player.flush();
-	}
+	//add player's stats to end-of-game report when they dc or when game ends
 	public void record(S3Client player) {
 		names.append(player.name).append(',');
 		kills.append(player.kills).append(',');
@@ -950,12 +944,12 @@ class Room {
 		float loc9 = (float) Math.pow(loc5, 1.5f) * 5.2f;
 		return (loc8 + loc9) / 4f * (players.size()) * loc2 * loc3;
 	}
-
 	// something wave related idk
 	public float commaHash() {
 		return this.rankSum + (this.p1 + (float) p4 * (float) this.wave)
 				/ ((float) p4 * (float) this.waveTotal) * 10f * ((this.waveTotal - 4) / 12f + 1f);
 	}
+	//send to all other players
 	public void writeFrom(S3Client origin, String toWrite) {
 		for(S3Client player:players){
 			if(player==origin)continue;
@@ -963,10 +957,15 @@ class Room {
 		}
 		
 	}
+	//send to all players
 	public void writeAll(String toWrite) {
 		for(S3Client player:players){
 			player.doubleWrite(toWrite);
 		}
+	}
+	public void flushAll(){
+		for(var player:players)
+			player.flush();
 	}
 	// h
 	public void h() {
@@ -975,11 +974,11 @@ class Room {
 }
 //class for main method
 public class S3Server extends ServerContext {
-	public static final boolean verbose = true;
+	public static final boolean verbose = false;
 	public static final List<Room> games = new CopyOnWriteArrayList<>();
 	@Override
 	public void onOpen() {
-		System.out.println("SAS3 server started! ");
+		System.out.println("SAS3 server started! port - "+getPort());
 	}
 	@Override
 	public ClientContext newClient() throws IOException {

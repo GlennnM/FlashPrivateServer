@@ -15,11 +15,13 @@ abstract class Decoder{//package-private
 	public int fixedLen;
 	public final boolean utf16BOM;
 	public final boolean utf32BOM;
+	final byte[] line;
 	Decoder() {
 		this(StandardCharsets.ISO_8859_1);
 	}
 	Decoder(Charset ch) {
 		this.ch=ch;
+		this.line="\n".getBytes(ch);
 		var encoder=ch.newEncoder();
 		utf16BOM=Objects.equals(ch,StandardCharsets.UTF_16)||ch.name().equalsIgnoreCase("x-UTF-16LE-BOM")||ch.name().equalsIgnoreCase("x-UTF-16BE-BOM");
 		utf32BOM=Objects.equals(ch.name(),"X-UTF-32LE-BOM")||ch.name().equalsIgnoreCase("X-UTF-32BE-BOM");
@@ -254,6 +256,7 @@ public abstract class TextClientContext extends ClientContext {
 	}
 	/**Sends the given string with \n appended to it.*/
 	public void sendln(String msg){
-		send((msg+"\n").getBytes(decoder.ch));
+		send(msg.getBytes(decoder.ch));
+		send(decoder.line);
 	}
 }

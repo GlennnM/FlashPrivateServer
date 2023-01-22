@@ -12,8 +12,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Map;
@@ -28,6 +30,7 @@ import java.util.stream.IntStream;
 import xyz.hydar.flash.util.FlashUtils;
 import xyz.hydar.flash.util.Scheduler;
 import xyz.hydar.net.ClientContext;
+import xyz.hydar.net.ClientOptions;
 import xyz.hydar.net.ServerContext;
 
 
@@ -138,7 +141,8 @@ class S4GameServer extends ServerContext{
 			}
 			if (!this.started) {
 				int st = Math.max(0,startAt-lastTick);
-				players.forEach(x->x.send(ByteBuffer.allocate(5).put((byte)-13).putInt(st).flip()));
+				var startPkt=ByteBuffer.allocate(5).put((byte)-13).putInt(st);
+				players.forEach(x->x.send(startPkt.flip()));
 			}
 		}
 		try {
@@ -232,6 +236,7 @@ class S4GameClient extends ClientContext {
 	protected ByteBuffer remote;//write to peers
 	//dummy constructor for bots
 	private S4GameClient(S4GameServer parent,short level,int vs) {
+		super(ClientOptions.NONE);
 		this.parent=parent;
 		this.id = (byte)parent.nextId.getAndIncrement();
 		this.bot=true;
@@ -301,7 +306,7 @@ class S4GameClient extends ClientContext {
 	protected void flushRemote() {
 		if(remote.position()==0)return;
 		for(var client:parent.players) {
-			if(client.id!=id) {
+			if(client.id!=id&&!client.bot) {
 				client.send(remote.flip());
 				remote.position(remote.limit());
 			}
@@ -676,6 +681,15 @@ class S4GameClient extends ClientContext {
 			}
 		flushRemote();
 	}
+	private void transferHost() {
+		var source=getPeer();
+		if (source!=null&&parent.host == id) {
+			// change host
+			byte[] pl2 = { (byte) -7, id, source.id };
+			parent.host = source.id;
+			parent.players.forEach(x->x.send(pl2));
+		}
+	}
 	/**start building(start game button), or automatically in event/quickmatch*/
 	public void startGame(boolean announce) {
 		if(announce)announce("Starting building...");
@@ -781,6 +795,10 @@ class S4GameClient extends ClientContext {
 			case "!range"->"Accepting levels "+parent.minLvl+"-"+parent.maxLvl;
 			case "!host"->"You are "+(id==parent.host?"":"not ")+"the host.";
 			case "!ping"->"Ping: "+ping+"ms, "+(1000/(0xffff&frameTime))+" reported FPS";
+			case "!yield"->{
+				transferHost();
+				yield null;
+			}
 			case "!setseed"->{
 				if(!valid&&parent.code!=0&&getPeer()==null) {
 					if(msg.length>1&&FlashUtils.isShort(msg[1])) {
@@ -923,6 +941,8 @@ class S4GameClient extends ClientContext {
 					leave();
 					this.alive = false;
 				}
+				if(src!=null)
+					src.position(src.limit());
 			}
 			@Override
 			protected ByteBuffer local(int length){
@@ -1036,7 +1056,7 @@ public class S4Server extends ServerContext{
 		
 	}
 	@Override
-	public void onOpen() {System.out.println("SAS4 server started!");}
+	public void onOpen() {System.out.println("SAS4 server started! IP - "+CONFIG.HOST+":"+getPort());}
 	@Override
 	public void onClose() {}
 	/**Initializes a new lobby client. Lobby clients process a single packet type:<br>

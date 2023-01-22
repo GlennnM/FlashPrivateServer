@@ -43,7 +43,6 @@ class BattlesClient extends LineClientContext {
 	// constructor initializes socket
 	public BattlesClient() throws IOException {
 		super(StandardCharsets.ISO_8859_1,true,CONFIG.BATTLES);
-		System.out.println("created thread");
 	}
 	public void createPrivate() throws IOException{
 		quickMatch = false;
@@ -96,7 +95,7 @@ class BattlesClient extends LineClientContext {
 		String[] cmd = msg.split(",",-1);
 		switch (cmd[0]) {
 		case "<policy-file-request/>":
-			send(FilePolicyServer.POLICY);
+			send(PolicyFileServer.POLICY);
 			break;
 		case "Hello":
 			//argument 1 is "version"(float)->can respond with "YourGameIsTooOld"
@@ -277,24 +276,21 @@ class GameServer extends ServerContext{
 		String filename = "FlashLog.txt";
 		try(FileWriter fw = new FileWriter(filename, true)){
 			String type=code==null?"Quick":"Private";
+			String report=toString();
+			if(report==null||report.length()==0)
+				return;
+			report+="\nType: "+type+"\n";
 			if(round>0){
 				int id1 = p1.id;
 				int id2 = p2.id;
-				List<String> entries1=BattlesServer.history.get(id1);
-				List<String> entries2=BattlesServer.history.get(id2);
-				if(entries1==null) {
-					entries1=new CopyOnWriteArrayList<>();
-					BattlesServer.history.put(id1,entries1);
-				}
-				if(entries2==null) {
-					entries2=new CopyOnWriteArrayList<>();
-					BattlesServer.history.put(id2,entries2);
-				}
-				if(entries1.size()>3)entries1.remove(0);
-				if(entries2.size()>3)entries2.remove(0);
-				entries1.add(toString() + "\nType: "+type+"\n");
-				entries2.add(toString() + "\nType: "+type+"\n");
-				fw.write(toString() +"\nType: "+type+"\n");
+				List<String> entries1=BattlesServer.history.computeIfAbsent(id1,x->new CopyOnWriteArrayList<>());
+				List<String> entries2=BattlesServer.history.computeIfAbsent(id2,x->new CopyOnWriteArrayList<>());
+				if(entries1.size()>4)entries1.remove(0);
+				if(entries2.size()>4)entries2.remove(0);
+				entries1.add(report);
+				if(entries1!=entries2)
+					entries2.add(report);
+				fw.write(report);
 			}
 		}catch(Exception ioe) {
 			ioe.printStackTrace();
@@ -386,7 +382,8 @@ class BattlesGameClient extends LineClientContext {
 	@Override
 	public void onClose(){
 		try {
-			System.out.println(opponent);
+			if(BattlesServer.verbose)
+				System.out.println(opponent);
 			if(opponent==null)return;
 			opponent.sendln("OpponentDisconnected");
 			if (opponent.win == 0 && player.win == 0) {
@@ -695,7 +692,7 @@ public class BattlesServer extends ServerContext{
 	public static final String ip=CONFIG.HOST;
 	@Override
 	public void onOpen(){
-		System.out.println("Battles server started!");
+		System.out.println("Battles server started! IP - "+CONFIG.HOST+":"+getPort());
 	}
 	public static boolean verbose=true;
 
