@@ -73,7 +73,7 @@ public class FlashConfig{
 			SAS4.port=8124
 			SAS4.nio=true
 			SAS4.client=mspt=100;timeout=10000;in=();out=()
-			SAS4.gameClient=mspt=50;timeout=180000;in=(direct);out=(locked,direct)
+			SAS4.gameClient=mspt=50;timeout=180000;in=(1024,32768,direct);out=(locked,direct)
 			SAS4.scaleEarly=8192
 			SAS4.gamePorts=8128;32000;5
 			SAS4.mode=ALL

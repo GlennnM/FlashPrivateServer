@@ -60,12 +60,28 @@ public class FlashLauncher {
 		}
 	}
 	static void startGame(String game, int port) throws IOException {
+		boolean nio;
 		(switch(game.toLowerCase().trim()) {
-			case "battles","btdb"->new BattlesServer();
-			case "coop","btd5"->new CoopServer();
-			case "sas4"->new S4Server();
-			case "sas3"->new S3Server();
-			case "cs","countersnipe"->new CSServer();
+			case "battles","btdb"->{
+				nio=CONFIG.BATTLES_NIO;
+				yield new BattlesServer();
+			}
+			case "coop","btd5"->{
+				nio=CONFIG.BTD5_NIO;
+				yield new CoopServer();
+			}
+			case "sas4"->{
+				nio=CONFIG.SAS4_NIO;
+				yield new S4Server();
+			}
+			case "sas3"->{
+				nio=CONFIG.SAS3_NIO;
+				yield new S3Server();
+			}
+			case "cs","countersnipe"->{
+				nio=CONFIG.CS_NIO;
+				yield new CSServer();
+			}
 			default->throw new IllegalArgumentException("Unknown game. try: battles,btd5,sas4,sas3,CS");
 		}).start(port,true);
 	}

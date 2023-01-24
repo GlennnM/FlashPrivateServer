@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -321,7 +322,6 @@ class SpawnTask implements Runnable {
 		}
 		String spawnCmd = cmds.toString();
 		if (spawnCmd.length() > 0) {
-			room.flushAll();
 			room.writeAll(spawnCmd);
 			room.flushAll();
 		}
@@ -451,6 +451,7 @@ class WaveEndTask implements Runnable{
 			}
 			room.zombies.clear();
 			room.totalCapacity.reset();
+			room.nextSpawnNum.set(ThreadLocalRandom.current().nextInt(4));
 			hitCmd.deleteCharAt(hitCmd.length() - 1).append("%\0");
 			room.writeAll(hitCmd.toString());
 			room.flushAll();
@@ -520,7 +521,7 @@ class Room {
 	
 	public final AtomicBoolean[] slots = new AtomicBoolean[4];
 	public volatile long startTime=0;
-	public final Map<Integer, Zombie> zombies= new ConcurrentHashMap<>(1024);
+	public final Map<Integer, Zombie> zombies= new ConcurrentHashMap<>();
 	
 	public volatile float rankSum;
 	public volatile float SBEmult;
@@ -536,7 +537,7 @@ class Room {
 	public volatile int p4 = 24;
 	public volatile int wave = 1;
 	public volatile int waveTotal;
-	public AtomicInteger nextSpawnNum=new AtomicInteger(ThreadLocalRandom.current().nextInt(100));
+	public AtomicInteger nextSpawnNum=new AtomicInteger(ThreadLocalRandom.current().nextInt(4));
 	public final DoubleAdder totalCapacity=new DoubleAdder();
 
 	public final int mode;// 1 purge 2 onslaught 3 apoc

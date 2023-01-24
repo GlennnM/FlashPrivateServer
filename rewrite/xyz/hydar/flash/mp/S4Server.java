@@ -12,18 +12,18 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
@@ -49,6 +49,7 @@ class S4GameServer extends ServerContext{
 	public final boolean autostart;
 	public final Set<S4GameClient> players = new CopyOnWriteArraySet<>();
 	public final int mapSet;
+	public volatile boolean skipi;
 	public final AtomicInteger nextId=new AtomicInteger();
 	public final long startedAt=FlashUtils.now();
 	public volatile short map;
@@ -56,15 +57,14 @@ class S4GameServer extends ServerContext{
 	public volatile short minLvl;
 	public volatile short maxLvl;
 	public volatile int startAt=-1;
-	public volatile boolean started=false;
-	public volatile boolean ingame=false;
 	public volatile int lastTick=0;
 	public volatile int ingameSince=Integer.MAX_VALUE;
+	public final AtomicBoolean started=new AtomicBoolean();
+	public final AtomicBoolean ingame=new AtomicBoolean();
 	/**
 	 * Initializes the game server. This does not bind any port until start() is called.
 	 * */
 	public S4GameServer(short mode, int code, short auto){
-		this.started = false;
 		this.autostart = (auto >= 0);
 		if (this.autostart) {
 			this.minLvl = (short) (auto - 10);
@@ -75,6 +75,7 @@ class S4GameServer extends ServerContext{
 		}
 		this.mode = mode;
 		this.code = code;
+		this.skipi= code==274496549 || code==1815900785;
 		// Pick a map based on mode; nm and event maps both have separate id's
 		// playing normal on an NM map and vice versa is playable; playing normal on an
 		// event map does nothing
@@ -99,6 +100,11 @@ class S4GameServer extends ServerContext{
 		Scheduler.schedule(this::checkAlive,30000);
 		
 	}
+	public S4GameClient getHost() {
+		for(var p:players) {
+			if(p.id==host)return p;
+		}return null;
+	}
 	/**Runs at most once a second when players send a ping or time packet(-9 or -3)<br>
 	 * Performs tasks that need to be performed continuously before the game starts, such as updating the auto-start timer and level ranges.<br>Public lobbies(code=0) only.*/
 	public void autoTick() throws IOException {
@@ -106,13 +112,12 @@ class S4GameServer extends ServerContext{
 			if(player.bot)
 				player.send((ByteBuffer)null);
 		}
-		if(started||!autostart)
-			return;
 		int t = flashTime();
 		if(lastTick==0)
 			lastTick=t;
 		int ticks = (t-lastTick)/1000;
-		if(ticks==0)return;
+		if(ticks==0||started()||!autostart)
+			return;
 		lastTick=t;
 		minLvl-=ticks;
 		maxLvl+=ticks;
@@ -124,13 +129,22 @@ class S4GameServer extends ServerContext{
 	/**Updates and resends the auto-start timer as well as finishing the building process if possible.<br>
 	 * The building process normally completes when a player finishes building, 
 	 * but can also complete from the last building player leaving.*/
+
+	/**Returns whether building has started.*/
+	public boolean started() {
+		return started.get();
+	}
+	/**Returns whether building has finished.*/
+	public boolean ingame() {
+		return ingame.get();
+	}
 	public void autoCheck(){
-		if(!ingame&&started&&players.stream().allMatch(x->x.built)) {
+		if(!ingame()&&started()&&players.stream().allMatch(x->x.built)) {
 			var src=getNonBot();
 			if(src!=null)
 				src.finishBuild();
 			return;
-		}else if(started)return;
+		}else if(started())return;
 		if(players.size()==1) {
 			autoClear();
 		}else if(autostart&&this.allLoaded()){
@@ -139,7 +153,7 @@ class S4GameServer extends ServerContext{
 			}else if (players.size() == 4) {
 				this.startAt = lastTick;
 			}
-			if (!this.started) {
+			if (!this.started()) {
 				int st = Math.max(0,startAt-lastTick);
 				var startPkt=ByteBuffer.allocate(5).put((byte)-13).putInt(st);
 				players.forEach(x->x.send(startPkt.flip()));
@@ -154,9 +168,9 @@ class S4GameServer extends ServerContext{
 		this.startAt=-1;
 	}
 	/**Returns true if a level {@code lvl} player can join this lobby.<br>
-	 * Returns false if the lobby is started, full, or the level is out of the lobby range.*/
+	 * Returns false if the lobby is started(), full, or the level is out of the lobby range.*/
 	public boolean allows(short lvl) {
-		return (!this.started) && (this.players != null) && (this.players.size() < 4) && (lvl <= maxLvl)
+		return (!this.started()) && (this.players != null) && (this.players.size() < 4) && (lvl <= maxLvl)
 				&& (lvl >= minLvl);
 	}
 	/**Returns true if all players are level 96 or higher, allowing for a level 101 boost according to the default rules.*/
@@ -208,6 +222,9 @@ class S4GameServer extends ServerContext{
 	public int flashTime() {
 		return (int)(FlashUtils.now()-startedAt);
 	}
+	public void allHost() {
+		players.forEach(x->x.send((x.id==host)?new byte[0]:new byte[] {(byte)-7,host,x.id}));
+	}
 	/**Initializes a new connection context.*/
 	@Override
 	public ClientContext newClient() throws IOException {
@@ -219,21 +236,21 @@ class S4GameClient extends ClientContext {
 	public volatile S4Player player;
 	public final S4GameServer parent;
 	public final byte id;
-	//game state(started means building started, parent.ingame means actually started)
-	//TODO: atomic
+	//game state(started() means building started(), parent.ingame() means actually started())
 	public volatile boolean welcomed=false;
 	public volatile boolean loaded=false;
 	public volatile boolean built=false;
 
 	public final boolean bot;
 	public final int vs;
-	
 	private float load=0f;
 	private short ping=0;
 	private short frameTime=1000;
 	private boolean valid=false;
 	protected ByteBuffer local;//write to self
 	protected ByteBuffer remote;//write to peers
+
+	public static final int[] TIMED= {2,5,6,7,8,9,14,15}; 
 	//dummy constructor for bots
 	private S4GameClient(S4GameServer parent,short level,int vs) {
 		super(ClientOptions.NONE);
@@ -270,9 +287,9 @@ class S4GameClient extends ClientContext {
 	/**Returns the local buffer after ensuring it can hold {@code length} bytes, and expanding it or flushing it if not.*/
 	protected ByteBuffer local(int length) {
 		//System.out.println(""+local.position()+"%"+local.remaining()+"%"+length);
-		if(length>=1024) {
-			 System.out.println("buffer overflow(local, %d, %s)".formatted(length,local));
-			 alive=false;
+		if(length>=2048&&local.capacity()<2048) {
+			 //silently ignore(hope that not that much is actually needed)
+			 local=alloc(2048).put(local.flip());
 		}else if(length>=local.capacity()) {
 			 local=alloc(Integer.highestOneBit((local.position()+length)<<1)).put(local.flip());
 			// System.out.println("local buffer size increased to "+local.capacity());
@@ -372,7 +389,7 @@ class S4GameClient extends ClientContext {
 	}
 	/**Change the map, alerting all players. Packets start with -14.*/
 	public void setMap(short map) throws IOException {
-		if(parent.started)return;
+		if(parent.started())return;
 		int index;
 		if(map==-1) {
 			announce("Invalid map");
@@ -465,7 +482,7 @@ class S4GameClient extends ClientContext {
 		}
 		switch(opcode){
 			case 0:
-				if(!parent.started){
+				if(!parent.started()){
 					if((buffer.get()!=(byte)0xca) || !parent.players.add(this))break;
 					int length = buffer.getInt(offset+10);
 					byte[] data = new byte[actualSize-(length*2+14)];
@@ -532,14 +549,14 @@ class S4GameClient extends ClientContext {
 					
 				}else if(subop==0x07&&actualSize==20) {
 					float load=buffer.getFloat(offset+8);
-					if(!parent.started) {
+					if(!parent.started()) {
 						this.load=load;
 						if(Math.abs(1.0f-load)<0.0001f&&!loaded) {
 							loaded=true;
 							fullLoad();
 						}else 
 							loadingState(load);
-					}else if(!parent.ingame &&!built) {
+					}else if(!parent.ingame() &&!built) {
 						loadingState(load);
 						if(Math.abs(1.0f-load)<0.0001f)
 							finishBuild();
@@ -548,8 +565,37 @@ class S4GameClient extends ClientContext {
 				}//else if(subop==0x09)return;
 				//if only bots, dont bother copying buffer
 				else if(getPeer()==null) return;
-				else if(actualSize>10 && (subop==5||subop==7||subop==2||subop==9)){
-					buffer.putInt(offset+7,parent.flashTime());
+				else if(subop==2&&id==parent.host) {
+					//convert it to a subop 9 packet giving other players control of the mobs
+					buffer.position(offset+7);
+					var target=alloc(actualSize);
+					var players=parent.players.stream().filter(x->!x.bot&&x!=this).iterator();
+					S4GameClient firstTarget=players.next();
+					int targetLen=loadEntitiesImpl(buffer,target,offset+actualSize,firstTarget.id,false);
+					if(targetLen!=5) {
+						//flip without losing mark
+						firstTarget.send(target.mark().slice(0,target.position()));
+						for(var player:(Iterable<S4GameClient>)(()->players)){
+							//replace ID's
+							for(int i=target.reset().position()-15;i>0;i-=19) {
+								target.put(i,player.id);
+							}
+							player.send(target.slice(0,target.position()));
+						}
+					}
+					return;
+				}else if(subop==9) {
+					buffer.position(offset+7);
+					var target=local(actualSize);
+					int targetLen=loadEntitiesImpl(buffer,target,offset+actualSize,id,true);
+					if(targetLen==5) {
+						local.position(local.position()-targetLen-5);
+					}
+				}
+				else if(actualSize>10 && (Arrays.stream(TIMED).anyMatch(x->x==subop))){
+					int time=parent.flashTime();
+
+					buffer.putInt(offset+7,time);
 				}
 				int len = actualSize - 6;
 				remote(len+5)
@@ -557,9 +603,9 @@ class S4GameClient extends ClientContext {
 					.putInt(len)//len bytes after this point
 					.put(subop)
 					.put(buffer.slice(offset+7,actualSize-7));
-			break;
+				break;
 			case -17:
-			if(id==parent.host && !parent.started)
+			if(id==parent.host && !parent.started())
 				startGame(true);
 			break;
 			case -15:
@@ -570,14 +616,38 @@ class S4GameClient extends ClientContext {
 			break;
 		}
 	}
-
+	/**create -2.9 packet from either -2.9 or -2.2 while changing user id for all zombies to id*/
+	private static int loadEntitiesImpl(ByteBuffer src, ByteBuffer dst, int end, byte id, boolean hasId) {
+		dst.put((byte)-2).mark()
+			.putInt(0).put((byte)9)
+			.putInt(src.getInt());
+		int targetLen=5;
+		while(src.position()<(hasId?end-8:end)) {
+			int entityID=src.getInt();
+			src.position(src.position()+(hasId?1:2));
+			short length=src.getShort();
+			//zombies have payload length 12
+			if(length==12) {
+				dst.putInt(entityID)
+					.put(id)
+					.putShort((short)12)
+					.put(src.slice(src.position(),12));
+				targetLen+=19;
+			}
+			src.position(src.position()+length);
+		}
+		if(targetLen>5)
+			dst.reset().putInt(targetLen)
+			.position(dst.position()+targetLen);
+		return targetLen;
+	}
 	/**
 	 * -2 packet with operation -1 as interpreted in o14519; reflects most of the
 	 * data from the (0x00ca) packet containing player data. Appended to this is a
 	 * byte which goes from 0-100(loaded percentage). Each starting opcode
 	 * corresponds to a different function; however -2 is special in that it will
 	 * have a "sub-operation" such as -1. Format: |1| operation |4| length IF
-	 * type=bytearray |1| suboperation IF type -1 |data| - usually includes id and
+	 * type=bytearray |1| suboperation IF type -2 |data| - usually includes id and
 	 * level early on See o14519, o2144.
 	 */
 	public void playerData(S4GameClient source, WriteMode target) {
@@ -629,7 +699,7 @@ class S4GameClient extends ClientContext {
 	/**Add a bot, if possible. {@code vs} is 0 for normal bots, 1 for vs bots, and 2 for deadtabs*/
 	public void boost(short level,int vs) throws IOException {
 		if ((level>101&&(parent.code==0||valid))||(level==101&&!parent.can101())||
-				parent.players.size() > 3||parent.started||
+				parent.players.size() > 3||parent.started()||
 				(parent.mode>2&&(parent.code==0||valid)&&level<1)||
 				(vs>1&&parent.mode!=7&&parent.mode!=3)) {
 			chat("Unable to boost.",false);
@@ -664,14 +734,14 @@ class S4GameClient extends ClientContext {
 			parent.dequeue();
 			return;
 		}
-		byte[] pl = { (byte) -6, id };
-		parent.players.forEach(x->x.send(pl));
-		if (parent.host == id) {
+		if (!parent.skipi &&parent.host == id) {
 			// change host
 			byte[] pl2 = { (byte) -7, id, source.id };
 			parent.host = source.id;
 			parent.players.forEach(x->x.send(pl2));
 		}
+		byte[] pl = { (byte) -6, id };
+		parent.players.forEach(x->x.send(pl));
 		parent.autoCheck();
 		if(parent.mode==5 && !this.bot && parent.players.size()==1)
 			try {
@@ -681,33 +751,25 @@ class S4GameClient extends ClientContext {
 			}
 		flushRemote();
 	}
-	private void transferHost() {
-		var source=getPeer();
-		if (source!=null&&parent.host == id) {
-			// change host
-			byte[] pl2 = { (byte) -7, id, source.id };
-			parent.host = source.id;
-			parent.players.forEach(x->x.send(pl2));
-		}
-	}
 	/**start building(start game button), or automatically in event/quickmatch*/
 	public void startGame(boolean announce) {
+		if(!parent.started.compareAndSet(false,true))return;
 		if(announce)announce("Starting building...");
 		System.out.println("-------STARTING GAME " + parent.code + "@"+new Date()+"-------");
 		S4Server.gamesStarted++;
 		parent.players.forEach(x->x.send(new byte[] {(byte)-16}));
-		parent.started = true;
 		parent.close();
 	}
 	/**Called when one player finishes building, attempting to finish the process and start the game.*/
 	public void finishBuild() {
 		this.built=true;
-		if(!parent.ingame && parent.started && parent.players.stream().allMatch(x->x.built)) {
-			parent.ingame=true;
+		if(parent.started() && parent.players.stream().allMatch(x->x.built)&&parent.ingame.compareAndSet(false,true)) {
 			int hydar=parent.flashTime();
 			parent.ingameSince=hydar;
 			var startlocal=ByteBuffer.allocate(5).put((byte)-11).putInt(hydar+3000);
 			parent.players.forEach(x->x.send(startlocal.flip()));
+			if(parent.skipi && getPeer()!=null)
+				parent.allHost();
 		}
 	}
 	/**Checks for the length required for the SAS4 packet that starts at {@code input.position()}, or returns -1 if that length is not available.*/
@@ -734,7 +796,7 @@ class S4GameClient extends ClientContext {
 				yield req;
 			}
 			default->{
-				if(parent.ingame&&player!=null)
+				if(parent.ingame()&&player!=null)
 				System.out.println("help :((( "+opcode);
 				else alive=false;
 				//announce("Invalid packet[%d]. Buffer will be cleared".formatted(opcode));
@@ -795,9 +857,17 @@ class S4GameClient extends ClientContext {
 			case "!range"->"Accepting levels "+parent.minLvl+"-"+parent.maxLvl;
 			case "!host"->"You are "+(id==parent.host?"":"not ")+"the host.";
 			case "!ping"->"Ping: "+ping+"ms, "+(1000/(0xffff&frameTime))+" reported FPS";
-			case "!yield"->{
-				transferHost();
-				yield null;
+			case "!skipi", "!waveskip"->{
+				if(parent.skipi)
+					yield "Waveskip is already enabled.";
+				else if(parent.started())
+					yield "The game already started.";
+				else if(id!=parent.host) 
+					yield "This can only be used by the host.";
+				else if(getPeer()!=null) 
+					yield "This cannot be used after players join.";
+				parent.skipi=true;
+				yield "Waveskip enabled!";
 			}
 			case "!setseed"->{
 				if(!valid&&parent.code!=0&&getPeer()==null) {
@@ -833,7 +903,7 @@ class S4GameClient extends ClientContext {
 				stats();
 				yield null;
 			}case "!go", "!start"->{
-				if(!parent.started && parent.allLoaded()) {
+				if(!parent.started() && parent.allLoaded()) {
 					if(id==parent.host) {
 						if(msg.length==1||!parent.autostart)
 							startGame(true);
@@ -848,8 +918,8 @@ class S4GameClient extends ClientContext {
 					yield "Cannot start game";
 				}
 			}case "!unlock"->{
-				if(parent.started) {
-					yield "The game already started";
+				if(parent.started()) {
+					yield "The game already started()";
 				}else if(!parent.autostart || (parent.minLvl<0&&parent.maxLvl>100)) {
 					yield "This lobby already allows all levels";
 				}else if(id==parent.host) {
@@ -859,8 +929,8 @@ class S4GameClient extends ClientContext {
 				}else yield "You are not the host";
 			}
 			case "!map"->{
-				if(parent.started)
-					yield "Game already started";
+				if(parent.started())
+					yield "Game already started()";
 				else if(msg.length>1&&FlashUtils.isInt(msg[1])){
 					int q=Integer.parseInt(msg[1]);
 					if(q>0&&((parent.mode>2&&parent.mode<7)||id==parent.host)&&q<=S4Server.EVENT_MAPS.length){
@@ -920,7 +990,7 @@ class S4GameClient extends ClientContext {
 				long delta;
 				//leave after building+4 minutes(deadtab, not alpha virus), building+6 seconds(vs bot),
 				//or right away(normal)
-				/**if(parent.ingame&&(parent.flashTime()-parent.ingameSince)>5000&&vs==2&&welcomed) {
+				/**if(parent.ingame()&&(parent.flashTime()-parent.ingameSince)>5000&&vs==2&&welcomed) {
 					welcomed=false;
 					//var die=ByteBuffer.allocate(39).put((byte)-2).putInt(34)
 					//		.put((byte)5).putInt(parent.ingameSince).putInt(0x42c2497).
@@ -935,7 +1005,7 @@ class S4GameClient extends ClientContext {
 					parent.players.forEach(x->x.send(die.flip()));
 					parent.players.forEach(x->x.send(die2.flip()));
 				}*/
-				if (parent.started&&(this.vs==0)||
+				if (parent.started()&&(this.vs==0)||
 					((delta=parent.flashTime()-parent.ingameSince)>6000&&this.vs==1)||
 					(delta>240000&&parent.mode!=3&&this.vs==2)){
 					leave();
@@ -1036,7 +1106,6 @@ public class S4Server extends ServerContext{
 		LocalDateTime now=LocalDateTime.now(MINUS8);
 		return (int)ChronoUnit.DAYS.between(FEB_16_2022,now);
 	}
-	
 	public static short getEventMap(){
 		int eventOffset=offset2();
 		long seed=33888522196117857l+eventOffset*3;
@@ -1110,10 +1179,10 @@ public class S4Server extends ServerContext{
 					requestedCode-=1000000000;
 				}
 				int code=requestedCode;
-				short mode = requestedMode<100?switch(code) {
+				short mode = requestedMode<2?switch(code) {
 					case 193486639, 253193259, 1870369476->3;//avs, alpha, alphavirus
 					case 193498321, 264330093 -> 4;//lms, last man standing
-					case 2090085224, 193502727, 744744362, 2106828268 -> 5;//apoc, poc, apocalypse, sandbox
+					case 2090085224, 193502727, 744744362, 2106828268, 274496549, 1815900785-> 5;//apoc, poc, apocalypse, skipi, waveskip, sandbox
 					case 2090715702, 2107572390, 1168011283 -> 7;//samp, samples, virussamples
 					default->requestedMode;
 					//extra modes:0="any" 6="contracts", they play exactly like normal games
@@ -1128,7 +1197,7 @@ public class S4Server extends ServerContext{
 					.sorted(Comparator.comparingInt(x->-x.players.size()))
 					.findFirst()
 					.orElseGet(()->new S4GameServer(mode, code, autostart));
-				//list.forEach(x->System.out.println(""+x.code+" "+x.alive+" "+x.started+" "+x.players+" "+x.port));
+				//list.forEach(x->System.out.println(""+x.code+" "+x.alive+" "+x.started()+" "+x.players+" "+x.port));
 				if(list.add(g)) {
 					g.start(IntStream.generate(S4Server::nextPort).limit(100), isNio());
 				}
@@ -1136,7 +1205,7 @@ public class S4Server extends ServerContext{
 				//byte[] data = new byte[arrayLength*2];
 				//src.get(14,data);//"the array"(discard)
 				byte[] ip = S4Server.ip.getBytes(StandardCharsets.UTF_8);
-				//System.out.println("Started GS on "+g.getPort());
+				//System.out.println("started() GS on "+g.getPort());
 				var pl = ByteBuffer.allocate(10+ip.length)
 					.putShort((short)ip.length) 
 					.put(ip)

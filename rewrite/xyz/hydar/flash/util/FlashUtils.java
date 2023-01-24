@@ -1,4 +1,4 @@
-	package xyz.hydar.flash.util;
+package xyz.hydar.flash.util;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
@@ -8,10 +8,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +42,9 @@ public class FlashUtils {
 	public static int parseIntElse(String str, int defaultValue) {
 		return isInt(str)?Integer.parseInt(str):defaultValue;
 	}
+	public static void printBuffer(ByteBuffer src) {
+		System.out.println(HexFormat.of().formatHex(ByteBuffer.allocate(src.capacity()).put(src).array()));
+	}
 	private static boolean isNImpl(String param1, int min, int max, int maxDigits){
 		param1=param1.trim();
 		if(param1.startsWith("+")||param1.startsWith("-"))
@@ -58,6 +63,7 @@ public class FlashUtils {
 		return isInt(param1)?Integer.parseInt(param1.trim()):
 			Math.abs(param1.codePoints().reduce(5381, (x, y) -> ((x << 5) + x + y)));
 	}
+	
 	public static int shortSearch(short[] haystack, short needle) {
 		for(int i=0;i<haystack.length;i++) {
 			if(haystack[i]==needle)
@@ -136,13 +142,5 @@ public class FlashUtils {
 		}catch(InterruptedException ie) {
 			Thread.currentThread().interrupt();
 		}
-	}
-	public static boolean checkPort(int p) {
-		try(ServerSocket test = new ServerSocket(p)){
-			
-		}catch(IOException ioe) { 
-			return true;
-		}
-		return false;
 	}
 }
