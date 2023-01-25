@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 /**
+ * Script for parsing SAS4 map data(*.bin).
+ * Adapted from client behavior
  *	the procedure 
  *  1. get map.bin and scripts.csv from ninja kiwi
  *  http://assets.nkstatic.com/Games/gameswfs/sas4/download/scripts.csv
