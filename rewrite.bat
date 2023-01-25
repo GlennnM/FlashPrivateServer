@@ -1,2 +1,0 @@
-javac ./rewrite/xyz/hydar/net/*.java ./rewrite/xyz/hydar/flash/util/*.java ./rewrite/xyz/hydar/flash/mp/*.java -cp ./classes -d ./classes --release 19 --enable-preview
-java -cp ./classes --enable-preview xyz.hydar.flash.mp.FlashLauncher
