@@ -34,6 +34,6 @@ jobs:
       with:
         name: server
         # A file, directory or wildcard pattern that describes what to upload
-        path: ./target/*.jar
+        path: ./target/flash-server-3.2.jar
         # The desired behavior if no files are found using the provided path.
     
