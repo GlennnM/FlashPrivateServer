@@ -1080,9 +1080,9 @@ public class S4Server extends ServerContext{
 		FEB_16_2022=LocalDateTime.ofInstant(c.toInstant(),ZoneId.of("GMT-8"));
 		byte[] tmp1,tmp2,tmp3;
 		try {
-			tmp1 = Files.readAllBytes(Paths.get("./bot_normal.bin"));
-			tmp2 = Files.readAllBytes(Paths.get("./bot_vs.bin"));
-			tmp3 = Files.readAllBytes(Paths.get("./bot_deadtab.bin"));
+			tmp1 = Files.readAllBytes(Paths.get("./sas4_bot.bin"));
+			tmp2 = Files.readAllBytes(Paths.get("./sas4_vs.bin"));
+			tmp3 = Files.readAllBytes(Paths.get("./sas4_deadtab.bin"));
 		} catch (Exception e) {
 			System.out.println("warning: bot data not found(bot_normal.bin, bot_vs.bin, bot_deadtab.bin)");
 			tmp1=tmp2=tmp3=new byte[0];
