@@ -29,3 +29,11 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: server
+        # A file, directory or wildcard pattern that describes what to upload
+        path: ./target/*.jar
+        # The desired behavior if no files are found using the provided path.
+    
