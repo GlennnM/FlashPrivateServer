@@ -119,15 +119,15 @@ public abstract class ClientContext{
 	public final void start(AsynchronousSocketChannel socket) throws IOException {
 		if(client!=Client.NULL_CLIENT)throw new UnsupportedOperationException("already init");
 		this.client = new Client.OfNio(this,socket);
-		client.start();
 		onOpen();
+		client.start();
 	}
 	/**Starts this context given a Socket. It will run on a new thread from the provided factory.*/
 	public final void start(Socket socket, ThreadFactory factory) throws IOException {
 		if(client!=Client.NULL_CLIENT)throw new UnsupportedOperationException("already init");
 		this.client = new Client.OfIo(this,socket,factory);
-		client.start();
 		onOpen();
+		client.start();
 	}
 	/**Runs after the socket is opened, as a result of a successful start() call.*/
 	public abstract void onOpen() throws IOException;
@@ -416,7 +416,8 @@ public abstract class ClientContext{
 			}
 			private final void onTimeout() {
 				if(ctx.alive) {
-					ctx.onTimeout();
+					if(nextTimeout!=null)
+						ctx.onTimeout();
 					if(ctx.alive)
 						nextTimeout=ses.schedule(this::onTimeout,ctx.opt.timeout(), TimeUnit.MILLISECONDS);
 					
@@ -433,6 +434,10 @@ public abstract class ClientContext{
 			public void start() throws IOException{
 				if(ses!=null) {
 					onTimeout();
+				}
+				if(!ctx.alive) {
+					close2();
+					return;
 				}
 				readWithTimeout(input, new CompletionHandler<Integer, Void>() {
 					@Override

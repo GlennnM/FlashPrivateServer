@@ -91,10 +91,15 @@ public class FlashConfig{
 			e.printStackTrace();
 		}
 	}
-	public Map<InetAddress,LongAdder> threadsPerIp=new ConcurrentHashMap<>();
+	public final Map<InetAddress,LongAdder> threadsPerIp=new ConcurrentHashMap<>();
 	public void acquire(ClientContext ctx) {
+		var ip=ctx.getInetAddress();
+		if(ip==null) {
+			ctx.close();
+			return;
+		}
 		var all=threadCount;
-		var local=threadsPerIp.computeIfAbsent(ctx.getInetAddress(), (x)->new LongAdder());
+		var local=threadsPerIp.computeIfAbsent(ip, (x)->new LongAdder());
 		if(all.sum()>MAX_THREADS||local.sum()>THREADS_PER_IP) {
 			ctx.alive=false;
 			return;

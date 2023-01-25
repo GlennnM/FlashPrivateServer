@@ -288,8 +288,9 @@ class S4GameClient extends ClientContext {
 	/**Returns the local buffer after ensuring it can hold {@code length} bytes, and expanding it or flushing it if not.*/
 	protected ByteBuffer local(int length) {
 		//System.out.println(""+local.position()+"%"+local.remaining()+"%"+length);
-		if(length>=2048&&local.capacity()<2048) {
+		if(length>=2048) {
 			 //silently ignore(hope that not that much is actually needed)
+			if(local.capacity()<2048)
 			 local=alloc(2048).put(local.flip());
 		}else if(length>=local.capacity()) {
 			 local=alloc(Integer.highestOneBit((local.position()+length)<<1)).put(local.flip());
@@ -420,8 +421,12 @@ class S4GameClient extends ClientContext {
 	enum WriteMode{LOCAL,REMOTE,ALL}
 	@Override
 	public void onOpen() {
-		S4Server.connections++;
-		CONFIG.acquire(this);
+		if(player!=null) {
+			S4Server.connections++;
+			CONFIG.acquire(this);
+			if(!alive)
+				return;
+		}
 		local(17)
 			.put((byte)-4).put(parent.host).put(id)
 			.putInt(parent.flashTime())
