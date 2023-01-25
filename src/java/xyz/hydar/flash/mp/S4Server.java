@@ -1085,7 +1085,6 @@ public class S4Server extends ServerContext{
 			tmp2 = Files.readAllBytes(Paths.get("./vs.bin"));
 			tmp3 = Files.readAllBytes(Paths.get("./deadtab.bin"));
 		} catch (Exception e) {
-			e.printStackTrace();
 			System.out.println("warning: bot data not found(bot.bin, vs.bin, deadtab.bin)");
 			tmp1=tmp2=tmp3=new byte[0];
 		}

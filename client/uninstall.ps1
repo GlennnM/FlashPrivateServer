@@ -18,8 +18,6 @@ if (Test-Path -Path $cache) {
     }catch{
         $Q = Read-Host "Clearing cache failed, exiting."
     }
-       
-    
 } else {
     "Ninja Kiwi Archive not found."
     $Q = Read-Host "Press enter to exit..."
