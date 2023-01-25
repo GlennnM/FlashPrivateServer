@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
@@ -43,12 +44,7 @@ public abstract class ClientContext{
 	public volatile boolean alive=true;
 	volatile Client client=Client.NULL_CLIENT;
 	public final ClientOptions opt;
-	private static final ThreadFactory DEFAULT_FACTORY=new ThreadFactory() {//TODO
-		@Override
-		public Thread newThread(Runnable r) {
-			return Thread.ofVirtual().unstarted(r);
-		}
-	};
+	private static final ThreadFactory DEFAULT_FACTORY=Thread.ofVirtual().factory();
 	public ClientContext() {
 		this(ClientOptions.DEFAULT);
 	}
@@ -144,6 +140,7 @@ public abstract class ClientContext{
 	/**Sends the contents of the provided ByteBuffer(from position to limit).*/
 	public void send(ByteBuffer msg){
 		client.send(msg);
+		
 	}
 	/**Sends the contents of the provided byte[]. Equivalent to send(msg,0,msg.length)*/
 	public void send(byte[] msg){ 
@@ -395,6 +392,7 @@ public abstract class ClientContext{
 			protected volatile ByteBuffer output;
 			private final Lock sendLock;
 			private final ScheduledExecutorService ses;
+			private static final ScheduledExecutorService asyncReadTimer=Executors.newSingleThreadScheduledExecutor(r->new Thread(r,"Async read scheduler"));
 			private final Lock bufferLock;
 			private ScheduledFuture<?> nextTimeout;
 			public OfNio(ClientContext ctx, AsynchronousSocketChannel asc) throws IOException{
@@ -459,12 +457,8 @@ public abstract class ClientContext{
 									close2();
 								}else{//realloc can fail, resulting in alive=false
 									if(ctx.opt.mspt()>0)
-										try{
-											Thread.sleep(ctx.opt.mspt());
-										}catch(InterruptedException iee) {
-											Thread.currentThread().interrupt();
-										}
-									readWithTimeout(input,this);
+										asyncReadTimer.schedule(()->readWithTimeout(input,this),ctx.opt.mspt(),TimeUnit.MILLISECONDS);
+									else readWithTimeout(input,this);
 									return;
 								}
 							}else close2();

@@ -47,7 +47,7 @@ public class FlashConfig{
 	public final int MAX_THREADS;
 	public final int THREADS_PER_IP;
 	public final int scaleEarly;
-	public LongAdder threadCount=new LongAdder();
+	public final LongAdder threadCount=new LongAdder();
 	static final Properties DEFAULTS=new Properties();
 	static {
 		try {
@@ -95,7 +95,7 @@ public class FlashConfig{
 	public void acquire(ClientContext ctx) {
 		var all=threadCount;
 		var local=threadsPerIp.computeIfAbsent(ctx.getInetAddress(), (x)->new LongAdder());
-		if(all.sum()>MAX_THREADS||all.sum()>THREADS_PER_IP) {
+		if(all.sum()>MAX_THREADS||local.sum()>THREADS_PER_IP) {
 			ctx.alive=false;
 			return;
 		}
