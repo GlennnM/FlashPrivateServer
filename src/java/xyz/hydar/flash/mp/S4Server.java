@@ -567,10 +567,10 @@ class S4GameClient extends ClientContext {
 							finishBuild();
 					}
 					return;
-				}//else if(subop==0x09)return;
+				}
 				//if only bots, dont bother copying buffer
 				else if(getPeer()==null) return;
-				else if(subop==2&&id==parent.host) {
+				else if(subop==2&&id==parent.host&&!parent.skipi) {
 					//convert it to a subop 9 packet giving other players control of the mobs
 					buffer.position(offset+7);
 					var target=alloc(actualSize);
@@ -589,7 +589,7 @@ class S4GameClient extends ClientContext {
 						}
 					}
 					return;
-				}else if(subop==9) {
+				}else if(subop==9&&!parent.skipi) {
 					buffer.position(offset+7);
 					var target=local(actualSize);
 					int targetLen=loadEntitiesImpl(buffer,target,offset+actualSize,id,true);
