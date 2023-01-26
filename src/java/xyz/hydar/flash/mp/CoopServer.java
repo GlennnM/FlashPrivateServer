@@ -72,9 +72,8 @@ class CoopClient extends LineClientContext {
 		if(p.thread!=null)p.thread.flush();
 		//If players cannot be distinguished, we have to 
 		if(Objects.equals(player,p)) {
-			FlashUtils.sleep(5000);
-		}
-		sendln("13,"+CONFIG.HOST+","+gs.getPort()+",843,13042641,"+p.id+","+p.name+","+gs.map+","+gs.mode+","+gs.reverse+",1");
+			Scheduler.schedule(()->connectQuick(p),5000);
+		}else connectQuick(p);
 		queued=false;
 		matched=true;
 	}
@@ -120,7 +119,7 @@ class CoopClient extends LineClientContext {
 				var gs=new CoopGameServer(player,code,map,mode,reverse);
 				CoopServer.privateMatches.put(code,gs);
 				gs.start(IntStream.generate(S4Server::nextPort).limit(100),parent.isNio());
-				sendln("4,"+CONFIG.HOST+","+gs.getPort()+",0");//TODO ???
+				sendln("4,"+CONFIG.HOST+","+gs.getPort()+",0");
 			}else{
 				sendln("5");
 			}
@@ -138,14 +137,24 @@ class CoopClient extends LineClientContext {
 			}else{
 				gs.p1.sendln("9,"+""+0+","+",0");
 				if(Objects.equals(player,gs.p1)) {
-					FlashUtils.sleep(5000);
-				}sendln("1,"+CONFIG.HOST+","+gs.getPort()+",0,13042641,"+gs.p1.id+","+gs.p1.name+","+gs.map+","+gs.mode+","+gs.reverse);
+					Scheduler.schedule(this::connectPrivate,5000);
+				}else connectPrivate();
 				queued=true;
 			}
 			break;
 		}
 	}
-	
+	/**connect packets in methods so they can be scheduled if delay is needed*/
+	private void connectQuick(CoopPlayer p) {
+		if(!alive)return;
+		sendln("13,"+CONFIG.HOST+","+gs.getPort()+",843,13042641,"+p.id+","+p.name+","+gs.map+","+gs.mode+","+gs.reverse+",1");
+		flush();
+	}
+	private void connectPrivate() {
+		if(!alive)return;
+		sendln("1,"+CONFIG.HOST+","+gs.getPort()+",0,13042641,"+gs.p1.id+","+gs.p1.name+","+gs.map+","+gs.mode+","+gs.reverse);
+		flush();
+	}
 	@Override
 	public void onTimeout(){
 		

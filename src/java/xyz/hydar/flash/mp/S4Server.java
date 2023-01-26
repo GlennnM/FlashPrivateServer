@@ -513,8 +513,7 @@ class S4GameClient extends ClientContext {
 					if(parent.code==0&&!valid) {
 						chat("You can't join this lobby.\nTry a private/sandbox lobby(code apoc, lms, samp) instead",false);
 						flushLocal();flushRemote();
-						FlashUtils.sleep(2000);
-						alive=false;
+						Scheduler.schedule(this::close, 2000);
 						break;
 					}
 				}else alive=false;
@@ -803,13 +802,12 @@ class S4GameClient extends ClientContext {
 			}
 			default->{
 				if(parent.ingame()&&player!=null)
-				System.out.println("help :((( "+opcode);
+					System.out.println("help :((( "+opcode);
 				else alive=false;
 				//announce("Invalid packet[%d]. Buffer will be cleared".formatted(opcode));
 				//System.out.println(HexFormat.of().formatHex(input.array()));
 				//alive=false;
 				//input.clear();
-				//FlashUtils.sleep(2000);
 				yield -2;
 			}
 		};
@@ -835,14 +833,6 @@ class S4GameClient extends ClientContext {
 			remote.put(remote.position()-(msg.length+11),id);
 		}
 	}
-	/**chat, but without buffering(can be invoked by others)*/
-	public void syncChat(String s) {
-		String s2 = "\n[BEGINFONT face='Calibri' size='17' color='#21d91f' CLOSEFONT]"+s+"[ENDFONT]";
-		byte[] msg = s2.getBytes(StandardCharsets.UTF_8);
-		ByteBuffer dst=alloc(msg.length+31);
-		encodeChat(msg,dst);
-		send(dst.flip());
-	}
 	public void encodeChat(byte[] msg, ByteBuffer dst) {
 		S4GameClient peer=null;
 		for(var thread:parent.players) {
@@ -866,7 +856,7 @@ class S4GameClient extends ClientContext {
 	public void processChat(String[] msg) throws IOException{
 		announce(switch (msg[0].toLowerCase()) {
 			case "!source"->"https://github.com/GlennnM/NKFlashServers";
-			case "!help"->"Flash Private Server by Glenn M#9606.\nCommands:\n!boost <lvl>, !vsboost, !deadtab, !unboost\n!start, !unlock, !ping, !source, !seed, !stats, !code, !range, !disconnect";
+			case "!help"->"Flash Private Server by Glenn M#9606.\nCommands:\n!boost <lvl>, !vsboost, !deadtab, !unboost\n!start, !waveskip, !unlock, !ping, !source, !seed, !stats, !code, !range, !disconnect";
 			case "!seed"->"Current seed: "+parent.seed+"\nMap ID: "+parent.map+"\nMode: "+parent.mode;
 			case "!code"->"Current code: "+parent.code+"\nMap ID: "+parent.map+"\nMode: "+parent.mode+"\nSpecial codes: 400, apoc, lms, avs, samp";
 			case "!range"->"Accepting levels "+parent.minLvl+"-"+parent.maxLvl;
@@ -1105,7 +1095,7 @@ public class S4Server extends ServerContext{
 		return games.values().stream().mapToInt(Set::size).sum();
 	}
 	public static int getS4PlayerCount(){
-		return games.values().stream().flatMap(Set::stream).mapToInt(x->x.players.size()).sum();//TODO remove on start
+		return games.values().stream().flatMap(Set::stream).mapToInt(x->x.players.size()).sum();
 	}
 	public static short getMap(short mode, int index){
 		var mapArr=switch(mode) {

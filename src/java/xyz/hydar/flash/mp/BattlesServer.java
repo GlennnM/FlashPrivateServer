@@ -74,16 +74,21 @@ class BattlesClient extends LineClientContext {
 		queued = true;
 	}
 	public void connect(GameServer gs, Player opp) throws IOException{
-		gs.start(IntStream.generate(BattlesServer::nextPort).limit(100),true);//TODO:
-		opp.sendln("FoundYouAGame," + BattlesServer.ip + "," + gs.getPort() + "," + 0 + ",4480");
+		gs.start(IntStream.generate(BattlesServer::nextPort).limit(100),true);
+		String foundGame="FoundYouAGame," + BattlesServer.ip + "," + gs.getPort() + "," + 0 + ",4480";
+		opp.sendln(foundGame);
 		//If players cannot be distinguished, we have to 
 		if(Objects.equals(player,opp)) {
 			sendln("ServerMessage,please wait a few seconds to prevent desync...");
 			opp.sendln("ServerMessage,please wait a few seconds to prevent desync...");
-			FlashUtils.sleep(5000);
-		}
+			Scheduler.schedule(()->{
+				if(alive) {
+					sendln(foundGame);
+					flush();
+				}
+			},5000);
+		}else sendln(foundGame);
 		opp.thread.flush();
-		sendln("FoundYouAGame," + BattlesServer.ip + "," + gs.getPort() + "," + 0 + ",4480");
 		matched=true;
 		queued=false;
 	}
@@ -209,7 +214,7 @@ class GameServer extends ServerContext{
 		this(p1,null);
 	}
 	public GameServer(Player p1, String code) throws IOException{
-		super();//TODO args(clients too)
+		super();
 		this.p1 = p1;
 		this.code=code;
 		Scheduler.schedule(this::checkAlive,30000);
