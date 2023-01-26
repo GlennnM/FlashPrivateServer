@@ -10,15 +10,11 @@ import xyz.hydar.net.ClientOptions;
 import xyz.hydar.net.ServerContext;
 import xyz.hydar.net.TextClientContext;
 
-//class 
 /**
- * @TODO idk
+ * Flash requests a "cross domain policy" xml whenever contacting a server(similar to CORS in http)
+ * By default this is handled on port 843, then that connection is ended instantly
  */
 public class PolicyFileServer extends ServerContext {
-	/**
-	 * Flash requests a "cross domain policy" xml whenever contacting a server(similar to CORS in http)
-	 * By default this is handled on port 843, then that connection is ended instantly
-	 */
 	public static final byte[] POLICY ="""
 	<?xml version="1.0"?>
 	<!DOCTYPE cross-domain-policy SYSTEM 

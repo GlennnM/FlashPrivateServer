@@ -21,7 +21,9 @@ import xyz.hydar.flash.util.Scheduler;
 import xyz.hydar.net.ClientContext;
 import xyz.hydar.net.LineClientContext;
 import xyz.hydar.net.ServerContext;
-
+/**Client context for players in lobby or queues. Messages are delimited with \n.<br>
+ * The connection's purpose is fulfilled when the client is redirected to a game server through connect().
+ * */
 class CoopClient extends LineClientContext {
 	private CoopPlayer player = null;
 	private int timeouts = 0;
@@ -52,6 +54,7 @@ class CoopClient extends LineClientContext {
 		super(StandardCharsets.ISO_8859_1,CONFIG.BTD5);
 		this.parent=parent;
 	}
+	/**Attempt to queue, or start a game with the player there.*/
 	public void queuePublic() throws IOException{
 		if(matched)return;
 		CoopPlayer opp = CoopServer.checkQueue(player);
@@ -66,6 +69,7 @@ class CoopClient extends LineClientContext {
 		}
 		queued = true;
 	}
+	/**Connect to a quick match lobby as player 2, with player 1 provided as p.*/
 	public void connect(CoopGameServer gs, CoopPlayer p) throws IOException{
 		gs.start(IntStream.generate(CoopServer::nextPort).limit(100),parent.isNio());
 		p.sendln("13,"+CONFIG.HOST+","+gs.getPort()+",843,13042641,"+player.id+","+player.name+","+gs.map+","+gs.mode+","+gs.reverse+",0");
@@ -131,6 +135,7 @@ class CoopClient extends LineClientContext {
 			reset();
 			break;
 		case "2":
+			//join private
 			if(queued||matched)break;
 			if((gs = CoopServer.privateMatches.remove(msg[1]))==null){
 				sendln("8");
@@ -170,6 +175,7 @@ class CoopClient extends LineClientContext {
 			alive=false;
 		}
 	}
+	/**Resets the state, i.e. if a back button is pressed*/
 	private void reset() {
 		queued=false;
 		if(player!=null) {//strict equals since this queue can have multiple players
@@ -193,6 +199,7 @@ class CoopClient extends LineClientContext {
 		CONFIG.acquire(this);
 	}
 }
+/**Game server instance. When both players are connected and their data is verified, the game will start.*/
 class CoopGameServer extends ServerContext {
 	public volatile CoopPlayer p1;
 	public volatile CoopPlayer p2;
@@ -218,7 +225,7 @@ class CoopGameServer extends ServerContext {
 			this.alive=false;
 		}
 	}
-	public void registerPlayer(CoopPlayer p) throws IOException{
+	public void registerPlayer(CoopPlayer p){
 		if(!p1.init&&Objects.equals(p,p1)) {
 			p.init=true;
 			p1=p;
@@ -226,7 +233,7 @@ class CoopGameServer extends ServerContext {
 			p.init=true;
 			p2=p;
 		}else {
-			throw new IOException("can't join");
+			throw new IllegalStateException("can't join");
 		}
 		if(p1!=null&&p2!=null&&p1.init&&p2.init) {
 			if(p1.thread instanceof CoopGameClient gst1 &&
@@ -261,7 +268,7 @@ class CoopGameServer extends ServerContext {
 		return new CoopGameClient(this);
 	}
 }
-
+/**Client which is connected to a game server. The packets are still delimited by \n.*/
 class CoopGameClient extends LineClientContext {
 	public final CoopGameServer parent;
 	private volatile CoopPlayer player = null;
@@ -271,14 +278,14 @@ class CoopGameClient extends LineClientContext {
 	private double lastTime = 0;
 	private long lastTest = 0;
 
-	public CoopGameClient(CoopGameServer parent) throws IOException {
+	public CoopGameClient(CoopGameServer parent){
 		super(CONFIG.BTD5_GAME);
 		this.parent=parent;
 	}
-
-	public void setOpponent(CoopPlayer opponent) throws IOException{
+	/**Initialize this player's opponent and send it's data. This makes them appear in the lobby.*/
+	public void setOpponent(CoopPlayer opponent){
 		this.opponent=opponent;
-		sendln(opponent.forOpponent(player));//FoundYourGame packet
+		sendln(opponent.forOpponent(player));
 	}
 	@Override
 	public void onData(ByteBuffer src, int len) throws IOException {
@@ -287,11 +294,12 @@ class CoopGameClient extends LineClientContext {
 			opponent.thread.flush();
 		flush();
 	}
-	public void chat(String msg) throws IOException{
+	/**Wrap a string in a chat packet(b64 deflate)*/
+	public void chat(String msg){
 		sendln("106,214,"+FlashUtils.encode(msg));
 	}
 	@Override
-	public void onMessage(String line) throws IOException{
+	public void onMessage(String line){
 		timeouts=0;
 		if (lastTest>0) {
 			long delta=FlashUtils.now()-lastTest;
@@ -337,7 +345,6 @@ class CoopGameClient extends LineClientContext {
 				}
 				else if(msg[1].equals("214")&&msg.length>2){
 					String chat=FlashUtils.decode(msg[2]);
-					//message=CoopServer.
 					if(chat.startsWith("!help")){
 						chat("Commands:\n!help !source !lagtest");
 					}else if(chat.startsWith("!source")){
@@ -368,6 +375,9 @@ class CoopGameClient extends LineClientContext {
 			CONFIG.release(this);
 		}
 	}
+	/**Override so we don't time out the connection if we are in a private game. <br>
+	 * Unlike in battles, private match hosts actually connect to the game server before it starts.
+	 */
 	@Override
 	public void onTimeout(){
 		timeouts++;
@@ -386,6 +396,7 @@ class CoopGameClient extends LineClientContext {
 		CONFIG.acquire(this);
 	}
 }
+/**Represents the map and difficulty preferences selected in queue options.*/
 enum Constraint{
 	EASY_BEGINNER(0,0),EASY_INTERMEDIATE(1,0),EASY_ADVANCED(2,0),EASY_EXPERT(3,0),
 	MEDIUM_BEGINNER(0,1),MEDIUM_INTERMEDIATE(1,1),MEDIUM_ADVANCED(2,1),MEDIUM_EXPERT(3,1),
@@ -413,6 +424,7 @@ enum Constraint{
 		return map+gameDiff;
 	}
 }
+/**Wraps an EnumSet of constraints, providing utility for choosing a compatible map.*/
 class Constraints{
 	public static final Constraints ALL = new Constraints("1:1:1:1:1:1:1");
 	private final EnumSet<Constraint> constraints;
@@ -425,6 +437,8 @@ class Constraints{
 		return c==null?null:c.getMap();
 	}
 }
+/**Holds player data. Some fields are mutable, as the state advances when the
+ * associated thread changes from a lobby client to a game client.*/
 class CoopPlayer {
 	public final String name;
 	public final int id;

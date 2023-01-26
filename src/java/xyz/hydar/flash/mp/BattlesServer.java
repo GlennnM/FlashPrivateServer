@@ -26,13 +26,13 @@ import xyz.hydar.net.ClientContext;
 import xyz.hydar.net.LineClientContext;
 import xyz.hydar.net.ServerContext;
 import xyz.hydar.net.TextClientContext;
-/**
- * @TODO string builder?? no /done map, loadout, custom time?? no
- */
 
+/**Client context for players in lobby or queues. Messages are delimited with \n.<br>
+ * The connection's purpose is fulfilled when the client is redirected to a game server through connect().
+ * */
 class BattlesClient extends LineClientContext {
-	private Player player = null;
-	private GameServer gs=null;
+	private BattlesPlayer player = null;
+	private BattlesGameServer gs=null;
 	private boolean quickMatch = false;
 	private boolean queued = false;
 	private boolean assault = false;
@@ -40,20 +40,23 @@ class BattlesClient extends LineClientContext {
 	private String code = null;
 	private String joinCode = null;
 	private int timeouts=0;
-	// constructor initializes socket
+	/**pass true to allow \0 delimiter(in case of policy file request)*/
 	public BattlesClient() throws IOException {
 		super(StandardCharsets.ISO_8859_1,true,CONFIG.BATTLES);
 	}
+	/**Creates a new private game. It will not start listening for connections yet, <br>
+	 * but its first player slot will be initialized.*/
 	public void createPrivate() throws IOException{
 		quickMatch = false;
 		queued = true;
 		do{
 			code=FlashUtils.upperNoise("B2GARB",14);
 		}while (BattlesServer.privateMatches.containsKey(code));
-		GameServer gs = new GameServer(player,code);
+		BattlesGameServer gs = new BattlesGameServer(player,code);
 		BattlesServer.privateMatches.put(code, gs);
 		sendln("FindingYouAMatch," + code);
 	}
+	/**Join a private game, if it exists.*/
 	private void joinPrivate(String joinCode)  throws IOException{
 		sendln("FindingYouAMatch," + joinCode);
 		if ((gs=BattlesServer.privateMatches.remove(joinCode))!=null) {
@@ -62,22 +65,24 @@ class BattlesClient extends LineClientContext {
 			sendln("CouldntFindYourCustomBattle");
 		}
 	}
+	/**Add the player associated with this context to a queue, or start a game with the player already there.*/
 	public void queuePublic() throws IOException{
 		var queue = assault?BattlesServer.queue1:BattlesServer.queue2;
 		BattlesClient opp=queue.poll();
 		if (opp==null) {
 			queue.add(this);
 		} else {
-			GameServer gs = new GameServer(opp.player);
+			BattlesGameServer gs = new BattlesGameServer(opp.player);
 			this.connect(gs, opp.player);
 		}
 		queued = true;
 	}
-	public void connect(GameServer gs, Player opp) throws IOException{
+	/**Redirect this client to a game server.*/
+	public void connect(BattlesGameServer gs, BattlesPlayer opp) throws IOException{
 		gs.start(IntStream.generate(BattlesServer::nextPort).limit(100),true);
 		String foundGame="FoundYouAGame," + BattlesServer.ip + "," + gs.getPort() + "," + 0 + ",4480";
 		opp.sendln(foundGame);
-		//If players cannot be distinguished, we have to 
+		//If players have same ID, we allow the first player to join.
 		if(Objects.equals(player,opp)) {
 			sendln("ServerMessage,please wait a few seconds to prevent desync...");
 			opp.sendln("ServerMessage,please wait a few seconds to prevent desync...");
@@ -113,7 +118,7 @@ class BattlesClient extends LineClientContext {
 			break;
 		case "HeresMyPlayerInfo":
 			// set player info
-			this.player = new Player(this, cmd);
+			this.player = new BattlesPlayer(this, cmd);
 			if(matched)
 				break;
 			else if (quickMatch) {
@@ -154,6 +159,7 @@ class BattlesClient extends LineClientContext {
 			break;
 		}
 	}
+	/**Reset the matchmaking state, such as if leaving a queue.*/
 	private void reset() {
 		BattlesServer.queue1.remove(this);
 		BattlesServer.queue2.remove(this);
@@ -167,12 +173,7 @@ class BattlesClient extends LineClientContext {
 		}
 		player=null;
 	}
-	@Override
-	public void onClose() {
-		//reset state
-		reset();
-		CONFIG.release(this);
-	}
+	//Override so we don't time out the connection if we are queued.
 	@Override
 	public void onTimeout(){
 		timeouts++;
@@ -188,13 +189,20 @@ class BattlesClient extends LineClientContext {
 	public void onOpen() {
 		CONFIG.acquire(this);
 	}
+	@Override
+	public void onClose() {
+		//reset state
+		reset();
+		CONFIG.release(this);
+	}
 }
-class GameServer extends ServerContext{
-	public volatile Player p1;
-	public volatile Player p2;
+/**Game server instance. When both players are connected and their data is verified, the game will start.*/
+class BattlesGameServer extends ServerContext{
+	public volatile BattlesPlayer p1;
+	public volatile BattlesPlayer p2;
 	public volatile int round=0;
 	public volatile boolean full=false;
-	public volatile String reason = "Player disconnected";
+	public volatile String reason = "BattlesPlayer disconnected";
 	public volatile int map =ThreadLocalRandom.current().nextInt(22);
 	public final int seed = ThreadLocalRandom.current().nextInt(20000);
 	public final String code;
@@ -210,16 +218,16 @@ class GameServer extends ServerContext{
 	public static final byte[] HELP = ("RelayMsg,SentChatMsg," + FlashUtils.encode(
 			"\nCommands:\n!help - displays this\n!history - displays your most recent 10 matches\n!source - view the source code on GitHub\n!profile <url> - set a profile picture for your opponents to see(140x140)\n!random <count> - generates random tower(s)\n!map <count> - generates random map(s)\n!lagtest - tests game timer vs real time\n!bugs - displays known bugs")+"\n")
 			.getBytes();
-	public GameServer(Player p1) throws IOException{
+	public BattlesGameServer(BattlesPlayer p1){
 		this(p1,null);
 	}
-	public GameServer(Player p1, String code) throws IOException{
-		super();
+	public BattlesGameServer(BattlesPlayer p1, String code) {
 		this.p1 = p1;
 		this.code=code;
 		Scheduler.schedule(this::checkAlive,30000);
 	}
-	public void registerPlayer(Player p) throws IOException{
+	/**Initialize a player slot. If both are filled, start the game.*/
+	public void registerPlayer(BattlesPlayer p){
 		if(!p1.init&&Objects.equals(p,p1)) {
 			p.init=true;
 			p1=p;
@@ -227,7 +235,7 @@ class GameServer extends ServerContext{
 			p.init=true;
 			p2=p;
 		}else {
-			throw new IOException("can't join");
+			throw new IllegalStateException("can't join");
 		}
 		if(p1!=null&&p2!=null) {
 			command("OpponentChangedBattleOptions,"+BattlesServer.MAPIDS.get(map)+",0");//ensure maps aren't desynced
@@ -242,6 +250,7 @@ class GameServer extends ServerContext{
 			full=true;
 		}
 	}
+	/**Runs 30 seconds after starting. If the game hasn't started, end it.*/
 	public void checkAlive() {
 		if((p1==null || !(p1.thread instanceof BattlesGameClient))&&
 				(p2==null || !(p2.thread instanceof BattlesGameClient))) {
@@ -249,10 +258,7 @@ class GameServer extends ServerContext{
 			cleanup();
 		}
 	}
-	@Override
-	public ClientContext newClient() throws IOException{
-		return new BattlesGameClient(this);
-	}
+	/**Send a packet to both players*/
 	public void command(String command){
 		p1.sendln(command);
 		p2.sendln(command);
@@ -261,10 +267,12 @@ class GameServer extends ServerContext{
 		p1.thread.send(command);
 		p2.thread.send(command);
 	}
+	/**Send a chat message to both players*/
 	public void announce(String s){
 		String b64 = FlashUtils.encode(s);
 		command("RelayMsg,SentChatMsg,"+b64);
 	}
+	/**Runs when any player is ready to start a round, starts the round if both are ready*/
 	public void tryStartRound(){
 		if (p1.ready&&p2.ready) {
 			if (round == 0) {
@@ -304,22 +312,7 @@ class GameServer extends ServerContext{
 			ioe.printStackTrace();
 		}
 	}
-	@Override
-	public String toString() {
-		if (p1 == null || p2 == null || !(p1.thread instanceof BattlesGameClient gst1)
-				|| !(p2.thread instanceof BattlesGameClient gst2))
-			return "";
-		if (p1.win == 1) {
-			return p2.name + "," + p2.id + "," + "WIN\n" + p1.name + "," +p1.id + ","
-					+ "LOSE\nRound: " + round + ", Approx time: " + gst1.time/60 + "m" + gst1.time%60
-					+ "s, Cause: " + reason;
-		} else if (p2.win == 1) {
-			return p1.name + "," + p1.id + "," + "WIN\n" + p2.name + "," + p2.id + ","
-					+ "LOSE\nRound: " + round + ", Approx time: " + gst2.time/60 +  "m" + gst2.time%60
-					+ "s, Cause: " + reason;
-		}
-		return null;
-	}
+	/**Used by !setround. Requires both players to agree and the round number ot be valid*/
 	public void forceSetRound(int newRound) throws IOException{
 		if (!(p1.thread instanceof BattlesGameClient gst1)
 				|| !(p2.thread instanceof BattlesGameClient gst2)) {
@@ -344,6 +337,10 @@ class GameServer extends ServerContext{
 		gst2.actionType=TimedAction.NONE;
 	}
 	@Override
+	public ClientContext newClient() throws IOException{
+		return new BattlesGameClient(this);
+	}
+	@Override
 	public void onOpen() {}
 	@Override
 	public void onClose() {
@@ -355,39 +352,56 @@ class GameServer extends ServerContext{
 			p2.thread.close();
 		}
 	}
+	@Override
+	public String toString() {
+		if (p1 == null || p2 == null || !(p1.thread instanceof BattlesGameClient gst1)
+				|| !(p2.thread instanceof BattlesGameClient gst2))
+			return "";
+		if (p1.win == 1) {
+			return p2.name + "," + p2.id + "," + "WIN\n" + p1.name + "," +p1.id + ","
+					+ "LOSE\nRound: " + round + ", Approx time: " + gst1.time/60 + "m" + gst1.time%60
+					+ "s, Cause: " + reason;
+		} else if (p2.win == 1) {
+			return p1.name + "," + p1.id + "," + "WIN\n" + p2.name + "," + p2.id + ","
+					+ "LOSE\nRound: " + round + ", Approx time: " + gst2.time/60 +  "m" + gst2.time%60
+					+ "s, Cause: " + reason;
+		}
+		return null;
+	}
 
 }
-
+/**Client which is connected to a game server. The packets are still delimited by \n.*/
 class BattlesGameClient extends LineClientContext {
-	public final GameServer parent;
-	public volatile Player player;
-	public volatile Player opponent;
+	public final BattlesGameServer parent;
+	public volatile BattlesPlayer player;
+	public volatile BattlesPlayer opponent;
 	public volatile int side;
 	public int win;//0 unknown 1 lose 2 win
 	public volatile boolean init = false;
 	public int timeouts = 0;
 
-	enum TimedAction{NONE,LAGTEST, SETROUND};
+	static enum TimedAction{NONE,LAGTEST, SETROUND};
 	public volatile TimedAction actionType=TimedAction.NONE;
 	private long lastAction = 0;
 	private int actionParam = 0;
 	public int time = 0;//in game time
 	public volatile boolean syncFailed=false;
-	public BattlesGameClient(GameServer parent) throws IOException {
+	public BattlesGameClient(BattlesGameServer parent){
 		super(StandardCharsets.ISO_8859_1,CONFIG.BATTLES_GAME);
 		this.parent=parent;
 		this.win = 0;
 		if(BattlesServer.verbose)
 			System.out.println("GST create");
 	}
-	public void setOpponent(Player opponent) throws IOException{
+	/**Initialize this player's opponent and send it's data. This makes them appear in the lobby.*/
+	public void setOpponent(BattlesPlayer opponent){
 		this.opponent=opponent;
 		if (BattlesServer.getProfile(opponent.id) != null)
 			opponent.profile = BattlesServer.getProfile(opponent.id);
 		sendln(opponent.forOpponent(player));//FoundYourGame packet
 	}
 	@Override
-	public void onData(ByteBuffer input, int length) throws IOException {
+	public void onData(ByteBuffer input, int length) throws IOException{
 		super.onData(input,length);
 		flush();
 		if(opponent!=null&&opponent.thread!=null)
@@ -444,10 +458,10 @@ class BattlesGameClient extends LineClientContext {
 		//handle messages that can be received before fully initialized
 		if (this.player == null || !this.player.init) {
 			if (msg[0].equals("HeresMyPlayerInfo")) {
-				this.player = new Player(this, msg);
+				this.player = new BattlesPlayer(this, msg);
 				parent.registerPlayer(player);
 			}else if(msg[0].equals("GiveMeDaBalance")) 
-				send(GameServer.BALANCE);
+				send(BattlesGameServer.BALANCE);
 			else 
 				sendln("GimmeUrPlayerInfo");
 			return;
@@ -477,7 +491,7 @@ class BattlesGameClient extends LineClientContext {
 			case "IUsedAnAbility" -> "OpponentUsedAnAbility" + tail;
 			case "ISentABloonWave" -> {
 				if (tail.contains("Cerem")) {
-					send(GameServer.SHIFT9);
+					send(BattlesGameServer.SHIFT9);
 				}
 				yield ("OpponentSentABloonWave" + tail);
 			}
@@ -488,13 +502,13 @@ class BattlesGameClient extends LineClientContext {
 			case "IDied" -> {
 				System.out.println("game ended probably");
 				this.win = 1;
-				parent.reason = "Player died";
+				parent.reason = "BattlesPlayer died";
 				yield ("OpponentDied" + tail);
 			}
 			case "ISurrender" -> {
 				System.out.println("game ended probably");
 				this.win = 1;
-				parent.reason = "Player surrendered";
+				parent.reason = "BattlesPlayer surrendered";
 				yield ("OpponentSurrendered" + tail);
 			}
 			case "YouDidntRespondToMySyncs" ->{
@@ -526,11 +540,12 @@ class BattlesGameClient extends LineClientContext {
 				yield "OpponentDisconnected";
 			}
 			case "GiveMeDaBalance" -> {
-				send(GameServer.BALANCE);
+				send(BattlesGameServer.BALANCE);
 				yield null;
 			}
 			case "RelayMsg" -> {
 				if(parent.round<1) {
+					//Sometimes the loaded packet wasn't sent, so send it again
 					if(opponent.relays==0&&player.relays++>14) {
 						player.relays = 0;
 						opponent.sendln("OpponentHasLoaded");
@@ -541,6 +556,7 @@ class BattlesGameClient extends LineClientContext {
 			default -> null;
 		});
 	}
+	/**used by randomizing commands*/
 	private static String uniqueRandom(String[] list, int count,int max) {
 		List<String> x=new ArrayList<>();
 		count=Math.min(count,max);
@@ -552,9 +568,11 @@ class BattlesGameClient extends LineClientContext {
 		}
 		return x.stream().collect(Collectors.joining(", "));
 	}
+	/**Wrap a string in a chat packet. It is encoded as deflated b64*/
 	private void chat(String s) throws IOException{
 		sendln("RelayMsg,SentChatMsg," + FlashUtils.encode(s));
 	}
+	/**Handle relay packets, usually chat packets. A relay packet is just a packet that starts with RelayMsg*/
 	private String handleRelay(String[] msg, String line) throws IOException {
 		if (msg.length > 1 && msg[1].equals("SentChatMsg")) {
 			try {
@@ -562,7 +580,7 @@ class BattlesGameClient extends LineClientContext {
 				String param = null;
 				switch (cmd[0]) {
 				case "!help":
-					send(GameServer.HELP);
+					send(BattlesGameServer.HELP);
 					break;
 				case "!history":
 					chat(BattlesServer.getHistory(player.id));
@@ -587,7 +605,7 @@ class BattlesGameClient extends LineClientContext {
 					chat(uniqueRandom(BattlesServer.MAPS,numMaps,10));
 					break;
 				case "!bugs":
-					send(GameServer.BUGS);
+					send(BattlesGameServer.BUGS);
 					break;
 				case "!lagtest":
 					if(actionType!=TimedAction.NONE)break;
@@ -625,8 +643,9 @@ class BattlesGameClient extends LineClientContext {
 	}
 
 }
-
-class Player {
+/**Holds player data. Some fields are mutable, as the state advances when the
+ * associated thread changes from a lobby client to a game client.*/
+class BattlesPlayer {
 	public final String name;
 	public final int id;
 	public final int bs;
@@ -639,13 +658,10 @@ class Player {
 	public volatile int win=0;
 	public volatile boolean ready=false;
 	public volatile boolean init=false;
-	public Player(TextClientContext thread, String[] playerInfo) {
+	public BattlesPlayer(TextClientContext thread, String[] playerInfo) {
 		this(Integer.parseInt(playerInfo[1]), playerInfo[2], Integer.parseInt(playerInfo[3]), playerInfo[5], thread,Integer.parseInt(playerInfo[4]));
 	}
-	//public BattlesGameClient gst() {
-	//	return thread instanceof BattlesGameClient gst?gst:null;
-	//}
-	private Player(int id, String name, int bs, String profile, TextClientContext serverThread, int decal) {
+	private BattlesPlayer(int id, String name, int bs, String profile, TextClientContext serverThread, int decal) {
 		this.name = name;
 		this.id = id;
 		this.bs = bs;
@@ -661,7 +677,10 @@ class Player {
 		if(BattlesServer.verbose)
 			System.out.println("player.OUT: " + s);
 	}
-	public String forOpponent(Player opponent) {
+	/**Generate a packet representing this player's data and the game data from opponent's perspective.<br>
+	 * This is used by BattlesGameClient::setOpponent
+	 * */
+	public String forOpponent(BattlesPlayer opponent) {
 		if(opponent.thread instanceof BattlesGameClient gst) {
 			return Stream.of("FoundYourGame",id,name,bs,decal,profile,gst.parent.seed,gst.side,gst.parent.map,w,l)
 					.map(Object::toString)
@@ -675,7 +694,7 @@ class Player {
 
 	@Override
 	public boolean equals(Object o) {
-		if(o instanceof Player p)
+		if(o instanceof BattlesPlayer p)
 			return (id==p.id)&&(bs==p.bs);
 	return false;
 	}
@@ -699,11 +718,9 @@ public class BattlesServer extends ServerContext{
 			"PyramidSteps", "Patch", "BattlePark", "IceFlowBattle", "YellowBrick", "Swamp", "BattleRiver",
 			"Mondrian", "ZenGarden", "Volcano", "WaterHazard", "IndoorPools", "Agame", "InkBlot", "SnowyCastle" );
 	
-	//
-	
 	public static final Queue<BattlesClient> queue1=new ConcurrentLinkedQueue<>();// assault
 	public static final Queue<BattlesClient> queue2=new ConcurrentLinkedQueue<>();// defend
-	public static final Map<String, GameServer> privateMatches = new ConcurrentHashMap<>();
+	public static final Map<String, BattlesGameServer> privateMatches = new ConcurrentHashMap<>();
 	public static final Map<Integer, String> profiles = BasicCache.synced(1024);
 	public static final Map<Integer, List<String>> history = BasicCache.synced(1024);
 	public static final String ip=CONFIG.HOST;

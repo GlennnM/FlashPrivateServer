@@ -110,9 +110,9 @@ class CSClient extends TextClientContext {
 				game.setupRound();
 				opponent.score++;
 				int match = (opponent.score >= 3 || game.round == 5)?1:0;
-				doubleWrite("%xt%8%-1%" + name + "%" + opponent.name + "%" + opponent.name + "%" + name + "%"
+				send("%xt%8%-1%" + name + "%" + opponent.name + "%" + opponent.name + "%" + name + "%"
 						+ opponent.gun + "%" + dmg + "%" + match + "%" + game.round + "%" + opponent.suppressor + "%\0");
-				opponent.doubleWrite("%xt%8%-1%" + opponent.name + "%" + name + "%" + opponent.name + "%" + name + "%"
+				opponent.send("%xt%8%-1%" + opponent.name + "%" + name + "%" + opponent.name + "%" + name + "%"
 						+ opponent.gun + "%" + dmg + "%" + match + "%" + game.round + "%" + opponent.suppressor + "%\0");
 				if (match == 0) {
 					timer.schedule(game::startRound, 2000,TimeUnit.MILLISECONDS);
@@ -122,9 +122,9 @@ class CSClient extends TextClientContext {
 					System.out.println("ending match");
 				}
 			} else {
-				opponent.doubleWrite("%xt%8%-1%" + opponent.name + "%" + name + "%%%" + opponent.gun + "%" + dmg
+				opponent.send("%xt%8%-1%" + opponent.name + "%" + name + "%%%" + opponent.gun + "%" + dmg
 						+ "%0%" + game.round + "%" + opponent.suppressor + "%\0");
-				doubleWrite("%xt%8%-1%" + name + "%" + opponent.name + "%%%" + opponent.gun + "%" + dmg + "%0%"
+				send("%xt%8%-1%" + name + "%" + opponent.name + "%%%" + opponent.gun + "%" + dmg + "%0%"
 						+ game.round + "%" + opponent.suppressor + "%\0");
 				writeAll("%xt%10%-1%" + opponent.name + "%" + name + "%%%" + opponent.gun + "%" + 0 + "%"
 						+ opponent.suppressor + "%\0");
@@ -170,27 +170,31 @@ class CSClient extends TextClientContext {
 
 		return 0;
 	}
-	public void doubleWrite(String s){
-		send(s);
+	/**Override for debugging*/
+	@Override
+	public void send(String s){
+		super.send(s);
 		if (CSServer.verbose)
 			System.out.println("OUT: " + s);
 	}
+	/**Send to both this player and opponent.*/
 	public void writeAll(String s){
-		this.opponent.doubleWrite(s);
-		this.doubleWrite(s);
+		this.opponent.send(s);
+		this.send(s);
 	}
+	/**
+	 * Parse smartfox setup(unimportant) and extension messages.
+	 * Extension messages:
+	 * => client->server <= server->client
+	 *
+	 * 1=>queue 2=>loaded + enemy/executive data 3=>shoot 4<=start round 5<=>error
+	 * 6<=start game 7<=countdown 8<=hit(server response to 3) 9<=executive killed
+	 * 10<=miss(another response to 3) 11<=also an error??? 14=>request private
+	 * match creation 15<=private match id 16<=guest name(from server) 17<=opponent
+	 * disconnected
+	 */
 	@Override
 	public void onMessage(String m) {
-		// "extension message"
-		/**
-		 * => client->server <= server->client
-		 *
-		 * 1=>queue 2=>loaded + enemy/executive data 3=>shoot 4<=start round 5<=>error
-		 * 6<=start game 7<=countdown 8<=hit(server response to 3) 9<=executive killed
-		 * 10<=miss(another response to 3) 11<=also an error??? 14=>request private
-		 * match creation 15<=private match id 16<=guest name(from server) 17<=opponent
-		 * disconnected
-		 */
 		if(game==null||game.alive)timeouts=0;
 		if(CSServer.verbose)
 			System.out.println("IN: "+m);
@@ -234,7 +238,7 @@ class CSClient extends TextClientContext {
 				if(game!=null)game.alive=false;
 				break;
 			case 14:
-				doubleWrite(
+				send(
 						"%xt%15%-1%DON'T USE THIS, just click \"Multiplayer\" to play a public game. A bot will join after 30s if no one joins%\0");
 				break;
 			}
@@ -242,17 +246,17 @@ class CSClient extends TextClientContext {
 		}
 		// smartfox setup(hard coded) - none of it matters
 		else if (m.equals("<msg t='sys'><body action='verChk' r='0'><ver v='161' /></body></msg>"))
-			doubleWrite("<msg t='sys'><body action='apiOK' r='0'><ver v='161'/></body></msg>\0");
+			send("<msg t='sys'><body action='apiOK' r='0'><ver v='161'/></body></msg>\0");
 		else if (m.equals(
 				"<msg t='sys'><body action='login' r='0'><login z='SniperZone'><nick><![CDATA[]]></nick><pword><![CDATA[]]></pword></login></body></msg>")) {
-			doubleWrite("<msg t='sys'><body action='logOK' r='0'><login id='" + id
+			send("<msg t='sys'><body action='logOK' r='0'><login id='" + id
 					+ "' mod='0' n='SniperZone'/></body></msg>\0");
-			doubleWrite("%xt%16%0%1%" + name + "%\0");
+			send("%xt%16%0%1%" + name + "%\0");
 		} else if (m.equals("<msg t='sys'><body action='getRmList' r='-1'></body></msg>"))
-			doubleWrite(
+			send(
 					"<msg t='sys'><body action='rmList' r='-1'><rmList><rm id='0' maxu='2' maxs='2' temp='0' game='1' priv='0' lmb='0' ucnt='0' scnt='0'><n>Main Lobby</n></rm></rmList></body></msg>\0");
 		else if (m.equals("<msg t='sys'><body action='autoJoin' r='-1'></body></msg>"))
-			doubleWrite(
+			send(
 					"<msg t='sys'><body action='joinOK' r='0'><pid id='0'></pid><uLs><u></u></uLs></body></msg>\0");
 		else
 			close();
@@ -263,13 +267,14 @@ class CSClient extends TextClientContext {
 		
 	}
 	private int timeouts;
+	/**Override to allow a bot to join.*/
 	@Override
 	public void onTimeout() {
 		if (++timeouts > 30 && this.opponent == null && CSServer.queue.remove(this)) {
 			this.opponent = new BotCSServerThread();
 			this.game=new CSGame(this, opponent);
 		} else if (timeouts > 120) {
-			doubleWrite("%xt%5%-1%\0");
+			send("%xt%5%-1%\0");
 			close();
 		}
 	}
@@ -277,7 +282,7 @@ class CSClient extends TextClientContext {
 	public void onClose(){
 		CSServer.queue.remove(this);
 		if (opponent != null)
-			opponent.doubleWrite("%xt%17%-1%0%\0");
+			opponent.send("%xt%17%-1%0%\0");
 		System.out.println("ending thread");
 		if(game!=null)game.alive=false;
 		CONFIG.release(this);
@@ -312,6 +317,7 @@ class CSGame{
 				+ p2.pfp + "%" +p1.pfp + "%" + p2.gun + "%" + p1.gun + "%" + p2.rank + "%" + p1.rank + "%\0");
 		p1.writeAll("%xt%7%1%\0");
 	}
+	/**Runs at the end of each round, and at the start of the game. Initializes the round constants.*/
 	public void setupRound() {
 		var rng=ThreadLocalRandom.current();
 		this.execPoint = rng.nextInt(94);
@@ -321,16 +327,17 @@ class CSGame{
 		p1.hp = 100;
 		p2.hp = 100;
 	}
+	/**Advances the round for both players. Runs a few seconds after setupRound.*/
 	public void startRound() {
 		if(!alive)return;
 		roundActive=true;
 		for(CSClient p:List.of(p1,p2))
-			p.doubleWrite("%xt%4%-1%" +enemyPoint + "%" + execPoint + "%" + map + "%" + p2.name + "%"
+			p.send("%xt%4%-1%" +enemyPoint + "%" + execPoint + "%" + map + "%" + p2.name + "%"
 				+ p1.name + "%" + p2.pfp + "%" + p1.pfp + "%" + p2.gun + "%" + p1.gun + "%"
 				+ p2.rank + "%" + p1.rank + "%\0");
 	}
 }
-//Bot client. Its tasks are scheduled on the common scheduler, and it responds to commands through doubleWrite().
+/**Bot client. Its tasks are scheduled on the common scheduler, and it responds to commands through send() override.*/
 class BotCSServerThread extends CSClient {
 	private final double difficulty;// affects 1st shot time
 	protected final double delayMod;// affects time for shots after 1st
@@ -342,7 +349,7 @@ class BotCSServerThread extends CSClient {
 		this.gun =(1+rng.nextInt(10));
 		this.suppressor = 0;
 		this.pfp = 14;
-		if (Math.random() > 0.5) {
+		if (rng.nextFloat() > 0.5) {
 			this.pfp = 22 + rng.nextInt(7);
 		}
 		this.damage = getDamage(gun);
@@ -358,13 +365,14 @@ class BotCSServerThread extends CSClient {
 	}
 
 	@Override
-	public void doubleWrite(String s) {
+	public void send(String s) {
 		int cmd = Integer.parseInt(s.split("%")[2]);
 		var rng=ThreadLocalRandom.current();
 		int delay;
 		switch (cmd) {
 		case 4:
 		case 6:
+			// Schedule a shot at the start of the round
 			if(nextShot!=null)nextShot.cancel(false);
 			fastShot=false;
 			delay=(int) (10000 + rng.nextInt(40000) * difficulty);
@@ -372,11 +380,13 @@ class BotCSServerThread extends CSClient {
 			return;
 		case 5:
 		case 17:
+			// The other player left.
 			this.alive = false;
 			return;
 		case 8:
 		case 10:
-			if (rng.nextFloat() < (0.7 - (opponent.suppressor/10.0))) {// if you shoot/miss, bot will shoot sooner
+			// If you shoot/miss, bot will shoot sooner
+			if (rng.nextFloat() < (0.7 - (opponent.suppressor/10.0))) {
 				if(game.alive&&!fastShot) {
 					if(nextShot!=null)nextShot.cancel(false);
 					delay = (int) (rng.nextDouble(3000,4000) * delayMod);
@@ -388,6 +398,7 @@ class BotCSServerThread extends CSClient {
 		}
 		
 	}
+	// Send a shot packet, possibly ending the round.
 	private void shoot() {
 		var rng=ThreadLocalRandom.current();
 		float action = rng.nextFloat();
@@ -416,7 +427,6 @@ public class CSServer extends ServerContext{
 	public static final AtomicInteger nextName=new AtomicInteger();
 	@Override
 	public ClientContext newClient(){
-		// TODO Auto-generated method stub
 		return new CSClient();
 	}
 	@Override

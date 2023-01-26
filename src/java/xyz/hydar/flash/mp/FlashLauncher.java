@@ -10,9 +10,8 @@ import java.util.function.Supplier;
 
 import xyz.hydar.flash.util.FlashConfig;
 import xyz.hydar.flash.util.FlashUtils;
-import xyz.hydar.flash.util.Scheduler;
 import xyz.hydar.net.ServerContext;
-
+/**Main class. Launches servers from a configuration and allows them to be stopped through "stop" from STDIN.*/
 public class FlashLauncher {
 	public static FlashConfig CONFIG;
 	public static List<ServerContext> servers=new ArrayList<>();

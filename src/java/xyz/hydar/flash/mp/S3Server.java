@@ -26,7 +26,8 @@ import xyz.hydar.net.TextClientContext;
 
 /**
 *	SAS3 Multiplayer Server
-*	For some reason this game is more "server sided" than any other NK game... the server is not just used as a relay and for matchmaking but also has to:
+*	For some reason this game is more "server sided" than any other NK game.
+*	The server is not just used as a relay and for matchmaking but also has to:
 *	-spawn mobs(purge nests/skeletons too) itself
 *	-track which mobs are alive to end waves
 *	-manually kill mobs hit by AoE weapons
@@ -59,7 +60,6 @@ import xyz.hydar.net.TextClientContext;
 *	 winning/xp-done
 *	 powerups-done
  */
-
 class S3Client extends TextClientContext {
 	private Room room;
 	private boolean hydar;//false until sent stats to room
@@ -428,7 +428,7 @@ class PowerupTask implements Runnable {
 		}
 	}
 }
-
+/**Kill all zombies and schedule the next wave, or end the game.*/
 class WaveEndTask implements Runnable{
 	private final Room room;
 	public WaveEndTask(Room room) {
@@ -466,7 +466,7 @@ class WaveEndTask implements Runnable{
 		}
 	}
 }
-
+/**index is the type ID, weight and chance affect spawning, cap affects spawning as well as round ends.*/
 enum ZombieType {
 	SWARMER(0,1,100f,1f,160,10), RUNNER(1,4,30f,1.5f,100,15), CHOKER(2,10,15f,6f,500,60),
 	BLOATER(3,12,5f,15f,3000,150), SHADOW(4,14,2f,12f,2500,120), MAMUSHKA(5,16,1f,108f,4000,360),
@@ -488,7 +488,7 @@ enum ZombieType {
 		this.xp=xp;
 	}
 }
-
+/**"SBEmult" is based on the difficulty and used to scale hp.*/
 class Zombie{
 	public final ZombieType type;
 	public volatile int target;
@@ -503,7 +503,7 @@ class Zombie{
 		return "(" + type + "):" + hp;
 	}
 }
-
+/**Game state. Does not run on its own thread, instead the clients execute or schedule its methods.*/
 class Room {
 	public static final ScheduledExecutorService timer=newSingleThreadScheduledExecutor((r)->new Thread(r,"SAS3 room tasks"));
 	
@@ -563,7 +563,7 @@ class Room {
 		this.nm = nm;
 		Arrays.setAll(slots,x->new AtomicBoolean());
 	}
-	// starts the game, waves will begin after 5 seconds(constructor only initializes lobby data)
+	/**Starts the game, waves will begin after 5 seconds(constructor only initializes lobby data)*/
 	public void setup() {
 		System.out.println("Starting game...");
 		this.setup = true;
@@ -594,6 +594,7 @@ class Room {
 		}
 		timer.schedule(new WaveStartTask(this), 5000,TimeUnit.MILLISECONDS);
 	}
+	/**Return a new player number.*/
 	public int nextPlayerNum(){
 		for(int i=0;i<slots.length;i++)
 			if(slots[i].compareAndSet(false, true)){
@@ -601,16 +602,18 @@ class Room {
 			}
 		return -1;
 	}
+	/**Format the player list to be included in a welcome packet.*/
 	public String playerList() {
 		var playerNames = players.stream().map(x->"\""+x.name+"\"").toList();
 		var playerRanks = players.stream().map(x->x.rank).toList();
 		var readyList = players.stream().map(x->x.ready).toList();
 		return playerNames + "%" + playerRanks + "%" + readyList;
 	}
+	/**ms since game started(used for syncing)*/
 	public int flashTime() {
 		return startTime==0?0:(int)(FlashUtils.now()-startTime);
 	}
-	// retarget all mobs to living players - used when someone dies/disconnects
+	/**Retarget all mobs to living players. Used when someone dies/disconnects*/
 	public void retargetAll(int deadNum) {
 		if (players.size() == 0)
 			return;
@@ -634,7 +637,7 @@ class Room {
 			writeAll(x.toString());
 		}
 	}
-	// end the game
+	/**End the game*/
 	public void end(boolean win) {
 		if (this.end)
 			return;

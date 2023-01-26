@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 import xyz.hydar.net.ClientContext;
 import xyz.hydar.net.ClientOptions;
-
+/**Stores data from flash.properties, extracted to constants*/
 public class FlashConfig{
 	public final Map<String,String> cfg;
 	public final String HOST;
@@ -92,6 +92,7 @@ public class FlashConfig{
 		}
 	}
 	public final Map<InetAddress,LongAdder> threadsPerIp=new ConcurrentHashMap<>();
+	/**Check maxThreads and threadsPerIp to ensure ctx is allowed to start.*/
 	public void acquire(ClientContext ctx) {
 		var ip=ctx.getInetAddress();
 		if(ip==null) {
@@ -107,6 +108,7 @@ public class FlashConfig{
 		all.increment();
 		local.increment();
 	}
+	/**Decrement maxThreads and threadsPerIp for ctx after it closes.*/
 	public void release(ClientContext ctx) {
 		threadCount.decrement();
 		threadsPerIp.computeIfPresent(ctx.getInetAddress(), (x,y)->{
@@ -115,6 +117,7 @@ public class FlashConfig{
 			return y;
 		});
 	}
+	/**Stores a rule for allocating ports in for loop format, i.e. 5002;5;32000. "0" will use any port.*/
 	public static record Ports(int min, int max, int step) {
 		static Ports DEFAULT=new Ports(0,0,0);
 		public static Ports from(String str) {
@@ -125,10 +128,7 @@ public class FlashConfig{
 		}
 		public Ports() {
 			this(0,0,0);
-		}//TODO: how increment???
-	}
-	public String get(String key) {
-		return cfg.get(key);
+		}
 	}
 	public FlashConfig(String filename) throws IOException {
 		var properties = new Properties(DEFAULTS);
@@ -173,6 +173,10 @@ public class FlashConfig{
 		scaleEarly=i(get("SAS4.scaleEarly"));
 		
 		//System.out.println(cfg);
+	}
+	//utility functions for parsing data
+	public String get(String key) {
+		return cfg.get(key);
 	}
 	private static int prefix(String s, int tail) {
 		return Integer.parseInt(s.substring(0,s.length()-tail));

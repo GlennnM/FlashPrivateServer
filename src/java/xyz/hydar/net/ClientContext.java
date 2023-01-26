@@ -538,6 +538,8 @@ public abstract class ClientContext{
 				sendLock.lock(); 
 				try {
 					while(msg.hasRemaining()&&ctx.alive) {
+						//TODO: write without blocking?
+						//-->how ensure buffer isn't modified/another write isn't added without blocking
 						if(!client.isOpen()||client.write(msg).get()==0) {
 							ctx.alive=false;
 							return;
