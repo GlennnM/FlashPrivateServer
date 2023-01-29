@@ -840,6 +840,7 @@ class S4GameClient extends ClientContext {
 				peer=thread;break;
 			}
 		}
+		if(peer==null)return;
 		dst.put((byte)-2)
 			.putInt(msg.length + 26).put((byte) 0x05)
 			.putInt(parent.flashTime()).putInt(0x3e7)
