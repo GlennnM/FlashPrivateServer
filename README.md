@@ -42,6 +42,20 @@ However, you can run them from the same launcher using the following mod:<br>
 <a href=https://github.com/GlennnM/NKMultiArchive>NKMultiArchive</a><br>
 <details>
 <summary>
+Manual install(if powershell doesn't work)<br>
+</summary><br>
+All the script does is copy some files, so you can do it manually if you want.<br>
+Windows:<br>
+0. Close all Ninja Kiwi Archive windows<br>
+1. Navigate to %appdata%/Ninja Kiwi Archive/Cache<br>
+2. Download cache_windows.zip from the releases page and extract it there.<br>
+Max OS X:<br>
+0. Close all Ninja Kiwi Archive windows<br>
+1. Naviagte to ~/Library/Application Support/Ninja Kiwi Archive/Cache<br>
+2. Download cache_osx.zip from the releases page and extract it there.<br>
+</details>
+<details>
+<summary>
 Stuck installing flash player?<br>
 </summary><br>
 If the links provided to you during archive installation don't work for you(make sure to read 'How to Play' first!) try one of the following methods:<br><br>
