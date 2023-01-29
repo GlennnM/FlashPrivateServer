@@ -58,6 +58,7 @@ public class FlashUtils {
 		}
 		return allDigits;
 	}
+	/**SAS4 match code for a given string.*/
 	public static int sas4MatchCode(String param1) {
 		return isInt(param1)?Integer.parseInt(param1.trim()):
 			Math.abs(param1.codePoints().reduce(5381, (x, y) -> ((x << 5) + x + y)));
@@ -70,6 +71,7 @@ public class FlashUtils {
 		}
 		return -1;
 	}
+	/**Decodes a b64 deflated string.*/
 	public static String decode(String data){
 		try(var in1 = new ByteArrayInputStream(data.getBytes(ISO_8859_1));
 			var b64=Base64.getDecoder().wrap(in1);
@@ -78,7 +80,7 @@ public class FlashUtils {
 				return dis.readUTF();
 		}catch(IOException ioe){return null;}
 	}
-
+	/**Encodes a b64 deflated string.*/
 	public static String encode(String data){
 		var baos = new ByteArrayOutputStream(data.length());
 		try(var b64=Base64.getEncoder().wrap(baos);

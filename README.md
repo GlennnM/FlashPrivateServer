@@ -13,7 +13,7 @@ When playing on these servers, some quality of life/easter egg features are adde
 <h1>
 HOW TO PLAY<br></h1>
 1. Ensure you have Ninja Kiwi Archive installed(from ninja kiwi website or Steam)<br>
-2. Download FlashClient.ps1 from this page<a href = https://github.com/GlennnM/FlashPrivateServer/releases/tag/v3.2>(click)</a><br>
+2. Download FlashClient.ps1 from this page<a href = https://github.com/GlennnM/FlashPrivateServer/releases/tag/v3.3>(click)</a><br>
 3. Open the folder you downloaded it to, close all NK Archive windows(INCLUDING THE LAUNCHER), then run the script.<br>
 There are different methods of running the PowerShell script. The methods are as follows:<br>
 

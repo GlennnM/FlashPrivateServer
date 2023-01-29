@@ -1,3 +1,5 @@
+<%@page import="java.nio.charset.StandardCharsets"%>
+<%@page import="java.nio.file.Paths"%>
 <%@page import = "java.util.Random,java.io.ByteArrayInputStream,java.io.ObjectInputStream,java.io.ObjectOutputStream,java.util.Base64,java.util.List,java.util.Date,java.util.TimeZone,java.io.File,java.io.Writer,java.io.FileWriter,java.nio.file.Path,java.util.Calendar,java.io.IOException,java.nio.file.Files"%><%
 Calendar now = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 Calendar cache = Calendar.getInstance(TimeZone.getTimeZone("GMT"));

@@ -1,14 +1,14 @@
 ﻿"Checking for Ninja Kiwi Archive..."
 if ($IsWindows -or $ENV:OS) {
 	$cache = $env:APPDATA + '\Ninja Kiwi Archive\Cache'
-	$zippath = 'https://github.com/GlennnM/NKFlashServers/releases/download/v3.2/cache_windows.zip'
+	$zippath = 'https://github.com/GlennnM/NKFlashServers/releases/download/v3.3/cache_windows.zip'
 	$filename = 'cache_windows.zip'
-	$FULL_SIZE = 45006048
+	$FULL_SIZE = 44852544
 } else {
 	$cache = $HOME + '/Library/Application Support/Ninja Kiwi Archive/Cache'
-	$zippath = 'https://github.com/GlennnM/NKFlashServers/releases/download/v3.2/cache_osx.zip'
+	$zippath = 'https://github.com/GlennnM/NKFlashServers/releases/download/v3.3/cache_osx.zip'
 	$filename = 'cache_osx.zip'
-	$FULL_SIZE = 44825979
+	$FULL_SIZE = 44669223
 }
 [int]$FULL_MB = $FULL_SIZE / 0.1MB
 $FULL_MB_FLOAT = $FULL_MB / 10
@@ -36,7 +36,7 @@ if (Test-Path -Path $cache) {
 	"Archive cache cleared!"
 	try {
 		"Checking version..."
-		$N.DownloadFile('https://github.com/GlennnM/NKFlashServers/raw/main/v3.2.txt',$cache + '/test.txt')
+		$N.DownloadFile('https://github.com/GlennnM/NKFlashServers/raw/main/v3.3.txt',$cache + '/test.txt')
 		Remove-Item $cache'/test.txt'
 		"Version check successful!"
 	} catch {
