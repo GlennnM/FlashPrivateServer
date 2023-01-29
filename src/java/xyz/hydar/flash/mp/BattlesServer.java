@@ -614,6 +614,8 @@ class BattlesGameClient extends LineClientContext {
 					actionParam = this.time;
 					actionType=TimedAction.LAGTEST;
 					break;
+				/**
+				 * DISABLED
 				case "!setround":
 					if(actionType!=TimedAction.NONE)break;
 					if(!(opponent.thread instanceof BattlesGameClient gst))
@@ -628,7 +630,7 @@ class BattlesGameClient extends LineClientContext {
 						
 					}
 					actionType=TimedAction.SETROUND;
-					break;
+					break;*/
 				default:
 					return line;
 				}
