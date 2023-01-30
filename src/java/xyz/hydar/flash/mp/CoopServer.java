@@ -27,7 +27,7 @@ import xyz.hydar.net.ServerContext;
 class CoopClient extends LineClientContext {
 	private CoopPlayer player = null;
 	private int timeouts = 0;
-	private CoopGameServer gs = null;
+	private volatile CoopGameServer gs = null;
 	private boolean queued=false;
 	private boolean matched=false;
 	private String code;
@@ -64,7 +64,7 @@ class CoopClient extends LineClientContext {
 			String map=ms.substring(0,ms.length()-1);
 			int mode = parseInt(ms.substring(ms.length()-1));
 			int reverse=ThreadLocalRandom.current().nextInt(2);
-			CoopGameServer gs = new CoopGameServer(opp,null,map,mode,reverse);
+			gs = new CoopGameServer(opp,null,map,mode,reverse);
 			connect(gs,opp);
 		}
 		queued = true;
@@ -153,12 +153,10 @@ class CoopClient extends LineClientContext {
 	private void connectQuick(CoopPlayer p) {
 		if(!alive)return;
 		sendln("13,"+CONFIG.HOST+","+gs.getPort()+",843,13042641,"+p.id+","+p.name+","+gs.map+","+gs.mode+","+gs.reverse+",1");
-		flush();
 	}
 	private void connectPrivate() {
 		if(!alive)return;
 		sendln("1,"+CONFIG.HOST+","+gs.getPort()+",0,13042641,"+gs.p1.id+","+gs.p1.name+","+gs.map+","+gs.mode+","+gs.reverse);
-		flush();
 	}
 	@Override
 	public void onTimeout(){
