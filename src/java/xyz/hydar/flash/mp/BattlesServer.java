@@ -181,7 +181,7 @@ class BattlesClient extends LineClientContext {
 			timeouts--;
 		}//TODO: timeout in pmatch lobby?
 		if (timeouts > 10) {
-			this.alive=false;
+			close();
 			return;
 		}
 	}

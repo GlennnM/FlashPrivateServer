@@ -170,7 +170,7 @@ class CoopClient extends LineClientContext {
 			if(timeouts%15==0)sendln("hydar");
 		}
 		if (timeouts > max) {
-			alive=false;
+			close();
 		}
 	}
 	/**Resets the state, i.e. if a back button is pressed*/
@@ -385,7 +385,7 @@ class CoopGameClient extends LineClientContext {
 			if(timeouts%15==0)sendln("hydar");
 		}
 		if (timeouts > max) {
-			alive=false;
+			close();
 		}
 	}
 
