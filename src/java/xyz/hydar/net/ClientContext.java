@@ -19,8 +19,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import xyz.hydar.flash.mp.FlashLauncher;
-
 /**
  * Client context. Handles data with onData(the only method that needs to be
  * overriden).<br>
@@ -487,7 +485,6 @@ public abstract class ClientContext{
 			}
 			void close2() {
 				ctx.alive=false;
-				System.out.println(FlashLauncher.CONFIG.threadCount);
 				if(nextTimeout!=null)nextTimeout.cancel(false);
 				try {
 					ctx.onClose();
