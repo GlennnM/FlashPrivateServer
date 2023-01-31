@@ -421,12 +421,9 @@ class S4GameClient extends ClientContext {
 	enum WriteMode{LOCAL,REMOTE,ALL}
 	@Override
 	public void onOpen() {
-		if(player!=null) {
-			S4Server.connections++;
-			CONFIG.acquire(this);
-			if(!alive)
-				return;
-		}
+		CONFIG.acquire(this);
+		if(!alive)return;
+		S4Server.connections++;
 		local(17)
 			.put((byte)-4).put(parent.host).put(id)
 			.putInt(parent.flashTime())

@@ -102,7 +102,7 @@ public class FlashConfig{
 		var all=threadCount;
 		var local=threadsPerIp.computeIfAbsent(ip, (x)->new LongAdder());
 		if(all.sum()>MAX_THREADS||local.sum()>THREADS_PER_IP) {
-			ctx.alive=false;
+			ctx.close();
 			return;
 		}
 		all.increment();
