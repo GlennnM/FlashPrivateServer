@@ -825,7 +825,7 @@ class S4GameClient extends ClientContext {
 		byte[] msg = s2.getBytes(StandardCharsets.UTF_8);
 		if(msg.length>256)return;
 		encodeChat(msg,local(msg.length+31));
-		if(all) {
+		if(all&&getPeer()!=null) {
 			forward(msg.length+31);
 			remote.put(remote.position()-(msg.length+11),id);
 		}
