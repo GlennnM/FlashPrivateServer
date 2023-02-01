@@ -576,7 +576,10 @@ class BattlesGameClient extends LineClientContext {
 	private String handleRelay(String[] msg, String line) throws IOException {
 		if (msg.length > 1 && msg[1].equals("SentChatMsg")) {
 			try {
-				String[] cmd = FlashUtils.decode(msg[2]).trim().split(" ",2);
+				String decoded=FlashUtils.decode(msg[2]);
+				if(decoded==null)
+					return null;
+				String[] cmd = decoded.trim().split(" ",2);
 				String param = null;
 				switch (cmd[0]) {
 				case "!help":

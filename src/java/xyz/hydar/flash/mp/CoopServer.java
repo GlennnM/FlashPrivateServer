@@ -343,7 +343,8 @@ class CoopGameClient extends LineClientContext {
 				}
 				else if(msg[1].equals("214")&&msg.length>2){
 					String chat=FlashUtils.decode(msg[2]);
-					if(chat.startsWith("!help")){
+					if(chat==null)break;
+					else if(chat.startsWith("!help")){
 						chat("Commands:\n!help !source !lagtest");
 					}else if(chat.startsWith("!source")){
 						chat("https://github.com/GlennnM/NKFlashServers");
