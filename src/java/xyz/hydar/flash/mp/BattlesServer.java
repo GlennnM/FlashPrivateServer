@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -202,7 +203,7 @@ class BattlesGameServer extends ServerContext{
 	public volatile BattlesPlayer p2;
 	public volatile int round=0;
 	public volatile boolean full=false;
-	public volatile String reason = "BattlesPlayer disconnected";
+	public volatile String reason = "Player disconnected";
 	public volatile int map =ThreadLocalRandom.current().nextInt(22);
 	public final int seed = ThreadLocalRandom.current().nextInt(20000);
 	public final String code;
@@ -396,8 +397,6 @@ class BattlesGameClient extends LineClientContext {
 	/**Initialize this player's opponent and send it's data. This makes them appear in the lobby.*/
 	public void setOpponent(BattlesPlayer opponent){
 		this.opponent=opponent;
-		if (BattlesServer.getProfile(opponent.id) != null)
-			opponent.profile = BattlesServer.getProfile(opponent.id);
 		sendln(opponent.forOpponent(player));//FoundYourGame packet
 	}
 	@Override
@@ -502,13 +501,13 @@ class BattlesGameClient extends LineClientContext {
 			case "IDied" -> {
 				System.out.println("game ended probably");
 				this.win = 1;
-				parent.reason = "BattlesPlayer died";
+				parent.reason = "Player died";
 				yield ("OpponentDied" + tail);
 			}
 			case "ISurrender" -> {
 				System.out.println("game ended probably");
 				this.win = 1;
-				parent.reason = "BattlesPlayer surrendered";
+				parent.reason = "Player surrendered";
 				yield ("OpponentSurrendered" + tail);
 			}
 			case "YouDidntRespondToMySyncs" ->{
@@ -580,7 +579,6 @@ class BattlesGameClient extends LineClientContext {
 				if(decoded==null)
 					return null;
 				String[] cmd = decoded.trim().split(" ",2);
-				String param = null;
 				switch (cmd[0]) {
 				case "!help":
 					send(BattlesGameServer.HELP);
@@ -595,16 +593,22 @@ class BattlesGameClient extends LineClientContext {
 					if (cmd.length == 1)
 						chat("Current profile picture: " + BattlesServer.getProfile(player.id));
 					else {
-						chat("Set profile picture to: " + param);
-						BattlesServer.setProfile(player.id, param);
+						if(cmd[1].equals("reset")) {
+							chat("Reset profile picture.");
+							BattlesServer.removeProfile(player.id, cmd[1]);
+						}else if(BattlesPlayer.PROFILES.matcher(cmd[1]).matches()) {
+							cmd[1]=cmd[1].startsWith("https://")?cmd[1]:"https://"+cmd[1];
+							chat("Set profile picture to: " + cmd[1]);
+							BattlesServer.setProfile(player.id, cmd[1]);
+						}else chat("URL not permitted. allowed: avatars.ninjakiwi.com");
 					}
 					break;
 				case "!random":
-					int numTowers = param==null?4:Integer.parseInt(param);
+					int numTowers = cmd.length<=1?4:Integer.parseInt(cmd[1]);
 					chat(uniqueRandom(BattlesServer.TOWERS,numTowers,10));
 					break;
 				case "!map":
-					int numMaps = param==null?1:Integer.parseInt(param);
+					int numMaps = cmd.length<=1?1:Integer.parseInt(cmd[1]);
 					chat(uniqueRandom(BattlesServer.MAPS,numMaps,10));
 					break;
 				case "!bugs":
@@ -658,11 +662,13 @@ class BattlesPlayer {
 	public final int l;
 	public final int decal;
 	public final TextClientContext thread;
-	public volatile String profile;
+	public final String profile;
 	public volatile int relays=0;
 	public volatile int win=0;
 	public volatile boolean ready=false;
 	public volatile boolean init=false;
+	//prevent ip grabbing
+	public static final Pattern PROFILES = Pattern.compile("(^https:\\/\\/)?avatars.(nkstatic|ninjakiwi).com\\/mega\\/[a-zA-Z0-9-_]*\\.png$");
 	public BattlesPlayer(TextClientContext thread, String[] playerInfo) {
 		this(Integer.parseInt(playerInfo[1]), playerInfo[2], Integer.parseInt(playerInfo[3]), playerInfo[5], thread,Integer.parseInt(playerInfo[4]));
 	}
@@ -673,7 +679,8 @@ class BattlesPlayer {
 		this.w = ThreadLocalRandom.current().nextInt(1000);
 		this.l = ThreadLocalRandom.current().nextInt(1000);
 		this.thread = serverThread;
-		this.profile = profile;
+		this.profile = BattlesServer.getProfile(id) != null ? BattlesServer.getProfile(id) : 
+				PROFILES.matcher(profile).matches() ? profile : "Error002";
 		this.decal = decal;
 	}
 	public void sendln(String s){
@@ -733,7 +740,7 @@ public class BattlesServer extends ServerContext{
 	public void onOpen(){
 		System.out.println("Battles server started! IP - "+CONFIG.HOST+":"+getPort());
 	}
-	public static boolean verbose=false;
+	public static boolean verbose=true;
 
 	private static final int MIN_PORT=CONFIG.battlesPorts.min();
 	private static final int MAX_PORT=CONFIG.battlesPorts.max();
@@ -769,6 +776,9 @@ public class BattlesServer extends ServerContext{
 		profiles.put(uid, profile);
 	}
 
+	public static void removeProfile(int uid, String profile) {
+		profiles.remove(uid);
+	}
 	@Override
 	public void onClose() {
 		System.out.println("BTD Battles stopping. Quick matches won't be alerted");

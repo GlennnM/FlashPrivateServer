@@ -1,0 +1,24 @@
+glenn m,1930056,WIN
+glenn m,1930056,LOSE
+Round: 8, Approx time: 3m15s, Cause: BattlesPlayer died
+Type: Quick
+glenn m,1930056,WIN
+glenn m,1930056,LOSE
+Round: 2, Approx time: 0m46s, Cause: BattlesPlayer surrendered
+Type: Quick
+glenn m,1930056,WIN
+glenn m,1930056,LOSE
+Round: 2, Approx time: 0m26s, Cause: BattlesPlayer surrendered
+Type: Quick
+glenn m,1930056,WIN
+glenn m,1930056,LOSE
+Round: 2, Approx time: 0m33s, Cause: BattlesPlayer surrendered
+Type: Quick
+glenn m,1930056,WIN
+glenn m,1930056,LOSE
+Round: 1, Approx time: 0m6s, Cause: BattlesPlayer surrendered
+Type: Quick
+glenn m,1930056,WIN
+glenn m,1930056,LOSE
+Round: 7, Approx time: 2m37s, Cause: BattlesPlayer died
+Type: Quick
