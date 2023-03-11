@@ -1,11 +1,12 @@
 package xyz.hydar.flash.mp;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Scanner;
 import java.util.function.Supplier;
 
 import xyz.hydar.flash.util.FlashConfig;
@@ -46,12 +47,12 @@ public class FlashLauncher {
 			startGames(args[1],args[2]);
 		}
 		System.out.println("Type \"stop\" to close all servers.");
-		try(var s=new Scanner(System.in)){
+		try(var s=new BufferedReader(new InputStreamReader(System.in))){
 			while(true) {
-				String cmd=s.nextLine();
+				String cmd=s.readLine();
 				if(cmd.equals("stop")) {
 					System.out.println("Type stop again to confirm");
-					if(s.nextLine().equals("stop")) {
+					if(s.readLine().equals("stop")) {
 						servers.forEach(ServerContext::close);
 						break;
 					}

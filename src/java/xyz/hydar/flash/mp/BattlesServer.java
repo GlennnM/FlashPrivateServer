@@ -740,7 +740,7 @@ public class BattlesServer extends ServerContext{
 	public void onOpen(){
 		System.out.println("Battles server started! IP - "+CONFIG.HOST+":"+getPort());
 	}
-	public static boolean verbose=true;
+	public static boolean verbose=false;
 
 	private static final int MIN_PORT=CONFIG.battlesPorts.min();
 	private static final int MAX_PORT=CONFIG.battlesPorts.max();
