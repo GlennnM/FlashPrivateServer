@@ -1,4 +1,4 @@
-package xyz.hydar.flash.mp;
+package xyz.hydar.flash;
 
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -1,5 +1,5 @@
- package xyz.hydar.flash.mp;
-import static xyz.hydar.flash.mp.FlashLauncher.CONFIG;
+ package xyz.hydar.flash;
+import static xyz.hydar.flash.FlashLauncher.CONFIG;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import xyz.hydar.flash.mp.BattlesGameClient.TimedAction;
+import xyz.hydar.flash.BattlesGameClient.TimedAction;
 import xyz.hydar.flash.util.FlashUtils;
 import xyz.hydar.flash.util.FlashUtils.BasicCache;
 import xyz.hydar.flash.util.Scheduler;

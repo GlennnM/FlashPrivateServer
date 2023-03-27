@@ -1,6 +1,6 @@
-package xyz.hydar.flash.mp;
+package xyz.hydar.flash;
 
-import static xyz.hydar.flash.mp.FlashLauncher.CONFIG;
+import static xyz.hydar.flash.FlashLauncher.CONFIG;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

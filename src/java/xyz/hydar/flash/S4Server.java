@@ -1,5 +1,5 @@
-package xyz.hydar.flash.mp;
-import static xyz.hydar.flash.mp.FlashLauncher.CONFIG;
+package xyz.hydar.flash;
+import static xyz.hydar.flash.FlashLauncher.CONFIG;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -973,7 +973,7 @@ class S4GameClient extends ClientContext {
 		usage.append("\nMax Memory: ").append(instance.maxMemory() / mb).append(" MB");
 		announce(usage.toString());
 
-		announce("Uptime: "+(Duration.ofMillis(FlashUtils.now()-S4Server.START).toString().toLowerCase().substring(2))+"\nGames started: "+S4Server.gamesStarted);
+		announce("Uptime: "+(Duration.ofMillis(FlashUtils.now()-S4Server.START).toString().substring(2).toLowerCase())+"\nGames started: "+S4Server.gamesStarted);
 	}
 
 	public void dequeue() {

@@ -25,7 +25,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>xyz.hydar.flash.mp.FlashLauncher</mainClass>
+							<mainClass>xyz.hydar.flash.FlashLauncher</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
