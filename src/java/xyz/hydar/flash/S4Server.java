@@ -558,10 +558,11 @@ class S4GameClient extends ClientContext {
 							fullLoad();
 						}else 
 							loadingState(load);
-					}else if(!parent.ingame() &&!built) {
+					}else if(!parent.ingame()) {
 						loadingState(load);
 						if(Math.abs(1.0f-load)<0.0001f)
 							finishBuild();
+						else built=false;
 					}
 					return;
 				}
@@ -607,7 +608,7 @@ class S4GameClient extends ClientContext {
 					.put(buffer.slice(offset+7,actualSize-7));
 				break;
 			case -17:
-			if(id==parent.host && !parent.started())
+			if(id==parent.host &&parent.allLoaded() && !parent.started())
 				startGame(true);
 			break;
 			case -15:
