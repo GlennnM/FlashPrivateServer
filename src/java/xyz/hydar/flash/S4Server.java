@@ -560,7 +560,7 @@ class S4GameClient extends ClientContext {
 							loadingState(load);
 					}else if(!parent.ingame()) {
 						loadingState(load);
-						if(Math.abs(1.0f-load)<0.0001f)
+						if(!built && Math.abs(1.0f-load)<0.0001f)
 							finishBuild();
 						else built=false;
 					}
