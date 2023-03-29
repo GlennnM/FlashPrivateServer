@@ -66,7 +66,6 @@ public record ClientOptions(int timeout, int mspt, ScheduledExecutorService time
 		int outputMax=DEFAULT.out.max();
 		boolean outputDirect=DEFAULT.out.direct();
 		boolean outputLock=DEFAULT.out.locked();
-		
 		Builder(){}
 		public Builder timeout(int timeout) {
 			this.timeout=timeout;

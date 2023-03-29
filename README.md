@@ -42,7 +42,7 @@ However, you can run them from the same launcher using the following mod:<br>
 <a href=https://github.com/GlennnM/NKMultiArchive>NKMultiArchive</a><br>
 <details>
 <summary>
-Manual install(if powershell doesn't work)<br>
+Manual install(if powershell doesn't work/isn't available on your system)<br>
 </summary><br>
 All the script does is copy some files, so you can do it manually if you want.<br>
 Windows:<br>
@@ -53,6 +53,10 @@ Max OS X:<br>
 0. Close all Ninja Kiwi Archive windows<br>
 1. Naviagte to ~/Library/Application Support/Ninja Kiwi Archive/Cache<br>
 2. Download cache_osx.zip from the releases page and extract it there.<br>
+Linux(proton):<br>
+0. Close all Ninja Kiwi Archive windows<br>
+1. Search for folders named "Ninja Kiwi Archive" and find the one that contains "Cache"<br>
+2. Download cache_windows.zip from the releases page and extract it there.<br>
 </details>
 <details>
 <summary>
@@ -69,13 +73,8 @@ If the links provided to you during archive installation don't work for you(make
     &nbsp;&nbsp;&nbsp;&nbsp;<summary>How to verify a .dll from the internet is legit<br></summary>
     &nbsp;&nbsp;&nbsp;&nbsp;1. right click on pepflashplayer.dll(the one extracted from the zip, not the zip itself) and click 'Properties'<br>
     &nbsp;&nbsp;&nbsp;&nbsp;2. click the 'Digital Signatures' tab(if it isn't there don't trust the file)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;3. click on the signature by 'Adobe Systens Incorporated'(if it isn't there don't trust the file)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;4. click 'Details', then 'Advanced'<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;5. verify that the 'Issuer' is something other than the 'Name of signer' in the original signature list. For instance:<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-Name of signer: Adobe Systems Incorporated<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-Issuer: DigiCert EV Code Signing CA (SHA2)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;However, if both say "Adobe Systems Incorporated" then it is a self signed certificate and you shouldn't trust the file.<br>
-    
+    &nbsp;&nbsp;&nbsp;&nbsp;3. ensure there is a valid signature from 'Adobe Systens Incorporated'.
+   
 </details>
 &nbsp;&nbsp;&nbsp;&nbsp;2. navigate to %appdata%/Ninja Kiwi Archive/ in file explorer<br>
 &nbsp;&nbsp;&nbsp;&nbsp;3. open the folder there named "flash"(create it if it didn't exist)<br>
@@ -87,16 +86,16 @@ If the links provided to you during archive installation don't work for you(make
 <h1>
 Building<br>
   </h1>
-<h2>With OpenJDK 19:</h2><br>
-This is required for the newest version(the tree starting from src/java), for virtual threads.<br><br>
-1. Install OpenJDK 19 and add its binaries to your PATH environment variable(if you don't want to, edit the scripts to absolute paths).<br>
-2. Download the source and run "compile.bat" or "compile.sh" depending on your system.<br><br>
+<h2>With JDK 17:</h2><br>
+This is required for the newest version(the tree starting from src/java). If virtual threads are available they will be used by default(checked via reflection).<br>
+Note that this won't affect the async NIO implementation which can be enabled in flash.properties for each server. This mostly exists because byte buffers made sense for SAS4's binary protocol.<br><br>
+1. Download the source and run "compile.bat" or "compile.sh" depending on your system.<br><br>
 This will compile the source to ./classes and launch the server. <br>
 To configure the server, edit "flash.properties".<br>
-You can also create a jar file with <code>mvn package</code> or <code>extra/package.bat</code> (make sure to run it with --enable-preview), or download one from build artifacts.<br>
+You can also create a jar file with <code>mvn package</code> or <code>extra/package.bat</code>, or download one from build artifacts.<br>
 
-<h2>With JDK 8-18:</h2><br>
-This version is a few updates behind but each server is only a single source file, and they have been tested to run consistently for months.<br><br>
+<h2>With JDK 8:</h2><br>
+There is an older version of each server which can be compiled here and is a few updates behind, but each server is only a single source file and they have been tested to run consistently for months. However some deadlocks might emerge after thousands of games.<br><br>
 1. Add the JDK to your system PATH, or edit the script to an absolute one in the next step.<br>
 2. Navigate to extra/old/[game name] and run "runme.bat" or "runme.sh" depending on your system.<br>
 <br>

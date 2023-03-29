@@ -44,7 +44,6 @@ public abstract class ClientContext{
 	public volatile boolean alive=true;
 	volatile Client client=Client.NULL_CLIENT;
 	public final ClientOptions opt;
-	private static final ThreadFactory DEFAULT_FACTORY=Thread.ofVirtual().factory();
 	public ClientContext() {
 		this(ClientOptions.DEFAULT);
 	}
@@ -56,7 +55,7 @@ public abstract class ClientContext{
 	public void start(InetSocketAddress remote, boolean nio) throws IOException {
 		if(nio) {
 			startNio(remote);
-		}else startIo(remote,DEFAULT_FACTORY);
+		}else startIo(remote,ServerContext.DEFAULT);
 	}
 	/**Starts this context by connecting to the given remote address. Will use the provided factory if in IO mode.
 	 * @throws IOException */
@@ -113,7 +112,7 @@ public abstract class ClientContext{
 	}
 	/**Starts this context given a Socket. It will run on a new thread.*/
 	public final void start(Socket socket) throws IOException {
-		start(socket,DEFAULT_FACTORY);
+		start(socket,ServerContext.DEFAULT);
 	}
 	/**Starts this context given an AsynchronousSocketChannel.*/
 	public final void start(AsynchronousSocketChannel socket) throws IOException {

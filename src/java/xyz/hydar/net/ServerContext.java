@@ -1,6 +1,8 @@
 package xyz.hydar.net;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,6 +10,7 @@ import java.net.SocketTimeoutException;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.util.concurrent.ThreadFactory;
 import java.util.stream.IntStream;
 
 /**Represents an unstarted server, which can be started with start() (non-blocking).<br>
@@ -22,7 +25,26 @@ import java.util.stream.IntStream;
 public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 	public volatile boolean alive=true;
 	volatile Server server;
-
+	static final ThreadFactory DEFAULT;
+	//'conditional compile' for 19+
+	static {
+		ThreadFactory tmp;
+		try {
+			Method meth=Thread.class.getMethod("ofVirtual");
+			Object threadBuilder=meth.invoke(null);
+			Class<?> builderClass=meth.getReturnType();
+			builderClass.getMethod("name",String.class,long.class)
+				.invoke(threadBuilder,"client-vthread-",0);
+			tmp=(ThreadFactory)builderClass
+					.getMethod("factory")
+					.invoke(threadBuilder);
+			System.out.println("Using vthread factory");
+		}catch(IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+			System.out.println("Using normal thread factory");
+			tmp=Thread::new;
+		}
+		DEFAULT=tmp;
+	}
 	/**Equivalent to {@code start(port,50,nio)}.*/
 	public void start(int port, boolean nio) throws IOException {
 		start(port,50,nio);
@@ -192,7 +214,7 @@ public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 			}
 			@Override
 			public void start() throws IOException{
-				Thread.ofVirtual().start(this::run);
+				DEFAULT.newThread(this::run).start();
 			}
 			public void run() {
 				ctx.onOpen();
