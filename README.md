@@ -8,7 +8,7 @@ BTD5 Flash<br>
 as well as BTD Battles Flash, despite it not being mentioned in the original blog post.<br>
 <br>
 This project fully recreates these servers, built from scratch with Java TCP sockets.<br>
-Currently I am hosting all of these - BTD Battles, BTD5 challenges, BTD5 co-op, SAS3, Countersnipe, and SAS4. The guide to play on these servers is also available as a video(soon<br>
+Currently I am hosting all of these - BTD Battles, BTD5 challenges, BTD5 co-op, SAS3, Countersnipe, and SAS4. The guide to play on these servers is also available as a video: <br>https://www.youtube.com/watch?v=J3q-Vb5A4jI<br>
 When playing on these servers, some quality of life/easter egg features are added, but mostly they will play exactly as you would expect the game to play on Ninja Kiwi's servers, and any data or achievements from these games will register in your actual NK profile.<br>
 <h1>
 HOW TO PLAY<br></h1>
@@ -48,15 +48,18 @@ All the script does is copy some files, so you can do it manually if you want.<b
 Windows:<br>
 0. Close all Ninja Kiwi Archive windows<br>
 1. Navigate to %appdata%/Ninja Kiwi Archive/Cache<br>
-2. Download cache_windows.zip from the releases page and extract it there.<br>
+2. Delete everything that was there previously.<br>
+3. Download cache_windows.zip from the releases page and extract it there.<br>
 Max OS X:<br>
 0. Close all Ninja Kiwi Archive windows<br>
 1. Naviagte to ~/Library/Application Support/Ninja Kiwi Archive/Cache<br>
-2. Download cache_osx.zip from the releases page and extract it there.<br>
+2. Delete everything that was there previously.<br>
+3. Download cache_osx.zip from the releases page and extract it there.<br>
 Linux(proton):<br>
 0. Close all Ninja Kiwi Archive windows<br>
 1. Search for folders named "Ninja Kiwi Archive" and find the one that contains "Cache"<br>
-2. Download cache_windows.zip from the releases page and extract it there.<br>
+2. Delete everything that was there previously.<br>
+3. Download cache_windows.zip from the releases page and extract it there.<br>
 </details>
 <details>
 <summary>
@@ -86,18 +89,19 @@ If the links provided to you during archive installation don't work for you(make
 <h1>
 Building<br>
   </h1>
-<h2>With JDK 17:</h2><br>
+<h2>With JDK 17+:</h2><br>
 This is required for the newest version(the tree starting from src/java). If virtual threads are available they will be used by default(checked via reflection).<br>
 Note that this won't affect the async NIO implementation which can be enabled in flash.properties for each server. This mostly exists because byte buffers made sense for SAS4's binary protocol.<br><br>
+0. Add the JDK to your system PATH, or edit the script to an absolute one in the next step.<br>
 1. Download the source and run "compile.bat" or "compile.sh" depending on your system.<br><br>
 This will compile the source to ./classes and launch the server. <br>
 To configure the server, edit "flash.properties".<br>
 You can also create a jar file with <code>mvn package</code> or <code>extra/package.bat</code>, or download one from build artifacts.<br>
 
-<h2>With JDK 8:</h2><br>
+<h2>With JDK 8+:</h2><br>
 There is an older version of each server which can be compiled here and is a few updates behind, but each server is only a single source file and they have been tested to run consistently for months. However some deadlocks might emerge after thousands of games.<br><br>
-1. Add the JDK to your system PATH, or edit the script to an absolute one in the next step.<br>
-2. Navigate to extra/old/[game name] and run "runme.bat" or "runme.sh" depending on your system.<br>
+0. Add the JDK to your system PATH, or edit the script to an absolute one in the next step.<br>
+1. Navigate to extra/old/[game name] and run "runme.bat" or "runme.sh" depending on your system.<br>
 <br>
 <br>
 There are no dependencies for either version.<br>
@@ -112,4 +116,5 @@ Some useful tools for analyzing client and server behavior are <a href=https://g
 <h1>
 Contact<br>
 </h1>
-If you have questions or concerns feel free to message me on discord: Glenn M#9606
+If you have questions or concerns feel free to message me on discord: Glenn M#9606<br>
+or join: <a href=https://discord.gg/VVGuvq7kAv>https://discord.gg/VVGuvq7kAv</a><br>
