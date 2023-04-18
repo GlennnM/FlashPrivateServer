@@ -542,8 +542,10 @@ class S4GameClient extends ClientContext {
 				}*/
 				if ((subop == (byte) 0x05) && (actualSize > 25&&buffer.getInt(offset+11)==0x3e7)) {
 					byte chat_length = buffer.get(offset+23);
-					if(actualSize>=24+chat_length && chat_length>=0) {
+					if(actualSize>=24+chat_length && chat_length>0) {
 						byte[] chars=new byte[chat_length];
+						if(buffer.get(offset+24)!='!')
+							break;
 						buffer.get(offset+24,chars);
 						String[] msg=new String(chars, StandardCharsets.UTF_8).split(" ",2);
 						processChat(msg);

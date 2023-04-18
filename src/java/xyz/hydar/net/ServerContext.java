@@ -22,7 +22,7 @@ import java.util.stream.IntStream;
  * while alive=false waits for the server timeout.<br>
  * The server timeout is 10 seconds and accepts are always looped.
 */
-public abstract class ServerContext{//TODO: options: ssl/thread factory for io
+public abstract class ServerContext{//TODO: options: ssl
 	public volatile boolean alive=true;
 	volatile Server server;
 	static final ThreadFactory DEFAULT;
@@ -75,7 +75,6 @@ public abstract class ServerContext{//TODO: options: ssl/thread factory for io
 			}
 		}).findFirst();
 	}
-	//TODO: provide thread pool
 	/**Starts listening for connections using the specified already-bound server.*/
 	public void start(ServerSocket server) throws IOException {
 		(this.server=new Server.OfIo(this,server)).start();
