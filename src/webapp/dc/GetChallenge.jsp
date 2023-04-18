@@ -1,39 +1,49 @@
+<%@page import="java.io.InputStreamReader"%>
+<%@page import="java.time.LocalDate"%>
+<%@page import="java.util.List"%>
+<%@page import="java.util.Base64"%>
+<%@page import="java.util.Random"%>
+<%@page import="java.time.temporal.ChronoUnit"%>
+<%@page import="java.time.ZoneId"%>
+<%@page import="java.time.Instant"%>
+<%@page import="java.time.LocalDateTime"%>
+<%@page import="java.io.BufferedReader"%>
 <%@page import="java.nio.charset.StandardCharsets"%>
+<%@page session='false' %>
 <%@page import="java.nio.file.Paths"%>
-<%@page import = "java.util.Random,java.io.ByteArrayInputStream,java.io.ObjectInputStream,java.io.ObjectOutputStream,java.util.Base64,java.util.List,java.util.Date,java.util.TimeZone,java.io.File,java.io.Writer,java.io.FileWriter,java.nio.file.Path,java.util.Calendar,java.io.IOException,java.nio.file.Files"%><%
-Calendar now = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-Calendar cache = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-now.setTime(new Date());
+<%!
+static volatile Instant lastUpdate=Instant.ofEpochMilli(0);
+static volatile String data;
+%><%
+response.resetBuffer();
+//Calendar cache = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+LocalDateTime cache = LocalDateTime.ofInstant(lastUpdate, ZoneId.of("GMT"));
+LocalDateTime origin = LocalDateTime.of(2018, 7, 1, 0, 0)
+	.atZone(ZoneId.of("GMT"))
+	.toLocalDateTime();
+LocalDateTime now = LocalDateTime.now(ZoneId.of("GMT"));
+
+
 StringBuilder output = new StringBuilder();
-try{
-	Path p = Paths.get("./dc/GetChallenge.txt");
-	File f = p.toFile();
-	cache.setTime(new Date(f.lastModified()));
-	if(now.get(Calendar.YEAR)!=cache.get(Calendar.YEAR)||now.get(Calendar.DAY_OF_YEAR)!=cache.get(Calendar.DAY_OF_YEAR)){
-		throw new IOException();
-	} 
-	//add random stuff so it doesn't get cached by browser
-	response.sendRedirect("/dc/GetChallenge.txt"+"?hydar="+(now.getTime().getTime())+"."+(long)(Math.random()*33888522196117857l));
-	
-}
-catch(IOException eee){
-	Writer fileWriter = new FileWriter("./dc/GetChallenge.txt", false);
+long offset= ChronoUnit.DAYS.between(cache,now);
+if(offset!=0){
 	Random x = new Random(33888522196117857l);
 	
-	Calendar event = Calendar.getInstance(TimeZone.getTimeZone("GMT")); 
-	event.set(2018,7,1,0,0,0);
-	int eventOffset=0;
-	while(now.get(Calendar.YEAR)!=event.get(Calendar.YEAR)||now.get(Calendar.DAY_OF_YEAR)!=event.get(Calendar.DAY_OF_YEAR)){
-		event.add(Calendar.HOUR,24);
+	long eventOffset=ChronoUnit.DAYS.between(origin,now);
+	for(long i=0;i<eventOffset;i++){
 		x.nextDouble();
-		eventOffset++;
 	} 
 	int year = 2012+(int)(x.nextDouble()*7);
 	int month=0;
 	if(year==2018){
 		month = 1+(int)(x.nextDouble()*6);
 	}else month = 1+(int)(x.nextDouble()*12);
-	List<String> s = Files.readAllLines(Paths.get("./dc/challenges-month-"+year+((month<10)?"0":"")+month),StandardCharsets.UTF_8);
+	List<String> s = new BufferedReader(
+		new InputStreamReader(
+			request.getServletContext() 
+			.getResourceAsStream("/dc/challenges-month-"+year+((month<10)?"0":"")+month)
+			)
+		).lines().toList();
 	int day = (int)(x.nextDouble()*s.size());
 	String e=s.get(day).trim();
 	if(month==1&&year==2012)
@@ -41,8 +51,9 @@ catch(IOException eee){
 	String n=e.substring(8);
 	String q=new String(Base64.getDecoder().decode(n.getBytes(StandardCharsets.UTF_8)),StandardCharsets.UTF_8);
 	q=q.replace("\""+e.substring(0,8)+"\"","null");
-	String data=Base64.getEncoder().encodeToString(q.getBytes(StandardCharsets.UTF_8));
-	out.print(data);
-	fileWriter.write(data);
-	fileWriter.close();
-}%>
+	String data_=Base64.getEncoder().encodeToString(q.getBytes(StandardCharsets.UTF_8));
+	data=data_;
+	lastUpdate=Instant.now();
+} 
+out.print(data);
+%>
