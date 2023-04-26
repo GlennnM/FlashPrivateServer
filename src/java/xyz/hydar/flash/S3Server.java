@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -182,18 +183,14 @@ class S3Client extends TextClientContext {
 					room.setup();
 				msg.set(msg.size() - 2, "" + room.SBEmult);
 				msg.set(msg.size() - 1, "" + room.barriHP);
-				String tmp = msg.get(3);
-				msg.set(3, msg.get(4));
-				msg.set(4, tmp);
+				Collections.swap(msg,3,4);
 				msg.remove(5);
 			}else if (WRITE_FROM.contains(cmd) && cmd != 26) {
 				if(msg.size()<8)
 					return;
 				msg.remove(2);
 				msg.remove(2);
-				String tmp = msg.get(2);
-				msg.set(2, msg.get(3));
-				msg.set(3, tmp);
+				Collections.swap(msg,2,3);
 				msg.set(5, "" + myPlayerNum);
 				if (cmd == 7) {
 					msg.set(4, "0");
@@ -506,7 +503,21 @@ class Zombie{
 /**Game state. Does not run on its own thread, instead the clients execute or schedule its methods.*/
 class Room {
 	public static final ScheduledExecutorService timer=newSingleThreadScheduledExecutor((r)->new Thread(r,"SAS3 room tasks"));
-	
+	private static final int[][] SPAWN_LOCATIONS={null,//map 0
+		{ 9, 6, 5, 8, 11, 10, 4 },
+		{ 18, 17, 16, 13, 12, 11, 15, 14, 19 },
+		{ 31, 37, 38, 35, 34, 33, 32, 36 },
+		{ 13, 12, 14, 31 },
+		{ 43, 42, 41, 40, 47, 7, 46, 44, 9, 17, 4, 45 }
+	};
+	private static final int[][] POWERUP_LOCATIONS= {null,//map 0
+		{ 0, 1, 2, 3 },
+		{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
+		{ 1, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+				28, 29, 30 },
+		{ 0, 2, 3, 6, 7, 12, 13, 14, 15, 17, 21, 26, 33, 35, 37, 38 },
+		{ 0, 1, 2, 3, 5, 8, 11, 12, 15, 21, 25, 32, 33, 34, 36, 37 }
+	};
 	public final List<S3Client> players=new CopyOnWriteArrayList<>();
 	public final List<Integer> targets=new CopyOnWriteArrayList<>();
 	public final List<Nest> nests= new CopyOnWriteArrayList<>();
@@ -866,27 +877,11 @@ class Room {
 	}
 	//Locations where a mob can spawn on each map. see $[Q$/$0$
 	public static int[] spawns(int map) {
-		return switch (map) {
-		case 1 -> new int[] { 9, 6, 5, 8, 11, 10, 4 };
-		case 2 -> new int[] { 18, 17, 16, 13, 12, 11, 15, 14, 19 };
-		case 3 -> new int[] { 31, 37, 38, 35, 34, 33, 32, 36 };
-		case 4 -> new int[] { 13, 12, 14, 31 };
-		case 5 -> new int[] { 43, 42, 41, 40, 47, 7, 46, 44, 9, 17, 4, 45 };
-		default -> new int[0];
-		};
+		return SPAWN_LOCATIONS[map];
 	}
-
 	//Locations where a powerup or nest can spawn on each map. see $[Q$/$0$
 	public static int[] powerups(int map) {
-		return switch (map) {
-		case 1 -> new int[] { 0, 1, 2, 3 };
-		case 2 -> new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-		case 3 -> new int[] { 1, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
-							28, 29, 30 };
-		case 4 -> new int[] { 0, 2, 3, 6, 7, 12, 13, 14, 15, 17, 21, 26, 33, 35, 37, 38 };
-		case 5 -> new int[] { 0, 1, 2, 3, 5, 8, 11, 12, 15, 21, 25, 32, 33, 34, 36, 37 };
-		default -> new int[0];
-		};
+		return POWERUP_LOCATIONS[map];
 	}
 	//add player's stats to end-of-game report when they dc or when game ends
 	public void record(S3Client player) {
