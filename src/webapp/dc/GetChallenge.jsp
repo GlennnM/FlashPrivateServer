@@ -17,11 +17,11 @@ static volatile String data;
 %><%
 response.resetBuffer();
 //Calendar cache = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-LocalDateTime cache = LocalDateTime.ofInstant(lastUpdate, ZoneId.of("GMT"));
-LocalDateTime origin = LocalDateTime.of(2018, 7, 1, 0, 0)
+LocalDate cache = LocalDate.ofInstant(lastUpdate, ZoneId.of("GMT"));
+LocalDate origin = LocalDateTime.of(2018, 7, 1, 0, 0)
 	.atZone(ZoneId.of("GMT"))
-	.toLocalDateTime();
-LocalDateTime now = LocalDateTime.now(ZoneId.of("GMT"));
+	.toLocalDate();
+LocalDate now = LocalDate.now(ZoneId.of("GMT"));
 
 
 StringBuilder output = new StringBuilder();

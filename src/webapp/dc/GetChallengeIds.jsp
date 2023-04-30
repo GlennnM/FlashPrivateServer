@@ -1,3 +1,4 @@
+<%@page import="java.time.LocalDate"%>
 <%@page import="java.io.InputStreamReader"%>
 <%@page import="java.io.BufferedReader"%>
 <%@page import="java.time.temporal.ChronoUnit"%>
@@ -16,11 +17,11 @@ static volatile long cacheOffset=-1;
 %><%
 response.resetBuffer();
 //Calendar cache = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-LocalDateTime cache = LocalDateTime.ofInstant(lastUpdate, ZoneId.of("GMT"));
-LocalDateTime now = LocalDateTime.now(ZoneId.of("GMT"));
-LocalDateTime origin = LocalDateTime.of(2018, 7, 1, 0, 0)
+LocalDate cache = LocalDate.ofInstant(lastUpdate, ZoneId.of("GMT"));
+LocalDate now = LocalDate.now(ZoneId.of("GMT"));
+LocalDate origin = LocalDateTime.of(2018, 7, 1, 0, 0)
 	.atZone(ZoneId.of("GMT"))
-	.toLocalDateTime();
+	.toLocalDate();
 Random x = new Random(33888522196117857l);
 StringBuilder output = new StringBuilder();
 
@@ -33,15 +34,17 @@ if(offset!=0){
 		String j=new String(request.getServletContext()
 				.getResourceAsStream("/dc/challenge-id-archive")
 				.readAllBytes(),StandardCharsets.ISO_8859_1);
-		dat.append(j).append('\n');
+		dat.append(j);
 		co=0;
 	}else
-		dat.append(data).append('\n');
+		dat.append(data);
+	for(long i=0;i<co;i++)
+		x.nextDouble();
 	for(long i=co;i<eventOffset;i++){
 		x.nextDouble();
 		var event = ChronoUnit.DAYS.addTo(origin,i);
 		if(event.getYear()>2022||(event.getYear()==2022&&event.getMonthValue()>=5)){
-			
+			dat.append("\n");
 			ByteArrayOutputStream bo = new ByteArrayOutputStream();
 			ObjectOutputStream oos = new ObjectOutputStream(bo);
 			oos.writeObject(x);
@@ -67,12 +70,10 @@ if(offset!=0){
 			String n=e.substring(8);
 			String q=new String(Base64.getDecoder().decode(n.getBytes(StandardCharsets.UTF_8)),StandardCharsets.UTF_8);
 			q=q.replace("\""+e.substring(0,8)+"\"","null");
-			String id = q.substring(q.indexOf("\"id\"")+7,q.substring(q.indexOf("\"id\"")+7).indexOf("\"")+q.indexOf("\"id\"")+7);
+			int start=q.indexOf("\"id\"")+7;
+			String id = q.substring(start,q.indexOf("\"",start));
 			//System.out.println(id);
 			dat.append(id);
-			if(ChronoUnit.DAYS.between(event,now)!=0){
-				dat.append("\n");
-			}
 			x = prev;
 		}
 		
