@@ -324,7 +324,7 @@ class SpawnTask implements Runnable {
 			//delay before spawning next group
 			int delay = switch (room.mode) {
 				case 2 -> room.bracket3(3)?2500:1000;
-				case 1 -> (Math.max(2000 - room.p1 * 10, 1000)) * room.nests.size() / (room.wave);
+				case 1 -> (Math.max(2000 - room.p1 * 10, 1000)) / room.wave;
 				default -> Math.max(2500 - room.p1 * 10, 1500);
 			};
 			Room.timer.schedule(new SpawnTask(room), delay,TimeUnit.MILLISECONDS);
@@ -923,7 +923,7 @@ class Room {
 	// something wave related idk
 	public float dashL(float param1) {
 		float loc3 = (this.nm == 0) ? 0.9f : 2.5f;
-		float loc4 = Math.max(param1,45f);
+		float loc4 = Math.min(param1,45f);
 		float loc5 = Math.max(0,loc4-45f);
 		float loc2 = switch (this.map) {
 			case 1 -> 0.65f;
@@ -932,7 +932,7 @@ class Room {
 			default -> 1.0f;
 		};
 		float loc6 = 10f - (loc4 - 10f) / 7f;
-		float loc8 = (float) Math.pow(loc6, (loc4 / 18f)) * 1.2f;
+		float loc8 = (float) Math.pow(loc6, loc4 / 18f) * 1.2f;
 		float loc9 = (float) Math.pow(loc5, 1.5f) * 5.2f;
 		return (loc8 + loc9) / 4f * (players.size()) * loc2 * loc3;
 	}
