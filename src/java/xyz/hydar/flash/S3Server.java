@@ -82,6 +82,14 @@ class S3Client extends TextClientContext {
 		if (S3Server.verbose)
 			System.out.println("OUT: " + s);
 	}
+	//Remove a zombie and add to kills/xp.
+	public void killWithCredit(int znum, StringBuilder spawnCmd) {
+		int xp=room.kill(znum,spawnCmd);
+		if(xp>=0) {//weapons like SCIMTR can kill multiple times - only count 1
+			this.xp += xp;
+			this.kills++;
+		}
+	}
 	@Override
 	public void onMessage(String m){
 		// "extension message" - main protocol for the game. A message triggers a
@@ -324,7 +332,7 @@ class SpawnTask implements Runnable {
 			//delay before spawning next group
 			int delay = switch (room.mode) {
 				case 2 -> room.bracket3(3)?2500:1000;
-				case 1 -> (Math.max(2000 - room.p1 * 10, 1000)) / room.wave;
+				case 1 -> (Math.max(2000 - wave * 200 - room.p1 * 25, 900));//speeds up over time
 				default -> Math.max(2500 - room.p1 * 10, 1500);
 			};
 			Room.timer.schedule(new SpawnTask(room), delay,TimeUnit.MILLISECONDS);
@@ -527,7 +535,7 @@ class Room {
 	public volatile long startTime=0;
 	public final Map<Integer, Zombie> zombies= new ConcurrentHashMap<>(1024);
 	
-	public volatile float rankSum;
+	public volatile float rankAvg;
 	public volatile float SBEmult;
 	public volatile float barriHP;
 	public volatile boolean setup = false;
@@ -579,9 +587,9 @@ class Room {
 		System.out.println("Starting game...");
 		this.setup = true;
 		//(not a sum at all)
-		this.rankSum = (int)(players.stream().mapToInt(x->x.rank).average().orElse(0));
+		this.rankAvg = (int)(players.stream().mapToInt(x->x.rank).average().orElse(0));
 		//this.rankSum /= (Math.pow((float)players.size(), 0.9f));
-		this.SBEmult = (1f + this.rankSum / 10f) / 2f * (nm==0?1f:10f);
+		this.SBEmult = (1f + this.rankAvg / 10f) / 2f * (nm==0?1f:10f);
 		this.barriHP = (int) (600f * this.SBEmult * this.SBEmult);
 		switch (mode) {
 		case 1:
@@ -593,12 +601,12 @@ class Room {
 			p4 = 7200;
 			break;
 		default: //copied from singleplayer
-			if (this.rankSum >= 38) this.waveTotal = 11;
-			else if (this.rankSum >= 30) this.waveTotal = 10;
-			else if (this.rankSum >= 22) this.waveTotal = 9;
-			else if (this.rankSum >= 15) this.waveTotal = 8;
-			else if (this.rankSum >= 9) this.waveTotal = 7;
-			else if (this.rankSum >= 5) this.waveTotal = 6;
+			if (this.rankAvg >= 38) this.waveTotal = 11;
+			else if (this.rankAvg >= 30) this.waveTotal = 10;
+			else if (this.rankAvg >= 22) this.waveTotal = 9;
+			else if (this.rankAvg >= 15) this.waveTotal = 8;
+			else if (this.rankAvg >= 9) this.waveTotal = 7;
+			else if (this.rankAvg >= 5) this.waveTotal = 6;
 			else this.waveTotal = 5;
 			this.waveTotal--;//this is consistent with all the YT videos i could find
 			break;
@@ -655,6 +663,10 @@ class Room {
 		System.out.println("Ending game...");
 		this.end = true;
 		int xpBonus = 0;
+		//300 * average rank is added in a won purge game
+		//affects xp but not cash
+		//(source: yt videos)
+		int purgeBonus = (int) (rankAvg * 300); 
 		for (S3Client player : players) {
 			xpBonus += player.xp;
 		}
@@ -669,14 +681,21 @@ class Room {
 				player.xp = (int) (1.2f * player.xp);
 			}
 			// $1K$
-			player.xp = (int) (1f + (.1f * players.size()) * player.xp);
+			player.xp += (int) (.04f * (players.size()-1) * player.xp);
+			if(mode==1){//purge
+				player.xp/=2;//there is an xp modifier, idk the exact number
+			}
 			if (wave > 1)
 				player.xp += (ThreadLocalRandom.current().nextInt(200)) + wave * 20;
 			if (!win && mode != 3)
 				player.xp = (int) (0.3333333f * player.xp);
 			player.cash = (int) (0.2f * player.xp);
-			if (mode != 1 && player.rank >= 40 && nm == 0) {
+			if (player.rank >= 40 && nm == 0) {
 				player.xp = 0;
+			}
+			if(mode == 1 && win) {
+				//purge bonus doesn't affect cash, but can still be earned over lvl40
+				player.xp+=purgeBonus;
 			}
 			record(player);
 		}
@@ -757,7 +776,7 @@ class Room {
 	public void raise(int zombieNum) {
 		var rng=ThreadLocalRandom.current();
 		int playerIndex = targets.get(rng.nextInt(targets.size()));
-		int skeleCount = (int) (rankSum / 4 + 3);
+		int skeleCount = (int) (rankAvg / 4 + 3);
 		StringBuilder skeleBuilder = new StringBuilder(skeleCount * 45);
 		for (int i = 0; i < skeleCount; i++) {
 			float loc7 = 2f * (float) Math.PI / skeleCount * i;
@@ -787,8 +806,7 @@ class Room {
 			player.damage += dmg;
 			if (params.length > 2 && params[2].equals("d")) {
 				tryEndWave=true;
-				player.xp += kill(znum,spawnCmd);
-				player.kills++;
+				player.killWithCredit(znum, spawnCmd);
 			} else {
 				Zombie z = zombies.get(znum);
 				if (z != null) {
@@ -797,10 +815,9 @@ class Room {
 							hitCmd=new StringBuilder(damages.length * 9 + 25)
 								.append("%xt%7%-1%").append(flashTime()).append("%")
 								.append(playerNum).append("%");
-						hitCmd.append(znum).append(":1:d,");
+						hitCmd.append(znum).append(":1:d,");//':d' indicates that the zombie should die
 						tryEndWave=true;
-						player.xp += kill(znum,spawnCmd);
-						player.kills++;
+						player.killWithCredit(znum, spawnCmd);
 					} else if(!forgetAboutTarget&&z.target!=playerNum){
 						if (targetCmd == null) 
 							targetCmd = new StringBuilder(damages.length * 5 + 25)
@@ -842,7 +859,7 @@ class Room {
 			finishKill(z1,number,spawnCmd);
 			return z1.type.xp;
 		}
-		return 0;
+		return -1;//indicate that it was already killed
 	}
 	//add spawn commands for worms/mamushkas to spawnCmd
 	public void finishKill(Zombie zombie, int znum, StringBuilder spawnCmd) {
@@ -863,17 +880,13 @@ class Room {
 				nests.removeIf(x->x.z()==zombie);
 				if (nests.size() == 0) {
 					r = true;
-					timer.schedule(new WaveEndTask(this), 1,TimeUnit.MILLISECONDS);
+					timer.schedule(new WaveEndTask(this), 500,TimeUnit.MILLISECONDS);
 				}
 				break;
 			default:
 				break;
 		}
 
-	}
-	// from SWF - checks if can end wave
-	public boolean bracket3(int max) {
-		return totalCapacity.sum()> max;
 	}
 	//Locations where a mob can spawn on each map. see $[Q$/$0$
 	public static int[] spawns(int map) {
@@ -920,7 +933,11 @@ class Room {
 			flushAll();
 		}
 	}
-	// something wave related idk
+	// name from SWF - checks if can end wave
+	public boolean bracket3(int max) {
+		return totalCapacity.sum()> max;
+	}
+	// name from SWF - something wave related idk
 	public float dashL(float param1) {
 		float loc3 = (this.nm == 0) ? 0.9f : 2.5f;
 		float loc4 = Math.min(param1,45f);
@@ -936,9 +953,9 @@ class Room {
 		float loc9 = (float) Math.pow(loc5, 1.5f) * 5.2f;
 		return (loc8 + loc9) / 4f * (players.size()) * loc2 * loc3;
 	}
-	// something wave related idk
+	// name from SWF - something wave related idk
 	public float commaHash() {
-		return this.rankSum + (this.p1 + (float) p4 * (float) this.wave)
+		return this.rankAvg + (this.p1 + (float) p4 * (float) this.wave)
 				/ ((float) p4 * (float) this.waveTotal) * 10f * ((this.waveTotal - 4) / 12f + 1f);
 	}
 	//send to all other players
