@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
@@ -71,13 +72,15 @@ class S3Client extends TextClientContext {
 	public volatile boolean dead = false;// INGAME alive/dead
 	public volatile int myPlayerNum = -1;
 	public volatile int kills=0, xp=0, damage=0, deaths=0, revives=0, cash=0;
+	
 	//commands that should be sent to all players except self
-	private static final List<Integer> WRITE_FROM = List.of(1, 2, 13, 9, 7, 10, 23, 22, 20, 19, 12, 5, 6, 24, 14, 11, 26);
+	private static final Set<Integer> WRITE_FROM = Set.of(1, 2, 13, 9, 7, 10, 23, 20, 22, 19, 12, 5, 6, 24, 14, 11, 26);
 	// constructor initializes socket
 	public S3Client() {
 		super(StandardCharsets.ISO_8859_1,'\0',CONFIG.SAS3);
 	}
 	public void doubleWrite(String s){
+		
 		send(s);
 		if (S3Server.verbose)
 			System.out.println("OUT: " + s);
@@ -97,6 +100,7 @@ class S3Client extends TextClientContext {
 		if (m.startsWith("%xt%S")) {
 			List<String> msg = Arrays.asList(m.split("%"));
 			if(msg.size()<6) return;
+			msg=new ArrayList<>(msg);
 			int cmd = Integer.parseInt(msg.get(5));
 			switch (cmd) {
 			case 10:
@@ -171,6 +175,24 @@ class S3Client extends TextClientContext {
 					hydar = true;
 				}
 				break;
+			case 20:
+				int barrier=Integer.parseInt(msg.get(8));
+				int startTime=Integer.parseInt(msg.get(9));
+				if(barrier<0 || barrier>1000)return;//limit size of map
+				int time=room.flashTime();
+				if("1".equals(msg.get(10))) {
+					
+					int status = room.barriers
+						.computeIfAbsent(barrier, x->new Room.Barrier(room.players.size()))
+						.acquire(startTime, time);
+					if(status<=0){
+						if(status<0)
+							room.barriers.remove(barrier);
+						return;
+					}
+				}
+				msg.set(9,""+time);
+				break;
 			case 26:
 				String playerList=room.playerList();
 				for (S3Client x : room.players) {
@@ -180,7 +202,6 @@ class S3Client extends TextClientContext {
 				}
 				break;
 			}
-			msg=new ArrayList<>(msg);
 			msg.set(2, "" + cmd);
 			msg.set(3, "" + room.flashTime());
 			msg.set(4, "" + -1);
@@ -206,7 +227,7 @@ class S3Client extends TextClientContext {
 			}
 			msg.add("\0");
 			String pl = String.join("%", msg);
-			if (WRITE_FROM.contains(cmd) && cmd != 23)
+			if (WRITE_FROM.contains(cmd) && cmd != 23 && cmd != 20)
 				room.writeFrom(this, pl);
 			else if (cmd != 4 || room.allReady())
 				room.writeAll(pl);
@@ -529,6 +550,36 @@ class Room {
 	public final List<S3Client> players=new CopyOnWriteArrayList<>();
 	public final List<Integer> targets=new CopyOnWriteArrayList<>();
 	public final List<Nest> nests= new CopyOnWriteArrayList<>();
+	public final Map<Integer,Barrier> barriers=new ConcurrentHashMap<>();
+	/**
+	 * For some reason clients will send more barrier packets when receiving one.
+	 * To counter this we block a limited number of 'repeats'
+	 * of a packet with the same time value, depending on player count,
+	 * and then start allowing them again.
+	 * */
+	static record Barrier(AtomicInteger time, AtomicInteger repeats, int max) {
+		Barrier(int max){
+			this(new AtomicInteger(-1),new AtomicInteger(max), max);
+		}
+		/**
+		 * Update time and repeats.
+		 * If startTime(included in packet) is greater than
+		 * the previous time(or prev is -1)
+		 * we set it to newTime(which is absolute from clock).
+		 * Returns: the time if successful, 0 if did nothing
+		 * , -1 if it should be deallocated(repeat max reached).
+		 * */
+		int acquire(int startTime, int newTime) {
+			//Update the value and check if it was successfully modified at the same time.
+			if(time.getAndAccumulate(startTime, (x,y)->x<y?newTime:x)<startTime) {
+				repeats.set(max);
+				return newTime;
+			}else if(startTime==0){
+				return (repeats.decrementAndGet() > 0) ? 0 : -1;
+			}
+			return 0;
+		}
+	};
 	static record Nest(Zombie z, int point) {}
 	
 	public final AtomicBoolean[] slots = new AtomicBoolean[4];
@@ -537,7 +588,7 @@ class Room {
 	
 	public volatile float rankAvg;
 	public volatile float SBEmult;
-	public volatile float barriHP;
+	public volatile int barriHP;
 	public volatile boolean setup = false;
 	public volatile boolean init = false;
 	public volatile boolean alive = true;
