@@ -544,13 +544,14 @@ class S4GameClient extends ClientContext {
 					byte chat_length = buffer.get(offset+23);
 					if(actualSize>=24+chat_length && chat_length>0) {
 						byte[] chars=new byte[chat_length];
-						if(buffer.get(offset+24)!='!')
-							break;
 						buffer.get(offset+24,chars);
-						String[] msg=new String(chars, StandardCharsets.UTF_8).split(" ",2);
-						processChat(msg);
+						if(buffer.get(offset+24)=='!') {
+							String[] msg=new String(chars, StandardCharsets.UTF_8).split(" ",2);
+							processChat(msg);
+						}
 					}
-					
+					//dont relay if no peers
+					if(getPeer()==null)break;
 				}else if(subop==0x07&&actualSize==20) {
 					float load=buffer.getFloat(offset+8);
 					if(!parent.started()) {
