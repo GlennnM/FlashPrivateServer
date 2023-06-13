@@ -116,5 +116,5 @@ Some useful tools for analyzing client and server behavior are <a href=https://g
 <h1>
 Contact<br>
 </h1>
-If you have questions or concerns feel free to message me on discord: Glenn M#9606<br>
+If you have questions or concerns feel free to message me on discord: glenn_m<br>
 or join: <a href=https://discord.gg/VVGuvq7kAv>https://discord.gg/VVGuvq7kAv</a><br>
