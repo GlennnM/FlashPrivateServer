@@ -369,32 +369,37 @@ class BotCSServerThread extends CSClient {
 		int cmd = Integer.parseInt(s.split("%")[2]);
 		var rng=ThreadLocalRandom.current();
 		int delay;
-		switch (cmd) {
-		case 4:
-		case 6:
-			// Schedule a shot at the start of the round
-			if(nextShot!=null)nextShot.cancel(false);
-			fastShot=false;
-			delay=(int) (10000 + rng.nextInt(40000) * difficulty);
-			nextShot=timer.schedule(this::shoot,delay,TimeUnit.MILLISECONDS);
-			return;
-		case 5:
-		case 17:
-			// The other player left.
-			this.alive = false;
-			return;
-		case 8:
-		case 10:
-			// If you shoot/miss, bot will shoot sooner
-			if (rng.nextFloat() < (0.7 - (opponent.suppressor/10.0))) {
-				if(game.alive&&!fastShot) {
-					if(nextShot!=null)nextShot.cancel(false);
-					delay = (int) (rng.nextDouble(3000,4000) * delayMod);
-					fastShot=true;
-					nextShot=timer.schedule(this::shoot, delay,TimeUnit.MILLISECONDS);
+		game.hitLock.lock();
+		try {
+			switch (cmd) {
+			case 4:
+			case 6:
+				// Schedule a shot at the start of the round
+				if(nextShot!=null)nextShot.cancel(false);
+				fastShot=false;
+				delay=(int) (10000 + rng.nextInt(40000) * difficulty);
+				nextShot=timer.schedule(this::shoot,delay,TimeUnit.MILLISECONDS);
+				return;
+			case 5:
+			case 17:
+				// The other player left.
+				this.alive = false;
+				return;
+			case 8:
+			case 10:
+				// If you shoot/miss, bot will shoot sooner
+				if (rng.nextFloat() < (0.7 - (opponent.suppressor/10.0))) {
+					if(game.roundActive && game.alive && !fastShot) {
+						if(nextShot!=null)nextShot.cancel(false);
+						delay = (int) (rng.nextDouble(3000,4000) * delayMod);
+						fastShot=true;
+						nextShot=timer.schedule(this::shoot, delay,TimeUnit.MILLISECONDS);
+					}
 				}
+				return;
 			}
-			return;
+		}finally {
+			game.hitLock.unlock();
 		}
 		
 	}
@@ -411,7 +416,7 @@ class BotCSServerThread extends CSClient {
 			else
 				this.opponent.hit(game.enemyX + 50, game.enemyY);
 			int delay = (int) (rng.nextDouble(3000,4000) * this.delayMod);
-			if(game.alive)
+			if(game.alive && game.roundActive)
 				nextShot=timer.schedule(this::shoot, delay, TimeUnit.MILLISECONDS);
 		}finally {
 			game.hitLock.unlock();
