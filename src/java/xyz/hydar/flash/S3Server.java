@@ -454,44 +454,6 @@ class PowerupTask implements Runnable {
 		}
 	}
 }
-/**Kill all zombies and schedule the next wave, or end the game.*/
-class WaveEndTask implements Runnable{
-	private final Room room;
-	public WaveEndTask(Room room) {
-		this.room = room;
-	}
-	@Override
-	public void run() {
-		int index=0;
-		if (!room.alive)
-			return;
-		for (S3Client t : room.players)
-			if (!t.dead)
-				index=t.myPlayerNum;
-		if (room.zombies.size() > 0) {
-			StringBuilder hitCmd = new StringBuilder(room.zombies.size()*7+25).append("%xt%7%-1%"+room.flashTime()+"%"+index+"%");
-			for (var z : room.zombies.keySet()) {
-				hitCmd.append(z).append(":1:d,");
-			}
-			room.zombies.clear();
-			room.totalCapacity.reset();
-			room.nextSpawnNum.set(ThreadLocalRandom.current().nextInt(4));
-			hitCmd.deleteCharAt(hitCmd.length() - 1).append("%\0");
-			room.writeAll(hitCmd.toString());
-			room.flushAll();
-		}
-		room.writeAll("%xt%18%-1%0%" + room.wave + "%" + room.waveTotal + "%\0");
-		room.p1 = 0;
-		room.p2 = 0.0f;
-		room.p3 = 0f;
-		room.flushAll();
-		if (room.wave++ < room.waveTotal) {
-			Room.timer.schedule(new WaveStartTask(room), 1000,TimeUnit.MILLISECONDS);
-		} else {
-			room.end(true);
-		}
-	}
-}
 /**index is the type ID, weight and chance affect spawning, cap affects spawning as well as round ends.*/
 enum ZombieType {
 	SWARMER(0,1,100f,1f,160,10), RUNNER(1,4,30f,1.5f,100,15), CHOKER(2,10,15f,6f,500,60),
@@ -785,8 +747,10 @@ class Room {
 		// spawns=normal spawn points, nests = nest locations
 		// the locations are integers(found in the swf)
 		int znum=nextSpawnNum.incrementAndGet();
-		int target=targets.get((parent>=0?parent:znum)%targets.size());
-		int spawn = parent>=0?-1:(mode==1?nests.get(znum%nests.size()).point():spawns[znum%spawns.length]);
+		int target=targets.isEmpty() ? -1 : targets.get((parent>=0?parent:znum)%targets.size());
+		if(mode==1 && nests.isEmpty())return "";
+		int spawn = parent>=0?-1:(mode==1?nests.get(znum%nests.size()).point():
+			spawns[znum%spawns.length]);
 		zombies.put(znum, new Zombie(z, target, SBEmult));
 		totalCapacity.add(z.cap);
 		return new StringBuilder(64).append("%xt%9%-1%").append(flashTime())
@@ -804,7 +768,7 @@ class Room {
 	// spawns nests at the start of a purge wave
 	public void spawnNests() {
 		var rng=ThreadLocalRandom.current();
-		int playerIndex = targets.get(rng.nextInt(targets.size()));
+		int playerIndex = targets.isEmpty() ? -1 : targets.get(rng.nextInt(targets.size()));
 		StringBuilder cmds = new StringBuilder(32 * wave);
 		for (int i = 0; i < wave; i++) {
 			int[] spawns=Arrays.stream(powerups)
@@ -826,7 +790,7 @@ class Room {
 	// spawns skeletons, triggered by incoming AttackCmd with "type" 2
 	public void raise(int zombieNum) {
 		var rng=ThreadLocalRandom.current();
-		int playerIndex = targets.get(rng.nextInt(targets.size()));
+		int playerIndex = targets.isEmpty() ? -1 : targets.get(rng.nextInt(targets.size()));
 		int skeleCount = (int) (rankAvg / 4 + 3);
 		StringBuilder skeleBuilder = new StringBuilder(skeleCount * 45);
 		for (int i = 0; i < skeleCount; i++) {
@@ -898,7 +862,7 @@ class Room {
 			if (S3Server.verbose)
 				System.out.println("||||||Wave end");
 			r = true;
-			timer.schedule(new WaveEndTask(this), 1, TimeUnit.MILLISECONDS);
+			endWave();
 		}
 		flushAll();
 	}
@@ -929,15 +893,46 @@ class Room {
 				break;
 			case NEST:
 				nests.removeIf(x->x.z()==zombie);
-				if (nests.size() == 0) {
+				if (nests.isEmpty()) {
 					r = true;
-					timer.schedule(new WaveEndTask(this), 500,TimeUnit.MILLISECONDS);
+					endWave();
 				}
 				break;
 			default:
 				break;
 		}
 
+	}
+	/**End the current wave.*/
+	public void endWave() {
+		int index=0;
+		if (!alive)
+			return;
+		for (S3Client t : players)
+			if (!t.dead)
+				index=t.myPlayerNum;
+		if (zombies.size() > 0) {
+			StringBuilder hitCmd = new StringBuilder(zombies.size()*7+25).append("%xt%7%-1%"+flashTime()+"%"+index+"%");
+			for (var z : zombies.keySet()) {
+				hitCmd.append(z).append(":1:d,");
+			}
+			zombies.clear();
+			totalCapacity.reset();
+			nextSpawnNum.set(ThreadLocalRandom.current().nextInt(4));
+			hitCmd.deleteCharAt(hitCmd.length() - 1).append("%\0");
+			writeAll(hitCmd.toString());
+			flushAll();
+		}
+		writeAll("%xt%18%-1%0%" + wave + "%" + waveTotal + "%\0");
+		p1 = 0;
+		p2 = 0.0f;
+		p3 = 0f;
+		flushAll();
+		if (wave++ < waveTotal) {
+			timer.schedule(new WaveStartTask(this), 1000,TimeUnit.MILLISECONDS);
+		} else {
+			end(true);
+		}
 	}
 	//Locations where a mob can spawn on each map. see $[Q$/$0$
 	public static int[] spawns(int map) {
