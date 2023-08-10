@@ -364,7 +364,7 @@ class S4GameClient extends ClientContext {
 			}
 		}
 		parent.autoCheck();
-		if(parent.mode==5&&parent.players.size()==3&&!bot)unboost();
+		if(parent.players.size()==3&&!bot)unboost();
 	}
 	/**Alert all players of the bot specified by target and then register it, since bots don't have output buffers.*/
 	public void registerBot(S4GameClient target) {
@@ -493,7 +493,7 @@ class S4GameClient extends ClientContext {
 					this.player = new S4Player(buffer.getShort(offset+8), data);
 					register();
 					if(parent.players.size()<2){
-						if(parent.mode!=7){
+						if(parent.mode!=7 && parent.mode!=5){
 							boost((byte)100, 0);
 							if (parent.code == 400||Math.abs(parent.code-2089076591)<20) {
 								boost((byte)100, 0);
@@ -540,7 +540,8 @@ class S4GameClient extends ClientContext {
 					copy.put(slice);
 					//System.out.println(""+subop+":"+HexFormat.of().formatHex(copy.array()));
 				}*/
-				if ((subop == (byte) 0x05) && (actualSize > 25&&buffer.getInt(offset+11)==0x3e7)) {
+				//chat packet - possibly run commands
+				if ((subop == 5) && (actualSize > 25&&buffer.getInt(offset+11)==0x3e7)) {
 					byte chat_length = buffer.get(offset+23);
 					if(actualSize>=24+chat_length && chat_length>0) {
 						byte[] chars=new byte[chat_length];
@@ -552,7 +553,22 @@ class S4GameClient extends ClientContext {
 					}
 					//dont relay if no peers
 					if(getPeer()==null)break;
-				}else if(subop==0x07&&actualSize==20) {
+				}
+				//death packet - remove deadtabs if present
+				else if(subop==5 && actualSize==28
+						&& buffer.getInt(offset+11)==id
+						&& buffer.getInt(offset+15)==-1 
+						&& buffer.get(offset+19)==0x14
+					) {
+					buffer.putInt(offset+7,parent.flashTime());
+					if(parent.mode!=7 && parent.mode!=3)//not in avs/vs
+						parent.players.stream()
+							.filter(x->x.vs==2)
+							.forEach(S4GameClient::leave);
+					//dont relay if no peers
+					if(getPeer()==null)break;
+				}
+				else if(subop==0x07&&actualSize==20) {
 					float load=buffer.getFloat(offset+8);
 					if(!parent.started()) {
 						this.load=load;
@@ -600,7 +616,6 @@ class S4GameClient extends ClientContext {
 				}
 				else if(actualSize>10 && (Arrays.stream(TIMED).anyMatch(x->x==subop))){
 					int time=parent.flashTime();
-
 					buffer.putInt(offset+7,time);
 				}
 				int len = actualSize - 6;
@@ -706,8 +721,9 @@ class S4GameClient extends ClientContext {
 	public void boost(short level,int vs) throws IOException {
 		if ((level>101&&(parent.code==0||valid))||(level==101&&!parent.can101())||
 				parent.players.size() > 3||parent.started()||
-				(parent.mode>2&&(parent.code==0||valid)&&level<1)||
-				(vs>1&&parent.mode!=7&&parent.mode!=3)) {
+				(parent.mode>2&&(parent.code==0||valid)&&level<1)
+				//||(vs>1&&parent.mode!=7&&parent.mode!=3)
+				) {
 			chat("Unable to boost.",false);
 			return;
 		}
@@ -751,7 +767,7 @@ class S4GameClient extends ClientContext {
 		parent.autoCheck();
 		if(parent.mode==5 && !this.bot && parent.players.size()==1)
 			try {
-				boost((short)100,0);
+				boost((short)100,2);
 			}catch(IOException ioe) {
 				alive=false;
 			}
@@ -857,8 +873,8 @@ class S4GameClient extends ClientContext {
 	/**Process a chat message (array representing a space-delimited chat message) for commands.*/
 	public void processChat(String[] msg) throws IOException{
 		announce(switch (msg[0].toLowerCase()) {
-			case "!source"->"https://github.com/GlennnM/NKFlashServers";
-			case "!help"->"Flash Private Server by Glenn M#9606.\nCommands:\n!boost <lvl>, !vsboost, !deadtab, !unboost\n!start, !waveskip, !unlock, !ping, !source, !seed, !stats, !code, !range, !disconnect";
+			case "!source"->"https://github.com/GlennnM/FlashPrivateServer";
+			case "!help"->"Flash Private Server by Glenn M.\nCommands:\n!boost <lvl>, !vsboost, !deadtab, !unboost\n!start, !waveskip, !unlock, !ping, !source, !seed, !stats, !code, !range, !disconnect";
 			case "!seed"->"Current seed: "+parent.seed+"\nMap ID: "+parent.map+"\nMode: "+parent.mode;
 			case "!code"->"Current code: "+parent.code+"\nMap ID: "+parent.map+"\nMode: "+parent.mode+"\nSpecial codes: 400, apoc, lms, avs, samp";
 			case "!range"->"Accepting levels "+parent.minLvl+"-"+parent.maxLvl;
@@ -897,7 +913,7 @@ class S4GameClient extends ClientContext {
 				else if(FlashUtils.isShort(msg[1]))
 					boost(Short.parseShort(msg[1]), 1);
 				yield null;
-			}case "!deadtab"->{//TODO: dead dead tab
+			}case "!deadtab", "!dt"->{
 				if(msg.length==1)
 					boost((byte)100, 2);
 				else if(FlashUtils.isShort(msg[1]))
@@ -937,7 +953,7 @@ class S4GameClient extends ClientContext {
 			}
 			case "!map"->{
 				if(parent.started())
-					yield "Game already started()";
+					yield "Game already started";
 				else if(msg.length>1&&FlashUtils.isInt(msg[1])){
 					int q=Integer.parseInt(msg[1]);
 					if(q>0&&((parent.mode>2&&parent.mode<7)||id==parent.host)&&q<=S4Server.EVENT_MAPS.length){
@@ -997,24 +1013,23 @@ class S4GameClient extends ClientContext {
 				long delta;
 				//leave after building+4 minutes(deadtab, not alpha virus), building+6 seconds(vs bot),
 				//or right away(normal)
-				/**if(parent.ingame()&&(parent.flashTime()-parent.ingameSince)>5000&&vs==2&&welcomed) {
+				if(parent.ingame()&&(parent.flashTime()-parent.ingameSince)>5000&&vs==2&&welcomed) {
 					welcomed=false;
-					//var die=ByteBuffer.allocate(39).put((byte)-2).putInt(34)
-					//		.put((byte)5).putInt(parent.ingameSince).putInt(0x42c2497).
-					//		putInt(-1).put(id).putInt(-1).putLong(0).putLong(0);
-					//just dc when a player die or dc
+					//change gun packet(otherwise exception occurs)
+					var die0=ByteBuffer.allocate(31).put((byte)-2).putInt(26)
+							.put((byte)5).putInt(parent.flashTime()).putInt(id).putInt(-1).
+							put((byte)0x05).putLong(0).putInt(0);
+					//death packet
 					var die=ByteBuffer.allocate(27).put((byte)-2).putInt(22)
 							.put((byte)5).putInt(parent.flashTime()).putInt(id).putInt(-1).
 							put((byte)0x14).putLong(0);
-					var die2=ByteBuffer.allocate(27).put((byte)-2).putInt(22)
-							.put((byte)5).putInt(parent.flashTime()).putInt(id).putInt(-1).
-							put((byte)0x04).putLong(0);
+					parent.players.forEach(x->x.send(die0.flip()));
 					parent.players.forEach(x->x.send(die.flip()));
-					parent.players.forEach(x->x.send(die2.flip()));
-				}*/
+				}
 				if (parent.started()&&(this.vs==0)||
-					((delta=parent.flashTime()-parent.ingameSince)>6000&&this.vs==1)||
-					(delta>240000&&parent.mode!=3&&this.vs==2)){
+					((delta=parent.flashTime()-parent.ingameSince)>6000&&this.vs==1)
+					||(delta>192000&&parent.mode==7&&this.vs==2)
+					){
 					leave();
 					this.alive = false;
 				}
