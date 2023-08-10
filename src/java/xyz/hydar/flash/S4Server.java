@@ -874,7 +874,7 @@ class S4GameClient extends ClientContext {
 	public void processChat(String[] msg) throws IOException{
 		announce(switch (msg[0].toLowerCase()) {
 			case "!source"->"https://github.com/GlennnM/FlashPrivateServer";
-			case "!help"->"Flash Private Server by Glenn M.\nCommands:\n!boost <lvl>, !vsboost, !deadtab, !unboost\n!start, !waveskip, !unlock, !ping, !source, !seed, !stats, !code, !range, !disconnect";
+			case "!help"->"Flash Private Server by Glenn M.\nCommands:\n!fill, !boost <lvl>, !vsboost, !deadtab, !unboost\n!start, !waveskip, !unlock, !ping, !source, !seed, !stats, !code, !range, !leave";
 			case "!seed"->"Current seed: "+parent.seed+"\nMap ID: "+parent.map+"\nMode: "+parent.mode;
 			case "!code"->"Current code: "+parent.code+"\nMap ID: "+parent.map+"\nMode: "+parent.mode+"\nSpecial codes: 400, apoc, lms, avs, samp";
 			case "!range"->"Accepting levels "+parent.minLvl+"-"+parent.maxLvl;
