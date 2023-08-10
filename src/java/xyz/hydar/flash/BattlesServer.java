@@ -274,7 +274,7 @@ class BattlesGameServer extends ServerContext{
 		command("RelayMsg,SentChatMsg,"+b64);
 	}
 	/**Runs when any player is ready to start a round, starts the round if both are ready*/
-	public void tryStartRound(){
+	public synchronized void tryStartRound(){
 		if (p1.ready&&p2.ready) {
 			if (round == 0) {
 				command(WELCOME);
