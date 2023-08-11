@@ -902,9 +902,12 @@ class S4GameClient extends ClientContext {
 				}yield null;
 			}
 			case "!fill","!f"->{
-				while(parent.players.size()<4)
+				int prev;
+				while((prev=parent.players.size())<4) {
 					boost((short)100,parent.mode==7?1:0);
-				yield null;
+					if(parent.players.size()<=prev)
+						break;
+				}yield null;
 			}
 			case "!boost","!b"->{
 				if(msg.length==1)
