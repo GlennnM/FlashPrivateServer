@@ -125,9 +125,6 @@ class S4GameServer extends ServerContext{
 			autoClear();
 		}
 	}
-	/**Updates and resends the auto-start timer as well as finishing the building process if possible.<br>
-	 * The building process normally completes when a player finishes building, 
-	 * but can also complete from the last building player leaving.*/
 
 	/**Returns whether building has started.*/
 	public boolean started() {
@@ -137,6 +134,10 @@ class S4GameServer extends ServerContext{
 	public boolean ingame() {
 		return ingame.get();
 	}
+
+	/**Updates and resends the auto-start timer as well as finishing the building process if possible.<br>
+	 * The building process normally completes when a player finishes building, 
+	 * but can also complete from the last building player leaving.*/
 	public void autoCheck(){
 		if(!ingame()&&started()&&players.stream().allMatch(x->x.built)) {
 			var src=getNonBot();
@@ -224,7 +225,10 @@ class S4GameServer extends ServerContext{
 		return (int)(FlashUtils.now()-startedAt);
 	}
 	public void allHost() {
-		players.forEach(x->x.send((x.id==host)?new byte[0]:new byte[] {(byte)-7,host,x.id}));
+		players.stream()
+			.filter(x->x.id!=host)
+			.limit(1)
+			.forEach(x->x.send(new byte[] {(byte)-7,host,x.id}));
 	}
 	/**Initializes a new connection context.*/
 	@Override
@@ -250,6 +254,7 @@ class S4GameClient extends ClientContext {
 	private boolean valid=false;
 	protected ByteBuffer local;//write to self
 	protected ByteBuffer remote;//write to peers
+	public static final int[] TIMED= {2,5,6,7,8,9,14,15}; 
 	//dummy constructor for bots
 	private S4GameClient(S4GameServer parent,short level,int vs) {
 		super(ClientOptions.NONE);
@@ -508,8 +513,12 @@ class S4GameClient extends ClientContext {
 						}
 					}
 					valid=validate(data);
-					if(parent.code==0&&!valid) {
-						chat("You can't join this lobby.\nTry a private/sandbox lobby(code apoc, lms, samp) instead",false);
+					if((parent.code==0&&!valid)||
+							(player.level()<15 && parent.mode>2 && parent.mode<100 && valid)) {
+						var msg=valid?
+								"You need to be level 15 to play events":
+								"You can't join this lobby.\nTry a private/sandbox lobby(code apoc, lms, samp) instead";
+						chat(msg,false);
 						flushLocal();flushRemote();
 						Scheduler.schedule(this::close, 2000);
 						break;
@@ -555,7 +564,6 @@ class S4GameClient extends ClientContext {
 						&& buffer.getInt(offset+15)==-1 
 						&& buffer.get(offset+19)==0x14
 					) {
-					buffer.putInt(offset+7,parent.flashTime());
 					if(parent.mode!=7 && parent.mode!=3)//not in avs/vs
 						parent.players.stream()
 							.filter(x->x.vs==2)
@@ -613,6 +621,10 @@ class S4GameClient extends ClientContext {
 						local.position(local.position()-targetLen-5);
 					}
 					return;
+				}
+				else if(parent.skipi && actualSize>10 && (Arrays.stream(TIMED).anyMatch(x->x==subop))){
+					int time=parent.flashTime();
+					buffer.putInt(offset+7,time);
 				}
 				int len = actualSize - 6;
 				remote(len+5)
@@ -719,12 +731,14 @@ class S4GameClient extends ClientContext {
 	/**Add a bot, if possible. {@code vs} is 0 for normal bots, 1 for vs bots, and 2 for deadtabs*/
 	public void boost(short level,int vs) throws IOException {
 		if ((level>101&&(parent.code==0||valid))||(level==101&&!parent.can101())||
-				parent.players.size() > 3||parent.started()||
-				(parent.mode>2&&(parent.code==0||valid)&&level<1)
+				parent.players.size() > 3||parent.started()
 				//||(vs>1&&parent.mode!=7&&parent.mode!=3)
 				) {
 			chat("Unable to boost.",false);
 			return;
+		}
+		if(parent.mode<100 && parent.mode>2&&(parent.code==0||valid)) {
+			level=(short)Math.max(level,15);
 		}
 		S4GameClient bot = S4GameClient.newBot(parent, level, vs);
 		parent.players.add(bot);
@@ -1018,23 +1032,24 @@ class S4GameClient extends ClientContext {
 			@Override
 			public void send(ByteBuffer src) {
 				long delta;
+				int time=parent.flashTime();
 				//leave after building+4 minutes(deadtab, not alpha virus), building+6 seconds(vs bot),
 				//or right away(normal)
-				if(parent.ingame()&&(parent.flashTime()-parent.ingameSince)>5000&&vs==2&&welcomed) {
+				if(parent.ingame()&&(time-parent.ingameSince)>5000&&vs==2&&welcomed) {
 					welcomed=false;
 					//change gun packet(otherwise exception occurs)
 					var die0=ByteBuffer.allocate(31).put((byte)-2).putInt(26)
-							.put((byte)5).putInt(parent.flashTime()).putInt(id).putInt(-1).
+							.put((byte)5).putInt(time).putInt(id).putInt(-1).
 							put((byte)0x05).putLong(0).putInt(0);
 					//death packet
 					var die=ByteBuffer.allocate(27).put((byte)-2).putInt(22)
-							.put((byte)5).putInt(parent.flashTime()).putInt(id).putInt(-1).
+							.put((byte)5).putInt(time).putInt(id).putInt(-1).
 							put((byte)0x14).putLong(0);
 					parent.players.forEach(x->x.send(die0.flip()));
 					parent.players.forEach(x->x.send(die.flip()));
 				}
 				if (parent.started()&&(this.vs==0)||
-					((delta=parent.flashTime()-parent.ingameSince)>6000&&this.vs==1)
+					((delta=time-parent.ingameSince)>6000&&this.vs==1)
 					||(delta>192000&&parent.mode==7&&this.vs==2)
 					){
 					leave();
