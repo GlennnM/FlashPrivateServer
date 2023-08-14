@@ -250,8 +250,6 @@ class S4GameClient extends ClientContext {
 	private boolean valid=false;
 	protected ByteBuffer local;//write to self
 	protected ByteBuffer remote;//write to peers
-
-	public static final int[] TIMED= {2,5,6,7,8,9,14,15}; 
 	//dummy constructor for bots
 	private S4GameClient(S4GameServer parent,short level,int vs) {
 		super(ClientOptions.NONE);
@@ -334,7 +332,10 @@ class S4GameClient extends ClientContext {
 	/**Copies {@code length} bytes from before the current position in the local buffer and appends them to the remote buffer.*/
 	protected void forward(int length) {
 		if(parent.players.size()==1)return;
-		remote(length).put(local.slice(local.position()-length,length));
+		remote(length)
+			.put(remote.position(),local,local.position()-length,length)
+			.position(remote.position()+length)
+		;
 	}
 	/**Registers this client, sending its player data to all peers and sending it all other players' data*/
 	public void register() {
@@ -457,7 +458,7 @@ class S4GameClient extends ClientContext {
 		if(left<1) return;
 		int len=0, offset=0;
 		while(left>0&&(len=length(data.position(offset))+1)>0) {
-			if(left<len)break;
+			if(left<len) {break;}
 			parsePacket(data.position(offset),offset,len);
 			offset+=len;
 			left-=len;
@@ -534,12 +535,6 @@ class S4GameClient extends ClientContext {
 				if (actualSize<=5)
 					return;
 				byte subop=buffer.get(offset+6);
-				/**if(subop==5||subop==6) {
-					var slice=buffer.slice(offset+11,actualSize-11);
-					var copy=ByteBuffer.allocate(slice.limit());
-					copy.put(slice);
-					//System.out.println(""+subop+":"+HexFormat.of().formatHex(copy.array()));
-				}*/
 				//chat packet - possibly run commands
 				if ((subop == 5) && (actualSize > 25&&buffer.getInt(offset+11)==0x3e7)) {
 					byte chat_length = buffer.get(offset+23);
@@ -590,40 +585,42 @@ class S4GameClient extends ClientContext {
 				else if(subop==2&&id==parent.host&&!parent.skipi) {
 					//convert it to a subop 9 packet giving other players control of the mobs
 					buffer.position(offset+7);
-					var target=alloc(actualSize);
+					//reuse the buffer without actually modifying it
+					var target=remote(actualSize).slice(remote.position(),actualSize);
+					
 					var players=parent.players.stream().filter(x->!x.bot&&x!=this).iterator();
 					S4GameClient firstTarget=players.next();
 					int targetLen=loadEntitiesImpl(buffer,target,offset+actualSize,firstTarget.id,false);
 					if(targetLen!=5) {
-						//flip without losing mark
-						firstTarget.send(target.mark().slice(0,target.position()));
+						//mark gets lost on flip
+						int prev=target.position();
+						firstTarget.send(target.flip());
 						for(var player:(Iterable<S4GameClient>)(()->players)){
 							//replace ID's
-							for(int i=target.reset().position()-15;i>0;i-=19) {
+							for(int i=prev-15;i>0;i-=19) {
 								target.put(i,player.id);
 							}
-							player.send(target.slice(0,target.position()));
+							player.send(target.position(prev));
 						}
 					}
 					return;
-				}else if(subop==9&&!parent.skipi) {
+				}
+				else if(subop==9&&!parent.skipi) {
 					buffer.position(offset+7);
 					var target=local(actualSize);
 					int targetLen=loadEntitiesImpl(buffer,target,offset+actualSize,id,true);
 					if(targetLen==5) {
 						local.position(local.position()-targetLen-5);
 					}
-				}
-				else if(actualSize>10 && (Arrays.stream(TIMED).anyMatch(x->x==subop))){
-					int time=parent.flashTime();
-					buffer.putInt(offset+7,time);
+					return;
 				}
 				int len = actualSize - 6;
 				remote(len+5)
 					.put((byte)-2)
 					.putInt(len)//len bytes after this point
-					.put(subop)
-					.put(buffer.slice(offset+7,actualSize-7));
+					.put(subop);
+				remote.put(remote.position(),buffer,offset+7,actualSize-7)
+					.position(remote.position()+actualSize-7);
 				break;
 			case -17:
 			if(id==parent.host &&parent.allLoaded() && !parent.started())
@@ -652,10 +649,12 @@ class S4GameClient extends ClientContext {
 				dst.putInt(entityID)
 					.put(id)
 					.putShort((short)12)
-					.put(src.slice(src.position(),12));
+					//copy 12 bytes
+					.putInt(src.getInt())
+					.putLong(src.getLong());
 				targetLen+=19;
-			}
-			src.position(src.position()+length);
+			}else
+				src.position(src.position()+length);
 		}
 		if(targetLen>5)
 			dst.reset().putInt(targetLen)
@@ -902,7 +901,7 @@ class S4GameClient extends ClientContext {
 				}yield null;
 			}
 			case "!fill","!f"->{
-				int prev;
+				int prev = 0;
 				while((prev=parent.players.size())<4) {
 					boost((short)100,parent.mode==7?1:0);
 					if(parent.players.size()<=prev)
