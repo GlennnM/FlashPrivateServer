@@ -590,7 +590,7 @@ class S4GameClient extends ClientContext {
 				}
 				//if only bots, dont bother copying buffer
 				else if(getPeer()==null) return;
-				else if(subop==2&&id==parent.host&&!parent.skipi) {
+				else if(subop==2&&!parent.skipi) {
 					//convert it to a subop 9 packet giving other players control of the mobs
 					buffer.position(offset+7);
 					//reuse the buffer without actually modifying it
@@ -608,7 +608,7 @@ class S4GameClient extends ClientContext {
 							for(int i=prev-15;i>0;i-=19) {
 								target.put(i,player.id);
 							}
-							player.send(target.position(prev));
+							player.send(target.flip());
 						}
 					}
 					return;
