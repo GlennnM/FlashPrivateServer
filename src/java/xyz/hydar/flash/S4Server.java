@@ -255,6 +255,10 @@ class S4GameClient extends ClientContext {
 	protected ByteBuffer local;//write to self
 	protected ByteBuffer remote;//write to peers
 	public static final int[] TIMED= {2,5,6,7,8,9,14,15}; 
+	
+	//used for playerData on registering
+	static enum WriteMode{LOCAL,REMOTE,ALL}
+	
 	//dummy constructor for bots
 	private S4GameClient(S4GameServer parent,short level,int vs) {
 		super(ClientOptions.NONE);
@@ -423,8 +427,6 @@ class S4GameClient extends ClientContext {
 		forward(5);
 		parent.autoCheck();
 	}
-	//used for playerData on registering
-	enum WriteMode{LOCAL,REMOTE,ALL}
 	@Override
 	public void onOpen() {
 		CONFIG.acquire(this);
