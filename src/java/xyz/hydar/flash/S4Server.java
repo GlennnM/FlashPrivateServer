@@ -14,6 +14,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Map;
@@ -254,6 +255,7 @@ class S4GameClient extends ClientContext {
 	private boolean valid=false;
 	protected ByteBuffer local;//write to self
 	protected ByteBuffer remote;//write to peers
+	private final Set<Integer> blueSpawns = Collections.newSetFromMap(new ConcurrentHashMap<>());
 	public static final int[] TIMED= {2,5,6,7,8,9,14,15}; 
 	
 	//used for playerData on registering
@@ -546,6 +548,7 @@ class S4GameClient extends ClientContext {
 				if (actualSize<=5)
 					return;
 				byte subop=buffer.get(offset+6);
+			//	System.out.println(HexFormat.of().formatHex(ByteBuffer.allocate(actualSize).put(0,buffer,offset,actualSize).array()));
 				//chat packet - possibly run commands
 				if ((subop == 5) && (actualSize > 25&&buffer.getInt(offset+11)==0x3e7)) {
 					byte chat_length = buffer.get(offset+23);
@@ -559,6 +562,27 @@ class S4GameClient extends ClientContext {
 					}
 					//dont relay if no peers
 					if(getPeer()==null)break;
+				}
+				//necro tp packet
+				else if(subop==5
+						&& actualSize==44
+						//&& buffer.getInt(offset+11)==id
+						&& buffer.getInt(offset+15)==-1 
+						&& buffer.get(offset+19)==0x3
+					) {
+					//give state ownership back to the host
+					if(blueSpawns.size()<4096 && blueSpawns.add(buffer.getInt(offset+11))){
+						local(17)
+							.put((byte)-2)
+							.putInt(12).put((byte)(9))
+							.putInt(buffer.getInt(offset+7))
+							.putInt(buffer.getInt(offset+11))
+							.put(parent.host)
+							.putShort((short)0);
+						forward(17);
+					}
+					if(id!=parent.host)
+						return;
 				}
 				//death packet - remove deadtabs if present
 				else if(subop==5 && actualSize==28
@@ -649,7 +673,7 @@ class S4GameClient extends ClientContext {
 		}
 	}
 	/**create -2.9 packet from either -2.9 or -2.2 while changing user id for all zombies to id*/
-	private static int loadEntitiesImpl(ByteBuffer src, ByteBuffer dst, int end, byte id, boolean hasId) {
+	private int loadEntitiesImpl(ByteBuffer src, ByteBuffer dst, int end, byte id, boolean hasId) {
 		dst.put((byte)-2).mark()
 			.putInt(0).put((byte)9)
 			.putInt(src.getInt());
@@ -661,7 +685,7 @@ class S4GameClient extends ClientContext {
 			//zombies have payload length 12
 			if(length==12) {
 				dst.putInt(entityID)
-					.put(id)
+					.put(blueSpawns.contains(entityID)?parent.host:id)
 					.putShort((short)12)
 					//copy 12 bytes
 					.putInt(src.getInt())
