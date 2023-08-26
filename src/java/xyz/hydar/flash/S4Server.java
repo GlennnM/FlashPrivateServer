@@ -1063,15 +1063,16 @@ class S4GameClient extends ClientContext {
 				//or right away(normal)
 				if(parent.ingame()&&(time-parent.ingameSince)>5000&&vs==2&&welcomed) {
 					welcomed=false;
+					var die=ByteBuffer.allocate(58)
 					//change gun packet(otherwise exception occurs)
-					var die0=ByteBuffer.allocate(31).put((byte)-2).putInt(26)
-							.put((byte)5).putInt(time).putInt(id).putInt(-1).
-							put((byte)0x05).putLong(0).putInt(0);
+							.put((byte)-2).putInt(26)
+							.put((byte)5).putInt(time).putInt(id).putInt(-1)
+							.put((byte)0x05).putLong(0).putInt(0)
 					//death packet
-					var die=ByteBuffer.allocate(27).put((byte)-2).putInt(22)
-							.put((byte)5).putInt(time).putInt(id).putInt(-1).
-							put((byte)0x14).putLong(0);
-					parent.players.forEach(x->x.send(die0.flip()));
+							.put((byte)-2).putInt(22)
+							.put((byte)5).putInt(time).putInt(id).putInt(-1)
+							.put((byte)0x14).putLong(0);
+					
 					parent.players.forEach(x->x.send(die.flip()));
 				}
 				if (parent.started()&&(this.vs==0)||
