@@ -563,27 +563,6 @@ class S4GameClient extends ClientContext {
 					//dont relay if no peers
 					if(getPeer()==null)break;
 				}
-				//necro tp packet
-				else if(subop==5
-						&& actualSize==44
-						//&& buffer.getInt(offset+11)==id
-						&& buffer.getInt(offset+15)==-1 
-						&& buffer.get(offset+19)==0x3
-					) {
-					//give state ownership back to the host
-					if(blueSpawns.size()<4096 && blueSpawns.add(buffer.getInt(offset+11))){
-						local(17)
-							.put((byte)-2)
-							.putInt(12).put((byte)(9))
-							.putInt(buffer.getInt(offset+7))
-							.putInt(buffer.getInt(offset+11))
-							.put(parent.host)
-							.putShort((short)0);
-						forward(17);
-					}
-					if(id!=parent.host)
-						return;
-				}
 				//death packet - remove deadtabs if present
 				else if(subop==5 && actualSize==28
 						&& buffer.getInt(offset+11)==id
@@ -616,6 +595,28 @@ class S4GameClient extends ClientContext {
 				}
 				//if only bots, dont bother copying buffer
 				else if(getPeer()==null) return;
+
+				//necro tp packet
+				else if(subop==5
+						&& actualSize==44
+						//&& buffer.getInt(offset+11)==id
+						&& buffer.getInt(offset+15)==-1 
+						&& buffer.get(offset+19)==0x3
+					) {
+					//give state ownership back to the host
+					if(blueSpawns.size()<4096 && blueSpawns.add(buffer.getInt(offset+11))){
+						local(17)
+							.put((byte)-2)
+							.putInt(12).put((byte)(9))
+							.putInt(buffer.getInt(offset+7))
+							.putInt(buffer.getInt(offset+11))
+							.put(parent.host)
+							.putShort((short)0);
+						forward(17);
+					}
+					if(id!=parent.host)
+						return;
+				}
 				else if(subop==2&&!parent.skipi) {
 					//convert it to a subop 9 packet giving other players control of the mobs
 					buffer.position(offset+7);
