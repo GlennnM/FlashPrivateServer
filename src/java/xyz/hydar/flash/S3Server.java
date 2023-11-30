@@ -203,7 +203,7 @@ class S3Client extends TextClientContext {
 				break;
 			}
 			msg.set(2, "" + cmd);
-			msg.set(3, "" + room.flashTime());
+			msg.set(3, "" + msg.get(6));
 			msg.set(4, "" + -1);
 			if (cmd == 4) {
 				this.ready = true;
@@ -282,14 +282,13 @@ class WaveStartTask implements Runnable{
 				+ "%" + room.waveTotal + "%\0");
 		room.flushAll();
 		if (room.mode == 1) {
-			Room.timer.schedule(new SpawnNestTask(room), 5000, TimeUnit.MILLISECONDS);
-			Room.timer.schedule(new PowerupTask(room), 7000, TimeUnit.MILLISECONDS);
+			Room.timer.schedule(new SpawnNestTask(room), 4000, TimeUnit.MILLISECONDS);
 		} else {
 			Room.timer.schedule(new SpawnTask(room), 5000, TimeUnit.MILLISECONDS);
-			Room.timer.schedule(new PowerupTask(room), 30000, TimeUnit.MILLISECONDS);
 		}
+		Room.timer.schedule(new PowerupTask(room), 30000, TimeUnit.MILLISECONDS);
 		room.init = true;
-		room.r = false;
+		room.r.set(false);
 	}
 }
 /**Spawns a set of mobs in a lobby when ran. If the wave changes while active, it will be cancelled.*/
@@ -374,6 +373,7 @@ class SpawnNestTask implements Runnable{
 			return;
 		}
 		room.spawnNests();
+		room.p1++;
 		Room.timer.schedule(new SpawnTask(room), 1000,TimeUnit.MILLISECONDS);
 	}
 }
@@ -448,10 +448,8 @@ class PowerupTask implements Runnable {
 			};
 			player.doubleWrite("%xt%16%-1%" + 0 + "%" + loc7 + "%" + type + "%" + item + "%\0");
 		}
-		if (room.mode == 1) {
-			Room.timer.schedule(new PowerupTask(room), 15000,TimeUnit.MILLISECONDS);
-			return;
-		}
+		if (room.mode == 1)
+			Room.timer.schedule(new PowerupTask(room), 30000,TimeUnit.MILLISECONDS);
 	}
 }
 /**index is the type ID, weight and chance affect spawning, cap affects spawning as well as round ends.*/
@@ -503,7 +501,7 @@ class Room {
 	};
 	private static final int[][] POWERUP_LOCATIONS= {null,//map 0
 		{ 0, 1, 2, 3 },
-		{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
+		{ 0, 1, 3, 4, 5, 6, 7, 8, 9, 10 },//location 2 excluded
 		{ 1, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
 				28, 29, 30 },
 		{ 0, 2, 3, 6, 7, 12, 13, 14, 15, 17, 21, 26, 33, 35, 37, 38 },
@@ -554,7 +552,7 @@ class Room {
 	public volatile boolean setup = false;
 	public volatile boolean init = false;
 	public volatile boolean alive = true;
-	public volatile boolean r = true;//ready for spawns
+	public final AtomicBoolean r=new AtomicBoolean(true);//ready for spawns
 	// SPAWNER ARGS
 	public volatile int p1 = 0;// §[D§
 	public volatile float p2 = 0f;// §]?§
@@ -748,7 +746,7 @@ class Room {
 		// the locations are integers(found in the swf)
 		int znum=nextSpawnNum.incrementAndGet();
 		int target=targets.isEmpty() ? -1 : targets.get((parent>=0?parent:znum)%targets.size());
-		if(mode==1 && nests.isEmpty())return "";
+		if(mode==1 && parent==-1 && nests.isEmpty())return "";
 		int spawn = parent>=0?-1:(mode==1?nests.get(znum%nests.size()).point():
 			spawns[znum%spawns.length]);
 		zombies.put(znum, new Zombie(z, target, SBEmult));
@@ -858,10 +856,9 @@ class Room {
 		if (spawnCmd.length()>0) {
 			writeAll(spawnCmd.toString());
 		}
-		if (tryEndWave && mode!=1&&init && p1 >= p4 && !(bracket3(3)) && !r){
+		if (tryEndWave && init && (mode!=1 || nests.isEmpty()) && (p1 >= (mode==1?1:p4)) && !(bracket3(3)) && r.compareAndSet(false,true)){
 			if (S3Server.verbose)
 				System.out.println("||||||Wave end");
-			r = true;
 			endWave();
 		}
 		flushAll();
@@ -893,10 +890,6 @@ class Room {
 				break;
 			case NEST:
 				nests.removeIf(x->x.z()==zombie);
-				if (nests.isEmpty()) {
-					r = true;
-					endWave();
-				}
 				break;
 			default:
 				break;
@@ -918,7 +911,7 @@ class Room {
 			}
 			zombies.clear();
 			totalCapacity.reset();
-			nextSpawnNum.set(ThreadLocalRandom.current().nextInt(4));
+			nextSpawnNum.addAndGet(ThreadLocalRandom.current().nextInt(4));
 			hitCmd.deleteCharAt(hitCmd.length() - 1).append("%\0");
 			writeAll(hitCmd.toString());
 			flushAll();
