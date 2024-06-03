@@ -194,12 +194,7 @@ class S3Client extends TextClientContext {
 				msg.set(9,""+time);
 				break;
 			case 26:
-				String playerList=room.playerList();
-				for (S3Client x : room.players) {
-					x.doubleWrite("%xt%25%" + 0 + "%%1%" + room.players.size() + "%"
-							+ x.myPlayerNum + "%" + playerList + "%1%" + room.mode + "%" + room.mode + "%" + room.mapURL + "%"
-							+ room.nm + "%" + room.nm+"\0");
-				}
+				room.tryLoad();
 				break;
 			}
 			msg.set(2, "" + cmd);
@@ -353,7 +348,7 @@ class SpawnTask implements Runnable {
 			int delay = switch (room.mode) {
 				case 2 -> room.bracket3(3)?2500:1000;
 				case 1 -> (Math.max(2000 - wave * 200 - room.p1 * 25, 900));//speeds up over time
-				default -> Math.max(2500 - room.p1 * 10, 1500);
+				default -> Math.max(2000 - room.p1 * 10, 1000);
 			};
 			Room.timer.schedule(new SpawnTask(room), delay,TimeUnit.MILLISECONDS);
 		}
@@ -552,6 +547,7 @@ class Room {
 	public volatile boolean setup = false;
 	public volatile boolean init = false;
 	public volatile boolean alive = true;
+	public final AtomicBoolean sentLoadCmd = new AtomicBoolean();//send load command(26)
 	public final AtomicBoolean r=new AtomicBoolean(true);//ready for spawns
 	// SPAWNER ARGS
 	public volatile int p1 = 0;// §[D§
@@ -593,13 +589,22 @@ class Room {
 		this.nm = nm;
 		Arrays.setAll(slots,x->new AtomicBoolean());
 	}
+	/**Send a load game command, if none has been sent already.*/
+	public void tryLoad() {
+		if(sentLoadCmd.compareAndSet(false, true)) {
+			String playerList=playerList();
+			for (S3Client x : players) {
+				x.doubleWrite("%xt%25%" + 0 + "%%1%" + players.size() + "%"
+						+ x.myPlayerNum + "%" + playerList + "%1%" + mode + "%" + mode + "%" + mapURL + "%"
+						+ nm + "%" + nm+"\0");
+			}
+		}
+	}
 	/**Starts the game, waves will begin after 5 seconds(constructor only initializes lobby data)*/
 	public void setup() {
 		System.out.println("Starting game...");
 		this.setup = true;
-		//(not a sum at all)
 		this.rankAvg = (int)(players.stream().mapToInt(x->x.rank).average().orElse(0));
-		//this.rankSum /= (Math.pow((float)players.size(), 0.9f));
 		this.SBEmult = (1f + this.rankAvg / 10f) / 2f * (nm==0?1f:10f);
 		this.barriHP = (int) (600f * this.SBEmult * this.SBEmult);
 		switch (mode) {
@@ -694,11 +699,11 @@ class Room {
 			// $1K$
 			player.xp += (int) (.04f * (players.size()-1) * player.xp);
 			if(mode==1){//purge
-				player.xp/=2;//there is an xp modifier, idk the exact number
+				player.xp/=3;//there is an xp modifier, idk the exact number
 			}
 			if (wave > 1)
 				player.xp += (ThreadLocalRandom.current().nextInt(200)) + wave * 20;
-			if (!win && mode != 3)
+			if (!win)
 				player.xp = (int) (0.3333333f * player.xp);
 			player.cash = (int) (0.2f * player.xp);
 			if (player.rank >= 40 && nm == 0) {
@@ -994,8 +999,10 @@ class Room {
 	}
 	// name from SWF - something wave related idk
 	public float commaHash() {
+		//avoid negative value if not onslaught mode
+		float waveDensity = mode==2 ? ((this.waveTotal - 4) / 12f + 1f) : 1f + this.rankAvg/100f;
 		return this.rankAvg + (this.p1 + (float) p4 * (float) this.wave)
-				/ ((float) p4 * (float) this.waveTotal) * 10f * ((this.waveTotal - 4) / 12f + 1f);
+				/ ((float) p4 * (float) this.waveTotal) * 10f * waveDensity;
 	}
 	//send to all other players
 	public void writeFrom(S3Client origin, String toWrite) {
