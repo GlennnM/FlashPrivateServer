@@ -363,7 +363,9 @@ class S4GameClient extends ClientContext {
 					if(parent.mode==1&&g.player.level()==1)
 						g.chat("Try using !map and !start if selection options don't appear.",false);
 					else if(parent.isEvent()) {
-						if(parent.code!=0) {
+						if(parent.code==101010) {
+							g.chat("You are MP banned. Leaderboard scores will not be recorded.", false);
+						}else if(parent.code!=0) {
 							g.chat("A special code changed the game type. "
 								+ "If this was unintentional, change the code.\nMap: "
 								+ (Arrays.binarySearch(S4Server.EVENT_MAPS,parent.map)+1)
@@ -990,7 +992,7 @@ class S4GameClient extends ClientContext {
 				}
 			}case "!unlock"->{
 				if(parent.started()) {
-					yield "The game already started()";
+					yield "The game already started";
 				}else if(!parent.autostart || (parent.minLvl<0&&parent.maxLvl>100)) {
 					yield "This lobby already allows all levels";
 				}else if(id==parent.host) {
