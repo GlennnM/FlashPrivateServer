@@ -100,10 +100,17 @@ class S4GameServer extends ServerContext{
 		Scheduler.schedule(this::checkAlive,30000);
 		
 	}
-	public S4GameClient getHost() {
+	/**returns the player with a given id*/
+	public S4GameClient getPlayer(int id) {
 		for(var p:players) {
-			if(p.id==host)return p;
-		}return null;
+			if(p.id==id)
+				return p;
+		}
+		return null;
+	}
+	/**returns the host*/
+	public S4GameClient getHost() {
+		return getPlayer(host);
 	}
 	/**Runs at most once a second when players send a ping or time packet(-9 or -3)<br>
 	 * Performs tasks that need to be performed continuously before the game starts, such as updating the auto-start timer and level ranges.<br>Public lobbies(code=0) only.*/
@@ -505,7 +512,8 @@ class S4GameClient extends ClientContext {
 					this.player = new S4Player(buffer.getShort(offset+8), data);
 					register();
 					if(parent.players.size()<2){
-						if(parent.mode!=7 && parent.mode!=5){
+						//not apoc, lms, or samples
+						if(parent.mode!=7 && parent.mode!=5 && parent.mode!=4){
 							boost((byte)100, 0);
 							if (parent.code == 400||Math.abs(parent.code-2089076591)<20) {
 								boost((byte)100, 0);
@@ -552,6 +560,24 @@ class S4GameClient extends ClientContext {
 				byte subop=buffer.get(offset+6);
 			//	System.out.println(HexFormat.of().formatHex(ByteBuffer.allocate(actualSize).put(0,buffer,offset,actualSize).array()));
 				//chat packet - possibly run commands
+				if(subop==5 && actualSize==32
+						//&& buffer.getInt(offset+11)==id
+						&& buffer.getInt(offset+15)==-1 
+						&& buffer.get(offset+19)==0x1
+						) {
+					var target=parent.getPlayer(buffer.getInt(offset+20));
+					if(target!=null && target.bot) {
+						buffer.putInt(offset+20,-1);//target this player
+						local(23)
+							.put((byte)-2)
+							.putInt(18).put((byte)(5))
+							.putInt(buffer.getInt(offset+7))//time
+							.putInt(buffer.getInt(offset+11))//enemy ID
+							.putInt(-1)
+							.put((byte)1)//opcode(target)
+							.putInt(-1);//player to target
+					}
+				}
 				if ((subop == 5) && (actualSize > 25&&buffer.getInt(offset+11)==0x3e7)) {
 					byte chat_length = buffer.get(offset+23);
 					if(actualSize>=24+chat_length && chat_length>0) {
@@ -946,7 +972,7 @@ class S4GameClient extends ClientContext {
 			case "!fill","!f"->{
 				int prev = 0;
 				while((prev=parent.players.size())<4) {
-					boost((short)100,parent.mode==7?1:0);
+					boost((short)100,parent.mode==7||parent.mode==4?1:0);
 					if(parent.players.size()<=prev)
 						break;
 				}yield null;
@@ -1066,17 +1092,44 @@ class S4GameClient extends ClientContext {
 				//or right away(normal)
 				if(parent.ingame()&&(time-parent.ingameSince)>5000&&vs==2&&welcomed) {
 					welcomed=false;
-					var die=ByteBuffer.allocate(58)
-					//change gun packet(otherwise exception occurs)
-							.put((byte)-2).putInt(26)
+					var rng=ThreadLocalRandom.current();
+					if(parent.mode!=4) {//not LMS - die
+					var die=ByteBuffer.allocate(69)
+							//change gun packet(otherwise exception occurs)
+							.put((byte)-2).putInt(18)
 							.put((byte)5).putInt(time).putInt(id).putInt(-1)
-							.put((byte)0x05).putLong(0).putInt(0)
-					//death packet
+							.put((byte)0x05)
+							.putInt(rng.nextInt(3))
+							//shoot packet
+							.put((byte)-2).putInt(14)
+							.put((byte)5).putInt(time).putInt(id).putInt(-1)
+							.put((byte)0x03)
+							//death packet
 							.put((byte)-2).putInt(22)
 							.put((byte)5).putInt(time).putInt(id).putInt(-1)
 							.put((byte)0x14).putLong(0);
+						parent.players.forEach(x->x.send(die.flip()));
+					}else {//LMS - go off map
+						var move = ByteBuffer.allocate(86)
+						//change gun packet(doesn't seem to matter but just in case)
+						.put((byte)-2).putInt(18)
+						.put((byte)5).putInt(time).putInt(id).putInt(-1)
+						.put((byte)0x05)
+						.putInt(rng.nextInt(3))
+						//position and rotation packet - send off map
+						.put((byte)-2).putInt(50)
+						.put((byte)5).putInt(time).putInt(id).putInt(-1)
+						.put((byte)0x01)
+						.putFloat(-3200000).putFloat(-3200000)//o7616.o2179.x, y
+						.putFloat(-3200000)//o7467 - x
+						.putFloat(-3200000)//o913 - y
+						.putFloat(-3200000)//o10644 - x
+						.putFloat(-3200000)//o1128 - y
+						.putFloat(0)//o8990 -  a rotation
+						.putFloat(-3200000).putFloat(-3200000);//o7616.o10720.x,y
+						parent.players.forEach(x->x.send(move.flip()));
+					}
 					
-					parent.players.forEach(x->x.send(die.flip()));
 				}
 				if (parent.started()&&(this.vs==0)||
 					((delta=time-parent.ingameSince)>6000&&this.vs==1)
