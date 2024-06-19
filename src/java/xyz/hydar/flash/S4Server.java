@@ -360,9 +360,9 @@ class S4GameClient extends ClientContext {
 		for (S4GameClient g : parent.players) {
 			if(!bot){ 
 				if(g.id==this.id)
-					playerData(g,WriteMode.REMOTE);
+					sendPlayerData(g,WriteMode.REMOTE);
 				else
-					playerData(g,WriteMode.LOCAL);
+					sendPlayerData(g,WriteMode.LOCAL);
 			}
 			if(!g.welcomed&&parent.players.size()>=2){
 				g.chat("Welcome to SAS4 Private Server!\n!help for a list of commands.",false);
@@ -389,7 +389,7 @@ class S4GameClient extends ClientContext {
 	}
 	/**Alert all players of the bot specified by target and then register it, since bots don't have output buffers.*/
 	public void registerBot(S4GameClient target) {
-		playerData(target,WriteMode.ALL);
+		sendPlayerData(target,WriteMode.ALL);
 		target.register();
 	}
 
@@ -559,7 +559,8 @@ class S4GameClient extends ClientContext {
 					return;
 				byte subop=buffer.get(offset+6);
 			//	System.out.println(HexFormat.of().formatHex(ByteBuffer.allocate(actualSize).put(0,buffer,offset,actualSize).array()));
-				//chat packet - possibly run commands
+				
+				//targeting packet(retarget if targeting a deadtab in LMS)
 				if(subop==5 && actualSize==32
 						//&& buffer.getInt(offset+11)==id
 						&& buffer.getInt(offset+15)==-1 
@@ -567,7 +568,7 @@ class S4GameClient extends ClientContext {
 						) {
 					var target=parent.getPlayer(buffer.getInt(offset+20));
 					if(target!=null && target.bot) {
-						buffer.putInt(offset+20,-1);//target this player
+						buffer.putInt(offset+20,-1);//-1 resets targeting
 						local(23)
 							.put((byte)-2)
 							.putInt(18).put((byte)(5))
@@ -578,6 +579,7 @@ class S4GameClient extends ClientContext {
 							.putInt(-1);//player to target
 					}
 				}
+				//chat packet - possibly run commands
 				if ((subop == 5) && (actualSize > 25&&buffer.getInt(offset+11)==0x3e7)) {
 					byte chat_length = buffer.get(offset+23);
 					if(actualSize>=24+chat_length && chat_length>0) {
@@ -604,6 +606,7 @@ class S4GameClient extends ClientContext {
 					//dont relay if no peers
 					if(getPeer()==null)break;
 				}
+				//loading/building packet - update loading status
 				else if(subop==0x07&&actualSize==20) {
 					float load=buffer.getFloat(offset+8);
 					if(!parent.started()) {
@@ -690,6 +693,7 @@ class S4GameClient extends ClientContext {
 					.position(remote.position()+actualSize-7);
 				break;
 			case -17:
+			//start button pressed
 			if(id==parent.host &&parent.allLoaded() && !parent.started())
 				startGame(true);
 			break;
@@ -737,7 +741,7 @@ class S4GameClient extends ClientContext {
 	 * type=bytearray |1| suboperation IF type -2 |data| - usually includes id and
 	 * level early on See o14519, o2144.
 	 */
-	public void playerData(S4GameClient source, WriteMode target) {
+	public void sendPlayerData(S4GameClient source, WriteMode target) {
 		int len = source.player.data().length+1;
 		int nameLen=len>2?ByteBuffer.wrap(source.player.data()).getShort():0;
 		byte loadPercent=source.bot?100:(byte) (source.load*100);
