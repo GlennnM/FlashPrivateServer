@@ -312,6 +312,7 @@ class CSGame{
 		p2.opponent = p1;
 		p1.side = false;
 		p2.side = true;
+		p1.score=p2.score=0;
 		setupRound();
 		p1.writeAll("%xt%6%-1%" + enemyPoint + "%" + execPoint + "%" + map + "%" + p2.name + "%" + p1.name + "%"
 				+ p2.pfp + "%" +p1.pfp + "%" + p2.gun + "%" + p1.gun + "%" + p2.rank + "%" + p1.rank + "%\0");
@@ -409,6 +410,8 @@ class BotCSServerThread extends CSClient {
 		float action = rng.nextFloat();
 		game.hitLock.lock();
 		try {
+			if(!game.alive || !game.roundActive)
+				return;
 			if (action > 0.85f)
 				this.opponent.hit(game.execX, game.execY);
 			else if (action > 0.15f)
