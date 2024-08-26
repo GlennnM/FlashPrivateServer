@@ -218,8 +218,13 @@ class CoopGameServer extends ServerContext {
 	}
 	
 	public void checkAlive() {
-		if((p1==null || !(p1.thread instanceof CoopGameClient))&&
+		if((p1==null || !(p1.thread instanceof CoopGameClient))||
 				(p2==null || !(p2.thread instanceof CoopGameClient))) {
+			if(code!=null && p1.thread !=null && p1.thread.alive) {
+				//if here, they are probably still hosting the pmatch
+				Scheduler.schedule(this::checkAlive,30000);
+				return;
+			}
 			this.alive=false;
 		}
 	}

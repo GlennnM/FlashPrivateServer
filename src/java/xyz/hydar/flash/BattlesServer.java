@@ -181,8 +181,8 @@ class BattlesClient extends LineClientContext {
 		timeouts++;
 		if (BattlesServer.queue1.contains(this) || BattlesServer.queue2.contains(this)) {
 			timeouts--;
-		}//TODO: timeout in pmatch lobby?
-		if (timeouts > 10) {
+		}
+		if (timeouts > 10 ) {
 			close();
 			return;
 		}
@@ -260,8 +260,13 @@ class BattlesGameServer extends ServerContext{
 	}
 	/**Runs 30 seconds after starting. If the game hasn't started, end it.*/
 	public void checkAlive() {
-		if((p1==null || !(p1.thread instanceof BattlesGameClient))&&
+		if((p1==null || !(p1.thread instanceof BattlesGameClient))||
 				(p2==null || !(p2.thread instanceof BattlesGameClient))) {
+			if(code!=null && p1.thread !=null && p1.thread.alive) {
+				//if here, they are probably still hosting the pmatch
+				Scheduler.schedule(this::checkAlive,30000);
+				return;
+			}
 			this.alive=false;
 			cleanup();
 		}
@@ -399,6 +404,7 @@ class BattlesGameClient extends LineClientContext {
 	private int actionParam = 0;
 	public int time = 0;//in game time
 	public volatile boolean syncFailed=false;
+	private boolean hasDartling=false;
 	public BattlesGameClient(BattlesGameServer parent){
 		super(StandardCharsets.ISO_8859_1,CONFIG.BATTLES_GAME);
 		this.parent=parent;
@@ -462,7 +468,6 @@ class BattlesGameClient extends LineClientContext {
 				actionType=TimedAction.NONE;
 			}
 		}
-		timeouts = 0;
 		if (BattlesServer.verbose)
 			System.out.println("#incoming: " + line);
 		String[] msg = line.split(",",-1);
@@ -477,6 +482,7 @@ class BattlesGameClient extends LineClientContext {
 				sendln("GimmeUrPlayerInfo");
 			return;
 		}
+		timeouts = 0;
 		if(!parent.full) {
 			if(msg[0].equals("IChangedBattleOptions")&&msg.length>1) {
 				parent.map = BattlesServer.MAPIDS.indexOf(msg[1]);
@@ -485,9 +491,12 @@ class BattlesGameClient extends LineClientContext {
 		}
 		//rest of message after ,
 		String tail=msg.length>1?line.substring(line.indexOf(',')):"";
-		opponent.sendln(switch (msg[0]) {
+		String response=switch (msg[0]) {
 			case "IChangedBattleOptions" -> "OpponentChangedBattleOptions" + tail;
-			case "IChangedMyTowerLoadout" -> "OpponentChangedTowerLoadout" + tail;
+			case "IChangedMyTowerLoadout" ->{ 
+				this.hasDartling=tail.contains("11");
+				yield "OpponentChangedTowerLoadout" + tail;
+			}
 			case "IRequestYourTowerLoadout" -> "OpponentRequestsMyTowerLoadout" + tail;
 			case "MyReadyToPlayStatus" -> "OpponentReadyStatus" + tail;
 			case "MyGameIsLoaded" -> "OpponentHasLoaded" + tail;
@@ -565,7 +574,9 @@ class BattlesGameClient extends LineClientContext {
 				yield handleRelay(msg,line);
 			}
 			default -> null;
-		});
+		};
+		if(response!=null)
+			opponent.sendln(response);
 	}
 	/**used by randomizing commands*/
 	private static String uniqueRandom(String[] list, int count,int max) {
@@ -658,7 +669,11 @@ class BattlesGameClient extends LineClientContext {
 				if(BattlesServer.verbose)
 					e.printStackTrace();
 			}
-		} else
+		} 
+		//allow before round 1 to make syncing faster
+		else if(msg.length>1 && msg[1].equals("SentMousePos") && !hasDartling && parent.round>=1)
+			return null;
+		else
 			return line;
 		return null;
 	}
