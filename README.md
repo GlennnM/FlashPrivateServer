@@ -27,11 +27,14 @@ There are different methods of running the PowerShell script. The methods are as
 4) Next, to run the script, enter in the following:
   `.\FlashClient.ps1`
 
-### Second Method
+### Second Method(does not work on Windows 11)
 
 1) Right-click the PowerShell file that you'd like to run and click on "Run With PowerShell"
 2) This will allow the script to run without having to do the above steps but Powershell will ask if you're sure you want to run this script.
 
+### Third Method
+
+1) Instead of the powershell file, download 'FlashClient.bat'(windows) or 'FlashClient.sh'(Mac) and run it. You might receive a warning since the application isn't signed.
 
 <br>That's it! Next time you start BTD Battles, BTD5, SAS3, Countersnipe, or SAS4 on the archive they will be modded to link to the private server, allowing you to play online with other players.<br><b>Enjoy!!</b><br>
 <br>Since the games are fairly inactive, you can play "solo" multiplayer with the following methods:<br>

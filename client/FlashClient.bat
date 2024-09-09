@@ -1,4 +1,11 @@
-﻿"Checking for Ninja Kiwi Archive..."
+﻿<#:
+@echo off
+    powershell /nologo /noprofile /command ^
+        "&{[ScriptBlock]::Create((cat """%~f0""") -join [Char[]]10).Invoke(@(&{$args}%*))}"
+  exit /b
+#>
+
+"Checking for Ninja Kiwi Archive..."
 if ($IsWindows -or $ENV:OS) {
 	$cache = $env:APPDATA + '\Ninja Kiwi Archive\Cache'
 	$zippath = 'https://github.com/GlennnM/FlashPrivateServer/releases/download/v3.8/cache_windows.zip'
