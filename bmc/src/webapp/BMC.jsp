@@ -1,3 +1,4 @@
+<%@page import="java.util.concurrent.atomic.AtomicReference"%>
 <%@page import="java.util.Objects"%>
 <%@page import="java.net.URI"%>
 <%@page import="java.net.http.HttpClient.Redirect"%>
@@ -12,8 +13,12 @@
     pageEncoding="ISO-8859-1"%> 
 <%@ page import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
 <%@ include file="AMF_utils.jsp" %>
-
+<%! static volatile JSONObject CORE = null;%>
 <%
+if(CORE==null){
+	CORE = new JSONObject(new String(request.getServletContext().getResourceAsStream("/bmc_core.json").readAllBytes(),
+			StandardCharsets.UTF_8));
+}
 if(request.getMethod().equals("POST")){  
 	int userID = Integer.parseInt(request.getParameter("userID"));
 	String operation =request.getParameter("operation");
@@ -23,7 +28,10 @@ if(request.getMethod().equals("POST")){
 	long sid = json.optLong("sid");
 	String nkApiId = Objects.toString(json.opt("nkApiId"));
 	String sessionID = Objects.toString(json.opt("sessionID"));
-	JSONObject responsePayload = new JSONObject();
+	JSONObject reply = new JSONObject();
+	if(!operation.equals("handshake"))
+		if(session.getAttribute("handshake") == null)
+			throw new RuntimeException("No handshake");
 	switch(operation){
 	case "handshake":
 		sessionID = session.getId();
@@ -65,6 +73,7 @@ if(request.getMethod().equals("POST")){
 		//we have succeeded
 		session.setAttribute("handshake", true);
 		session.setAttribute("userID", userID);
+		session.setAttribute("nkApiID", userID);
 		session.setAttribute("token", token);
 		session.setAttribute("sid", sid);
 		
@@ -78,21 +87,27 @@ if(request.getMethod().equals("POST")){
 		//get_inventory??????
 		//below is the proof of auth
 		//session.setAttribute(api id...
-		break;
-		default:
-			if(session.getAttribute("handshake") == null)
-				throw new RuntimeException("No handshake");
-			break;
-	}
-	var reply = new JSONObject()
-			.put("payload",responsePayload)
+				
+		reply = new JSONObject()
+			.put("payload",new JSONObject())
 			.put("nkApiID",session.getAttribute("nkApiID"))
 			.put("token",session.getAttribute("token"))
 			.put("sessionID",session.getId())
 			.put("success",true)
 			.put("sid",session.getAttribute("sid"));
+		break;
+		case "core":
+			//NOTE: most stuff here is actually user specific
+			reply = CORE;
+			return;
+		case "cities":
+			//NOTE: most stuff here is actually user specific
+			reply = CORE;
+			return;
+	}
 	response.resetBuffer();
 	out.print(reply.toString());
+	//TODO: nka does not seem to save session cookie
 	return;
 }else{
 	%><html><body>
