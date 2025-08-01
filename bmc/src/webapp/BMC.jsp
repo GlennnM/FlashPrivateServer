@@ -1,3 +1,4 @@
+<%@page import="java.util.concurrent.ConcurrentHashMap"%>
 <%@page import="java.util.concurrent.atomic.AtomicReference"%>
 <%@page import="java.util.Objects"%>
 <%@page import="java.net.URI"%>
@@ -13,7 +14,10 @@
     pageEncoding="ISO-8859-1"%> 
 <%@ page import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
 <%@ include file="AMF_utils.jsp" %>
-<%! static volatile JSONObject CORE = null;%>
+<%! 
+static volatile JSONObject CORE = null;
+static final Map<Integer,String> SESSIONS = new ConcurrentHashMap<>();
+%>
 <%
 if(CORE==null){
 	CORE = new JSONObject(new String(request.getServletContext().getResourceAsStream("/bmc_core.json").readAllBytes(),
@@ -22,19 +26,20 @@ if(CORE==null){
 if(request.getMethod().equals("POST")){  
 	int userID = Integer.parseInt(request.getParameter("userID"));
 	String operation =request.getParameter("operation");
-	int cityID = 0;
 	var json = new JSONObject(new String(request.getInputStream().readAllBytes(),StandardCharsets.UTF_8));
 	String token = Objects.toString(json.opt("token"));
 	long sid = json.optLong("sid");
 	String nkApiId = Objects.toString(json.opt("nkApiId"));
 	String sessionID = Objects.toString(json.opt("sessionID"));
+	String action = json.optString("action");
 	JSONObject reply = new JSONObject();
 	if(!operation.equals("handshake"))
-		if(session.getAttribute("handshake") == null)
-			throw new RuntimeException("No handshake");
+		if(!Objects.equals(sessionID,SESSIONS.get(userID)))
+			throw new RuntimeException("No handshake");//TODO: error about same sessions
 	switch(operation){
 	case "handshake":
 		sessionID = session.getId();
+		SESSIONS.put(userID,sessionID);
 		sid = System.currentTimeMillis();
 		
 		AMFMessage nkAuth = new AMFMessage();
@@ -98,16 +103,31 @@ if(request.getMethod().equals("POST")){
 		break;
 		case "core":
 			//NOTE: most stuff here is actually user specific
-			reply = CORE;
-			return;
+			if(action.equals("PUT")){
+				reply
+					.put("nkApiID",userID)
+					.put("sessionID",session.getId())
+					.put("success",true)
+					.put("tid",json.get("tid"));
+			}else 
+				reply = CORE;
+			break;
 		case "cities":
-			//NOTE: most stuff here is actually user specific
-			reply = CORE;
-			return;
+			String cityID = request.getParameter("cityID");
+			if("list".equals(cityID)){
+				reply.put("cityList",new JSONArray());
+			}
+			if(action.equals("PUT")){
+				reply
+					.put("nkApiID",userID)
+					.put("sessionID",session.getId())
+					.put("success",true)
+					.put("tid",json.get("tid"));
+			}
+			break;
 	}
 	response.resetBuffer();
 	out.print(reply.toString());
-	//TODO: nka does not seem to save session cookie
 	return;
 }else{
 	%><html><body>
