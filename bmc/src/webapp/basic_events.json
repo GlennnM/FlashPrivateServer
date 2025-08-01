@@ -1,0 +1,1955 @@
+[
+   {
+      "metadata":{
+         "Event-Preset":"ContractBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"contractsNT",
+         "News-Banner":"Bounty-Contracts-NT.jpg"
+      },
+      "rewardType":"none",
+      "name":"Contracts Bounty",
+      "start":1738569600000,
+      "icon":"",
+      "description":"",
+      "end":1738656000000,
+      "id":"m3y9ckvt",
+      "type":"Dynamic Event CB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Shambler",
+         "--Event-Rewards":"FB",
+         "--Bounty-Theme":"--Brutal"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1738656000000,
+      "icon":"",
+      "description":"",
+      "end":1738742400000,
+      "id":"m3y9ckt1",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"SAS Blitz no NM",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "News-Banner-BKP":"Championship-Blitz_trident_nonm.jpg",
+         "Event-Rewards":"RIA_Trident",
+         "News-Banner":""
+      },
+      "rewardType":"none",
+      "name":"Blitz no NM - Trident",
+      "start":1738742400000,
+      "icon":"",
+      "description":"",
+      "end":1739336400000,
+      "id":"m3y9cknh",
+      "type":"Championship",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"Vaccine"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1738742400000,
+      "icon":"",
+      "description":"",
+      "end":1738828800000,
+      "id":"m3y9ckq9",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"ZombiePods"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1738828800000,
+      "icon":"",
+      "description":"",
+      "end":1738915200000,
+      "id":"m3y9ckkp",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"LastStand"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1738915200000,
+      "icon":"",
+      "description":"",
+      "end":1739001600000,
+      "id":"m3y9ckhx",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"Onslaught"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1739001600000,
+      "icon":"",
+      "description":"",
+      "end":1739088000000,
+      "id":"m3y9ckf5",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"IceStation"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1739088000000,
+      "icon":"",
+      "description":"",
+      "end":1739174400000,
+      "id":"m3y9ckcd",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"LastStand"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1739174400000,
+      "icon":"",
+      "description":"",
+      "end":1739260800000,
+      "id":"m3y9ck9l",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"VIP"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1739260800000,
+      "icon":"",
+      "description":"",
+      "end":1739334600000,
+      "id":"m3y9ck6t",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"ContractBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"contractsNT",
+         "News-Banner":"Bounty-Contracts-NT.jpg"
+      },
+      "rewardType":"none",
+      "name":"Contracts Bounty",
+      "start":1739336400000,
+      "icon":"",
+      "description":"",
+      "end":1739433600000,
+      "id":"m3y9ck41",
+      "type":"Dynamic Event CB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Spitter",
+         "--Event-Rewards":"default",
+         "--Bounty-Theme":"--Beatdown"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1739433600000,
+      "icon":"",
+      "description":"",
+      "end":1739476800000,
+      "id":"m3y9ck19",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Runner",
+         "--Event-Rewards":"default",
+         "--Bounty-Theme":"--Chaos"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1739476800000,
+      "icon":"",
+      "description":"",
+      "end":1739520000000,
+      "id":"m3y9cjyh",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"LMSnorewards",
+         "Event-Preset":"Last Man Standing",
+         "--Map-Preset":"Survivors"
+      },
+      "rewardType":"none",
+      "name":"LMS",
+      "start":1739520000000,
+      "icon":"",
+      "description":"",
+      "end":1739606400000,
+      "id":"m3y9cjsx",
+      "type":"LastManStanding",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"LMS-Bounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"LMS-FB",
+         "News-Banner":"LMS-Bounty-FB.jpg"
+      },
+      "rewardType":"none",
+      "name":"LMS Bounty",
+      "start":1739520000000,
+      "icon":"",
+      "description":"",
+      "end":1739606400000,
+      "id":"m3y9cjvp",
+      "type":"Dynamic Event lms",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"Vaccine"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1739606400000,
+      "icon":"",
+      "description":"",
+      "end":1739692800000,
+      "id":"m3y9cjnd",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"BossBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"ALboss",
+         "News-Banner":"Bounty-Boss-AL.jpg"
+      },
+      "rewardType":"none",
+      "name":"Boss Bounty",
+      "start":1739606400000,
+      "icon":"",
+      "description":"",
+      "end":1739692800000,
+      "id":"m3y9cjq5",
+      "type":"Dynamic Event BB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"Meltdown"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1739692800000,
+      "icon":"",
+      "description":"",
+      "end":1739779200000,
+      "id":"m3y9cjht",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Runner",
+         "--Event-Rewards":"BK",
+         "--Bounty-Theme":"--Storm"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1739692800000,
+      "icon":"",
+      "description":"",
+      "end":1739736000000,
+      "id":"m3y9cjkl",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Shambler",
+         "--Event-Rewards":"BB",
+         "--Bounty-Theme":"--Rampage"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1739736000000,
+      "icon":"",
+      "description":"",
+      "end":1739779200000,
+      "id":"m3y9cjf1",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"ContractBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"contractsNT",
+         "News-Banner":"Bounty-Contracts-NT.jpg"
+      },
+      "rewardType":"none",
+      "name":"Contracts Bounty",
+      "start":1739779200000,
+      "icon":"",
+      "description":"",
+      "end":1739865600000,
+      "id":"m3y9cjc9",
+      "type":"Dynamic Event CB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"LMSnorewards",
+         "Event-Preset":"Last Man Standing",
+         "--Map-Preset":"Any"
+      },
+      "rewardType":"none",
+      "name":"LMS",
+      "start":1739865600000,
+      "icon":"",
+      "description":"",
+      "end":1739952000000,
+      "id":"m3y9cj6p",
+      "type":"LastManStanding",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"LMS-Bounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"LMS",
+         "News-Banner":"[PRESET_DEFINED]"
+      },
+      "rewardType":"none",
+      "name":"LMS Bounty",
+      "start":1739865600000,
+      "icon":"",
+      "description":"",
+      "end":1739952000000,
+      "id":"m3y9cj9h",
+      "type":"Dynamic Event lms",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"IceStation"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1739952000000,
+      "icon":"",
+      "description":"",
+      "end":1740038400000,
+      "id":"m3y9cj3x",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"BossBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"ALboss",
+         "News-Banner":"Bounty-Boss-AL.jpg"
+      },
+      "rewardType":"none",
+      "name":"Boss Bounty",
+      "start":1740038400000,
+      "icon":"",
+      "description":"",
+      "end":1740124800000,
+      "id":"m3y9cj15",
+      "type":"Dynamic Event BB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"LMSnorewards",
+         "Event-Preset":"Last Man Standing",
+         "--Map-Preset":"VIP"
+      },
+      "rewardType":"none",
+      "name":"LMS",
+      "start":1740124800000,
+      "icon":"",
+      "description":"",
+      "end":1740211200000,
+      "id":"m3y9civl",
+      "type":"LastManStanding",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"LMS-Bounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"LMS-FB",
+         "News-Banner":"LMS-Bounty-FB.jpg"
+      },
+      "rewardType":"none",
+      "name":"LMS Bounty",
+      "start":1740124800000,
+      "icon":"",
+      "description":"",
+      "end":1740211200000,
+      "id":"m3y9ciyd",
+      "type":"Dynamic Event lms",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"Meltdown"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1740211200000,
+      "icon":"",
+      "description":"",
+      "end":1740297600000,
+      "id":"m3y9ciq1",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Runner",
+         "--Event-Rewards":"BB",
+         "--Bounty-Theme":"--Storm"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1740211200000,
+      "icon":"",
+      "description":"",
+      "end":1740254400000,
+      "id":"m3y9cist",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Spitter",
+         "--Event-Rewards":"BK",
+         "--Bounty-Theme":"--Chaos"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1740254400000,
+      "icon":"",
+      "description":"",
+      "end":1740297600000,
+      "id":"m3y9cin9",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"ZombiePods"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1740297600000,
+      "icon":"",
+      "description":"",
+      "end":1740384000000,
+      "id":"m3y9cihp",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"BossBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"ALboss",
+         "News-Banner":"Bounty-Boss-AL.jpg"
+      },
+      "rewardType":"none",
+      "name":"Boss Bounty",
+      "start":1740297600000,
+      "icon":"",
+      "description":"",
+      "end":1740384000000,
+      "id":"m3y9cikh",
+      "type":"Dynamic Event BB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"ContractBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"contractsNT",
+         "News-Banner":"Bounty-Contracts-NT.jpg"
+      },
+      "rewardType":"none",
+      "name":"Contracts Bounty",
+      "start":1740384000000,
+      "icon":"",
+      "description":"",
+      "end":1740470400000,
+      "id":"m3y9ciex",
+      "type":"Dynamic Event CB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Shambler",
+         "--Event-Rewards":"FB",
+         "--Bounty-Theme":"--Brutal"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1740470400000,
+      "icon":"",
+      "description":"",
+      "end":1740556800000,
+      "id":"m3y9cic5",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"Vaccine"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1740556800000,
+      "icon":"",
+      "description":"",
+      "end":1740643200000,
+      "id":"m3y9ci6l",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"SAS Blitz no NM",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "News-Banner-BKP":"Championship-Blitz_trident_nonm.jpg",
+         "Event-Rewards":"HIKS_M1000",
+         "News-Banner":""
+      },
+      "rewardType":"none",
+      "name":"Blitz no NM - M1000",
+      "start":1740556800000,
+      "icon":"",
+      "description":"",
+      "end":1741150800000,
+      "id":"m3y9ci9d",
+      "type":"Championship",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"ZombiePods"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1740643200000,
+      "icon":"",
+      "description":"",
+      "end":1740729600000,
+      "id":"m3y9ci3t",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"LastStand"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1740729600000,
+      "icon":"",
+      "description":"",
+      "end":1740816000000,
+      "id":"m3y9ci11",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"Onslaught"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1740816000000,
+      "icon":"",
+      "description":"",
+      "end":1740902400000,
+      "id":"m3y9chy9",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"IceStation"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1740902400000,
+      "icon":"",
+      "description":"",
+      "end":1740988800000,
+      "id":"m3y9chvh",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"LastStand"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1740988800000,
+      "icon":"",
+      "description":"",
+      "end":1741075200000,
+      "id":"m3y9chsp",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"VIP"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1741075200000,
+      "icon":"",
+      "description":"",
+      "end":1741149000000,
+      "id":"m3y9chpx",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"ContractBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"contractsNT",
+         "News-Banner":"Bounty-Contracts-NT.jpg"
+      },
+      "rewardType":"none",
+      "name":"Contracts Bounty",
+      "start":1741150800000,
+      "icon":"",
+      "description":"",
+      "end":1741248000000,
+      "id":"m3y9chn5",
+      "type":"Dynamic Event CB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Spitter",
+         "--Event-Rewards":"default",
+         "--Bounty-Theme":"--Beatdown"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1741248000000,
+      "icon":"",
+      "description":"",
+      "end":1741291200000,
+      "id":"m3y9chkd",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Runner",
+         "--Event-Rewards":"default",
+         "--Bounty-Theme":"--Chaos"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1741291200000,
+      "icon":"",
+      "description":"",
+      "end":1741334400000,
+      "id":"m3y9chhl",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"LMS-Bounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"LMS-FB",
+         "News-Banner":"LMS-Bounty-FB.jpg"
+      },
+      "rewardType":"none",
+      "name":"LMS Bounty",
+      "start":1741334400000,
+      "icon":"",
+      "description":"",
+      "end":1741420800000,
+      "id":"m3y9chc1",
+      "type":"Dynamic Event lms",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"LMSnorewards",
+         "Event-Preset":"Last Man Standing",
+         "--Map-Preset":"Survivors"
+      },
+      "rewardType":"none",
+      "name":"LMS",
+      "start":1741334400000,
+      "icon":"",
+      "description":"",
+      "end":1741420800000,
+      "id":"m3y9chet",
+      "type":"LastManStanding",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"BossBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"ALboss",
+         "News-Banner":"Bounty-Boss-AL.jpg"
+      },
+      "rewardType":"none",
+      "name":"Boss Bounty",
+      "start":1741420800000,
+      "icon":"",
+      "description":"",
+      "end":1741507200000,
+      "id":"m3y9ch6h",
+      "type":"Dynamic Event BB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"Vaccine"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1741420800000,
+      "icon":"",
+      "description":"",
+      "end":1741507200000,
+      "id":"m3y9ch99",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Runner",
+         "--Event-Rewards":"BK",
+         "--Bounty-Theme":"--Storm"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1741507200000,
+      "icon":"",
+      "description":"",
+      "end":1741550400000,
+      "id":"m3y9ch0x",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"Meltdown"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1741507200000,
+      "icon":"",
+      "description":"",
+      "end":1741593600000,
+      "id":"m3y9ch3p",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Shambler",
+         "--Event-Rewards":"BB",
+         "--Bounty-Theme":"--Rampage"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1741550400000,
+      "icon":"",
+      "description":"",
+      "end":1741593600000,
+      "id":"m3y9cgy5",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"ContractBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"contractsNT",
+         "News-Banner":"Bounty-Contracts-NT.jpg"
+      },
+      "rewardType":"none",
+      "name":"Contracts Bounty",
+      "start":1741593600000,
+      "icon":"",
+      "description":"",
+      "end":1741680000000,
+      "id":"m3y9cgvd",
+      "type":"Dynamic Event CB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"LMS-Bounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"LMS",
+         "News-Banner":"[PRESET_DEFINED]"
+      },
+      "rewardType":"none",
+      "name":"LMS Bounty",
+      "start":1741680000000,
+      "icon":"",
+      "description":"",
+      "end":1741766400000,
+      "id":"m3y9cgpt",
+      "type":"Dynamic Event lms",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"LMSnorewards",
+         "Event-Preset":"Last Man Standing",
+         "--Map-Preset":"Any"
+      },
+      "rewardType":"none",
+      "name":"LMS",
+      "start":1741680000000,
+      "icon":"",
+      "description":"",
+      "end":1741766400000,
+      "id":"m3y9cgsl",
+      "type":"LastManStanding",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"IceStation"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1741766400000,
+      "icon":"",
+      "description":"",
+      "end":1741852800000,
+      "id":"m3y9cgn1",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"BossBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"ALboss",
+         "News-Banner":"Bounty-Boss-AL.jpg"
+      },
+      "rewardType":"none",
+      "name":"Boss Bounty",
+      "start":1741852800000,
+      "icon":"",
+      "description":"",
+      "end":1741939200000,
+      "id":"m3y9cgk9",
+      "type":"Dynamic Event BB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"LMS-Bounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"LMS-FB",
+         "News-Banner":"LMS-Bounty-FB.jpg"
+      },
+      "rewardType":"none",
+      "name":"LMS Bounty",
+      "start":1741939200000,
+      "icon":"",
+      "description":"",
+      "end":1742025600000,
+      "id":"m3y9cgep",
+      "type":"Dynamic Event lms",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"LMSnorewards",
+         "Event-Preset":"Last Man Standing",
+         "--Map-Preset":"VIP"
+      },
+      "rewardType":"none",
+      "name":"LMS",
+      "start":1741939200000,
+      "icon":"",
+      "description":"",
+      "end":1742025600000,
+      "id":"m3y9cghh",
+      "type":"LastManStanding",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Runner",
+         "--Event-Rewards":"BB",
+         "--Bounty-Theme":"--Storm"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1742025600000,
+      "icon":"",
+      "description":"",
+      "end":1742068800000,
+      "id":"m3y9cg95",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"Meltdown"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1742025600000,
+      "icon":"",
+      "description":"",
+      "end":1742112000000,
+      "id":"m3y9cgbx",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Spitter",
+         "--Event-Rewards":"BK",
+         "--Bounty-Theme":"--Chaos"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1742068800000,
+      "icon":"",
+      "description":"",
+      "end":1742112000000,
+      "id":"m3y9cg6d",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"BossBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"ALboss",
+         "News-Banner":"Bounty-Boss-AL.jpg"
+      },
+      "rewardType":"none",
+      "name":"Boss Bounty",
+      "start":1742112000000,
+      "icon":"",
+      "description":"",
+      "end":1742198400000,
+      "id":"m3y9cg0t",
+      "type":"Dynamic Event BB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"ZombiePods"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1742112000000,
+      "icon":"",
+      "description":"",
+      "end":1742198400000,
+      "id":"m3y9cg3l",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"ContractBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"contractsNT",
+         "News-Banner":"Bounty-Contracts-NT.jpg"
+      },
+      "rewardType":"none",
+      "name":"Contracts Bounty",
+      "start":1742198400000,
+      "icon":"",
+      "description":"",
+      "end":1742284800000,
+      "id":"m3y9cfy1",
+      "type":"Dynamic Event CB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Shambler",
+         "--Event-Rewards":"FB",
+         "--Bounty-Theme":"--Brutal"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1742284800000,
+      "icon":"",
+      "description":"",
+      "end":1742371200000,
+      "id":"m3y9cfuz",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"SAS Blitz no NM",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "News-Banner-BKP":"Championship-Blitz_furie_nm.jpg",
+         "Event-Rewards":"Furie",
+         "News-Banner":""
+      },
+      "rewardType":"none",
+      "name":"Blitz no NM - Furie",
+      "start":1742371140000,
+      "icon":"",
+      "description":"",
+      "end":1742965140000,
+      "id":"m821gzyx",
+      "type":"Championship",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"Vaccine"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1742371200000,
+      "icon":"",
+      "description":"",
+      "end":1742457600000,
+      "id":"m821gzw5",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"ZombiePods"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1742457600000,
+      "icon":"",
+      "description":"",
+      "end":1742544000000,
+      "id":"m821gztd",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"LastStand"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1742544000000,
+      "icon":"",
+      "description":"",
+      "end":1742630400000,
+      "id":"m821gzql",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"Onslaught"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1742630400000,
+      "icon":"",
+      "description":"",
+      "end":1742716800000,
+      "id":"m821gznt",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"IceStation"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1742716800000,
+      "icon":"",
+      "description":"",
+      "end":1742803200000,
+      "id":"m821gzl1",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"LastStand"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1742803200000,
+      "icon":"",
+      "description":"",
+      "end":1742889600000,
+      "id":"m821gzi9",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"VIP"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1742889600000,
+      "icon":"",
+      "description":"",
+      "end":1742963400000,
+      "id":"m821gzfh",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"ContractBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"contractsNT",
+         "News-Banner":"Bounty-Contracts-NT.jpg"
+      },
+      "rewardType":"none",
+      "name":"Contracts Bounty",
+      "start":1742965200000,
+      "icon":"",
+      "description":"",
+      "end":1743062400000,
+      "id":"m821gzcp",
+      "type":"Dynamic Event CB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Spitter",
+         "--Event-Rewards":"default",
+         "--Bounty-Theme":"--Beatdown"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1743062400000,
+      "icon":"",
+      "description":"",
+      "end":1743105600000,
+      "id":"m821gz9x",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Runner",
+         "--Event-Rewards":"default",
+         "--Bounty-Theme":"--Chaos"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1743105600000,
+      "icon":"",
+      "description":"",
+      "end":1743148800000,
+      "id":"m821gz75",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"LMS-Bounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"LMS-FB",
+         "News-Banner":"LMS-Bounty-FB.jpg"
+      },
+      "rewardType":"none",
+      "name":"LMS Bounty",
+      "start":1743148800000,
+      "icon":"",
+      "description":"",
+      "end":1743235200000,
+      "id":"m821gz1l",
+      "type":"Dynamic Event lms",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"LMSnorewards",
+         "Event-Preset":"Last Man Standing",
+         "--Map-Preset":"Survivors"
+      },
+      "rewardType":"none",
+      "name":"LMS",
+      "start":1743148800000,
+      "icon":"",
+      "description":"",
+      "end":1743235200000,
+      "id":"m821gz4d",
+      "type":"LastManStanding",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"BossBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"ALboss",
+         "News-Banner":"Bounty-Boss-AL.jpg"
+      },
+      "rewardType":"none",
+      "name":"Boss Bounty",
+      "start":1743235200000,
+      "icon":"",
+      "description":"",
+      "end":1743321600000,
+      "id":"m821gyw1",
+      "type":"Dynamic Event BB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"Vaccine"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1743235200000,
+      "icon":"",
+      "description":"",
+      "end":1743321600000,
+      "id":"m821gyyt",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Runner",
+         "--Event-Rewards":"BK",
+         "--Bounty-Theme":"--Storm"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1743321600000,
+      "icon":"",
+      "description":"",
+      "end":1743364800000,
+      "id":"m821gyqh",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"Meltdown"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1743321600000,
+      "icon":"",
+      "description":"",
+      "end":1743408000000,
+      "id":"m821gyt9",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Shambler",
+         "--Event-Rewards":"BB",
+         "--Bounty-Theme":"--Rampage"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1743364800000,
+      "icon":"",
+      "description":"",
+      "end":1743408000000,
+      "id":"m821gynp",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"ContractBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"contractsNT",
+         "News-Banner":"Bounty-Contracts-NT.jpg"
+      },
+      "rewardType":"none",
+      "name":"Contracts Bounty",
+      "start":1743408000000,
+      "icon":"",
+      "description":"",
+      "end":1743494400000,
+      "id":"m821gykx",
+      "type":"Dynamic Event CB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"LMS-Bounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"LMS",
+         "News-Banner":"[PRESET_DEFINED]"
+      },
+      "rewardType":"none",
+      "name":"LMS Bounty",
+      "start":1743494400000,
+      "icon":"",
+      "description":"",
+      "end":1743580800000,
+      "id":"m821gyfd",
+      "type":"Dynamic Event lms",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"LMSnorewards",
+         "Event-Preset":"Last Man Standing",
+         "--Map-Preset":"Any"
+      },
+      "rewardType":"none",
+      "name":"LMS",
+      "start":1743494400000,
+      "icon":"",
+      "description":"",
+      "end":1743580800000,
+      "id":"m821gyi5",
+      "type":"LastManStanding",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"IceStation"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1743580800000,
+      "icon":"",
+      "description":"",
+      "end":1743667200000,
+      "id":"m821gycl",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"BossBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"ALboss",
+         "News-Banner":"Bounty-Boss-AL.jpg"
+      },
+      "rewardType":"none",
+      "name":"Boss Bounty",
+      "start":1743667200000,
+      "icon":"",
+      "description":"",
+      "end":1743753600000,
+      "id":"m821gy9t",
+      "type":"Dynamic Event BB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"LMS-Bounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"LMS-FB",
+         "News-Banner":"LMS-Bounty-FB.jpg"
+      },
+      "rewardType":"none",
+      "name":"LMS Bounty",
+      "start":1743753600000,
+      "icon":"",
+      "description":"",
+      "end":1743840000000,
+      "id":"m821gy49",
+      "type":"Dynamic Event lms",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"LMSnorewards",
+         "Event-Preset":"Last Man Standing",
+         "--Map-Preset":"VIP"
+      },
+      "rewardType":"none",
+      "name":"LMS",
+      "start":1743753600000,
+      "icon":"",
+      "description":"",
+      "end":1743840000000,
+      "id":"m821gy71",
+      "type":"LastManStanding",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Runner",
+         "--Event-Rewards":"BB",
+         "--Bounty-Theme":"--Storm"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1743840000000,
+      "icon":"",
+      "description":"",
+      "end":1743883200000,
+      "id":"m821gxyp",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Virus Samples",
+         "--Map-Preset":"Meltdown"
+      },
+      "rewardType":"none",
+      "name":"Virus Sample",
+      "start":1743840000000,
+      "icon":"",
+      "description":"",
+      "end":1743926400000,
+      "id":"m821gy1h",
+      "type":"VirusSamples",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"Spitter",
+         "--Event-Rewards":"BK",
+         "--Bounty-Theme":"--Chaos"
+      },
+      "rewardType":"none",
+      "name":"Bounty",
+      "start":1743883200000,
+      "icon":"",
+      "description":"",
+      "end":1743926400000,
+      "id":"m821gxvx",
+      "type":"DynamicBounty",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "Event-Preset":"BossBounty",
+         "Event-Icon":"[PRESET_DEFINED]",
+         "Event-Rewards":"ALboss",
+         "News-Banner":"Bounty-Boss-AL.jpg"
+      },
+      "rewardType":"none",
+      "name":"Boss Bounty",
+      "start":1743926400000,
+      "icon":"",
+      "description":"",
+      "end":1744012800000,
+      "id":"m821gxqd",
+      "type":"Dynamic Event BB",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   },
+   {
+      "metadata":{
+         "--Event-Rewards":"default",
+         "Event-Preset":"Apocalypse",
+         "--Map-Preset":"ZombiePods"
+      },
+      "rewardType":"none",
+      "name":"AP",
+      "start":1743926400000,
+      "icon":"",
+      "description":"",
+      "end":1744012800000,
+      "id":"m821gxt5",
+      "type":"Apocalypse",
+      "priority":1,
+      "rewards":[
+         
+      ],
+      "frequency":"single"
+   }
+]
