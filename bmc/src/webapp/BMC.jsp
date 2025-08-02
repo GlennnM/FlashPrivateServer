@@ -33,7 +33,7 @@ static{
 <%
 LAST_SKU_UPDATE.accumulateAndGet(System.currentTimeMillis(), (current, given)->{
 	try{
-		if(given - current > 24*3600){
+		if(given - current > 24*3600*1000){
 			createSKU(7,"",request);
 			return given;
 		}
