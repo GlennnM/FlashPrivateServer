@@ -85,10 +85,6 @@ if(request.getMethod().equals("POST")){
 			System.err.println("WARNING: AUTH SKIPPED!!!");
 		//we have succeeded
 		session.setAttribute("handshake", true);
-		session.setAttribute("userID", userID);
-		session.setAttribute("nkApiID", userID);
-		session.setAttribute("token", token);
-		session.setAttribute("sid", sid);
 		
 		//If UID not in DB, create it with a new API ID. we need a db anyways theres stuff to store
 		//or do we???
@@ -103,11 +99,12 @@ if(request.getMethod().equals("POST")){
 				
 		reply = new JSONObject()
 			.put("payload",new JSONObject())
-			.put("nkApiID",session.getAttribute("nkApiID"))
-			.put("token",session.getAttribute("token"))
+			.put("nkApiID",userID)
+			.put("token",token)
 			.put("sessionID",session.getId())
 			.put("success",true)
-			.put("sid",session.getAttribute("sid"));
+			.put("sid",sid)
+			.put("serverTime",sid);
 		break;
 		case "core":
 			//NOTE: most stuff here is actually user specific
