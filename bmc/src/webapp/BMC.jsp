@@ -14,16 +14,21 @@
     pageEncoding="ISO-8859-1"%> 
 <%@ page import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
 <%@ include file="AMF_utils.jsp" %>
+<%@ include file="BMC_Data.jsp" %>
 <%! 
-static volatile JSONObject CORE = null;
 static final Map<Integer,String> SESSIONS = new ConcurrentHashMap<>();
+static final boolean DO_NK_AUTH = false;
+static final BMCData DATA;
+static{
+	try{
+		DATA = new BMCData(new FileObjectStore(Path.of("./objects")));//TODO: obviously not .
+	}catch(IOException ioe){
+		throw new RuntimeException(ioe);
+	}
+}
 %>
 <%
-if(CORE==null){
-	CORE = new JSONObject(new String(request.getServletContext().getResourceAsStream("/bmc_core.json").readAllBytes(),
-			StandardCharsets.UTF_8));
-}
-if(request.getMethod().equals("POST")){  
+if(request.getMethod().equals("POST")){   
 	int userID = Integer.parseInt(request.getParameter("userID"));
 	String operation =request.getParameter("operation");
 	var json = new JSONObject(new String(request.getInputStream().readAllBytes(),StandardCharsets.UTF_8));
@@ -31,50 +36,53 @@ if(request.getMethod().equals("POST")){
 	long sid = json.optLong("sid");
 	String nkApiId = Objects.toString(json.opt("nkApiId"));
 	String sessionID = Objects.toString(json.opt("sessionID"));
-	String action = json.optString("action");
+	String action = json.optString("action"); 
+	System.out.println("->"+action);
 	JSONObject reply = new JSONObject();
-	if(!operation.equals("handshake"))
-		if(!Objects.equals(sessionID,SESSIONS.get(userID)))
-			throw new RuntimeException("No handshake");//TODO: error about same sessions
+	//if(!operation.equals("handshake"))
+	//	if(!Objects.equals(sessionID,SESSIONS.get(userID)))
+	//		throw new RuntimeException("No handshake");//TODO: error about same sessions
 	switch(operation){
-	case "handshake":
+	case "handshake": 
 		sessionID = session.getId();
 		SESSIONS.put(userID,sessionID);
 		sid = System.currentTimeMillis();
 		
-		AMFMessage nkAuth = new AMFMessage();
-		var serializer = ByteAMF.serializer();
-		var body = new AMFBody("user.get_koins", "/1", List.of(userID, token), AMFBody.DATA_TYPE_ARRAY);
-		nkAuth.addBody(body);
-		serializer.serialize(nkAuth);
-		byte[] amfPayload = serializer.get();
-		
-		try(HttpClient client = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build()){
-			HttpRequest req = HttpRequest.newBuilder()
-					.header("Content-Type", "x-amf")
-					.header("Accept-Encoding","gzip, deflate, br")
-					.header("Accept-Language","en-US")
-					.header("Referer","https://assets.nkstatic.com/nklogin/Banana.swf?gamename=BTD5")
-					.header("Origin","https://assets.nkstatic.com")
-					.header("Sec-Fetch-Dest","embed")
-					.header("Sec-Fetch-Mode","no-cors")
-					.header("Sec-Fetch-Site","cross-site")
-					.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) NinjaKiwiArchive/1.1.0 Chrome/80.0.3987.86 Electron/8.0.1 Safari/537.36")
-					.header("X-Requested-With","ShockwaveFlash/11.2.999.999")
-					.POST(BodyPublishers.ofByteArray(amfPayload))
-					.uri(URI.create("https://mynk.ninjakiwi.com/gateway"))
-					.build();
-			HttpResponse<byte[]> amfResponse = client.send(req, BodyHandlers.ofByteArray());
-			if(amfResponse.statusCode() != 200)
-				throw new RuntimeException("Auth failure "+amfResponse.statusCode());
-			AMFBodies bodies = AMFBodies.from(amfResponse.body());
-			System.out.println(bodies);
-			AMFBody b = bodies.iterator().next();
-			if(b.getTarget().contains("onStatus") || 
-					b.getType() != AMFBody.DATA_TYPE_OBJECT ||
-					((Map<?,?>)b.getValue()).get("koins")==null)
-				throw new RuntimeException("Auth failure 500");
-		}
+		if(DO_NK_AUTH)
+			try(HttpClient client = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build()){
+				AMFMessage nkAuth = new AMFMessage();
+				var serializer = ByteAMF.serializer();
+				var body = new AMFBody("user.get_koins", "/1", List.of(userID, token), AMFBody.DATA_TYPE_ARRAY);
+				nkAuth.addBody(body);
+				serializer.serialize(nkAuth);
+				byte[] amfPayload = serializer.get();
+				HttpRequest req = HttpRequest.newBuilder()
+						.header("Content-Type", "x-amf")
+						.header("Accept-Encoding","gzip, deflate, br")
+						.header("Accept-Language","en-US")
+						.header("Referer","https://assets.nkstatic.com/nklogin/Banana.swf?gamename=BTD5")
+						.header("Origin","https://assets.nkstatic.com")
+						.header("Sec-Fetch-Dest","embed")
+						.header("Sec-Fetch-Mode","no-cors")
+						.header("Sec-Fetch-Site","cross-site")
+						.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) NinjaKiwiArchive/1.1.0 Chrome/80.0.3987.86 Electron/8.0.1 Safari/537.36")
+						.header("X-Requested-With","ShockwaveFlash/11.2.999.999")
+						.POST(BodyPublishers.ofByteArray(amfPayload))
+						.uri(URI.create("https://mynk.ninjakiwi.com/gateway"))
+						.build();
+				HttpResponse<byte[]> amfResponse = client.send(req, BodyHandlers.ofByteArray());
+				if(amfResponse.statusCode() != 200)
+					throw new RuntimeException("Auth failure "+amfResponse.statusCode());
+				AMFBodies bodies = AMFBodies.from(amfResponse.body());
+				System.out.println(bodies);
+				AMFBody b = bodies.iterator().next(); 
+				if(b.getTarget().contains("onStatus") || 
+						b.getType() != AMFBody.DATA_TYPE_OBJECT ||
+						((Map<?,?>)b.getValue()).get("koins")==null)
+					throw new RuntimeException("Auth failure 500");
+			}
+		else 
+			System.err.println("WARNING: AUTH SKIPPED!!!");
 		//we have succeeded
 		session.setAttribute("handshake", true);
 		session.setAttribute("userID", userID);
@@ -103,26 +111,56 @@ if(request.getMethod().equals("POST")){
 		break;
 		case "core":
 			//NOTE: most stuff here is actually user specific
-			if(action.equals("PUT")){
+
+			if(action.equals("GET")){
+				reply = DATA.getCore(userID);
+			}else if(action.equals("PUT")){
+				boolean success = DATA.putCore(userID, json.getJSONObject("payload"));
 				reply
 					.put("nkApiID",userID)
 					.put("sessionID",session.getId())
-					.put("success",true)
+					.put("success",success)
+					.put("sid",System.currentTimeMillis())
 					.put("tid",json.get("tid"));
-			}else 
-				reply = CORE;
+			}
 			break;
 		case "cities":
 			String cityID = request.getParameter("cityID");
 			if("list".equals(cityID)){
-				reply.put("cityList",new JSONArray());
-			}
-			if(action.equals("PUT")){
-				reply
-					.put("nkApiID",userID)
-					.put("sessionID",session.getId())
-					.put("success",true)
-					.put("tid",json.get("tid"));
+				reply = DATA.getCityList(userID);
+				break;
+			}else if(cityID==null){
+				if(action.equals("GET")){
+					reply = DATA.getCities(userID);
+				}else if(action.equals("PUT")){
+
+					boolean success = DATA.putCities(userID, json.getJSONObject("payload"));
+					//System.out.println(new FileObjectStore(Path.of("./objects")).dump());
+					reply
+						.put("nkApiID",userID)
+						.put("sessionID",session.getId())
+						.put("success",success)
+						.put("sid",System.currentTimeMillis())
+						.put("tid",json.get("tid"));
+				}
+			}else{
+				int city = Integer.parseInt(cityID);
+				String target = request.getParameter("target");
+				if(action.equals("GET")){
+					reply = target == null ? 
+							DATA.getCity(userID, city):
+							DATA.getCityThing(userID, city, target);
+				}else if(action.equals("PUT")){
+					boolean success = target == null ? 
+							DATA.putCity(userID, city, json.getJSONObject("payload")):
+							DATA.putCityThing(userID, Integer.parseInt(cityID), target, json.getJSONObject("payload"));
+					reply
+						.put("nkApiID",userID)
+						.put("sessionID",session.getId())
+						.put("success", success)
+						.put("sid",System.currentTimeMillis())
+						.put("tid",json.get("tid"));
+				}
 			}
 			break;
 	}

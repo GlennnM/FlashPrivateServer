@@ -1,3 +1,10 @@
+<%@page import="java.util.Scanner"%>
+<%@page import="java.util.Spliterators"%>
+<%@page import="java.util.stream.Collectors"%>
+<%@page import="java.util.stream.Stream"%>
+<%@page import="java.util.stream.IntStream"%>
+<%@page import="java.util.function.UnaryOperator"%>
+<%@page import="org.json.JSONArray"%>
 <%@page import="java.util.zip.CRC32"%>
 <%@page import="java.io.File"%>
 <%@page import="java.util.concurrent.ConcurrentMap"%>
@@ -22,105 +29,326 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
     pageEncoding="ISO-8859-1"%> 
 <%@ page import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
-<%! 
+<%!
+public static class Defaults{
+	public static JSONObject CORE = new JSONObject().put("core",new JSONObject());
+}
 /**does stuff like putCity(0,{},..)*/
 public static class BMCData{
-	
+	private final ObjectStore store;
+	public BMCData(ObjectStore store){
+		this.store = store;
+	}
+	public JSONObject getCore(int userID){
+		return store.get(List.of("monkeyCity", ""+userID, "core"), Defaults.CORE);
+	}
+	//return success/failure thing?
+	public boolean putCore(int userID, JSONObject payload){
+		return store.put(List.of("monkeyCity", ""+userID, "core"), payload);
+	}
+	public JSONObject getCityList(int userID){
+		JSONArray ret = new JSONArray();
+		for(int i=0;i<=1;i++){
+			var info = getCityThing(userID, i, "info");
+			if(info!=null){
+				JSONObject newThing = new JSONObject();
+				newThing
+					.put("name", info.get("cityName"))
+					.put("level", info.get("level"))
+					.put("attacks", new JSONArray())
+					.put("index", i);
+				ret.put(newThing);
+			}
+		}
+		return new JSONObject()
+				.put("success", true)
+				.put("cityList", ret);
+	}
+	/**
+	public JSONObject getCityInfo(int userID, int cityID){
+		return getCityThing(userID, cityID, "info");
+	}
+	public boolean putCityInfo(int userID, int cityID, JSONObject payload){
+		return putCityThing(userID, cityID, "info", payload);
+	}
+	public JSONObject getCityContent(int userID, int cityID){
+		return getCityThing(userID, cityID, "info");
+	}
+	public boolean putCityInfo(int userID, int cityID, JSONObject payload){
+		return putCityThing(userID, cityID, "info", payload);
+	}*/
+	//TODO: compose the city from city things
+	public JSONObject getCities(int userID){
+		return store.get("monkeyCity", ""+userID, "cities");
+	}
+	public boolean putCities(int userID, JSONObject payload){
+		int cityID = payload.getJSONObject("cityInfo").getInt("cityIndex");
+		return putCity(userID, cityID, payload);
+		//return store.put(List.of("monkeyCity", ""+userID, "cities"), payload);
+	}
+	public JSONObject getCity(int userID, int cityID){
+		var info = getCityThing(userID,cityID,"info");
+		var content = getCityThing(userID,cityID,"content");
+		return info==null? null: 
+			new JSONObject()
+				.put("cityInfo",info)
+				.put("content",content)
+				.put("success", true);
+	}
+	//CONVERT TO NEW FORMAT
+	public boolean putCity(int userID, int cityID, JSONObject payload){
+		
+		var info = payload.getJSONObject("cityInfo");
+		var newInfo = new JSONObject()
+				.put("index",cityID)
+				.put("level",info.opt("cityLevel"))
+				.put("cityName",info.get("name"))
+				.put("xp",info.optInt("xp"))
+				.put("xpDebt",info.optInt("xpDebt"))
+				.put("userName",payload.get("userName"))
+				.put("userClan",payload.get("userClan"))
+				//TODO: pacifistExpiresAt
+				;
+		var newContent = new JSONObject()
+				.put("tiles",payload.get("tiles"))
+				.put("cityResources",payload.get("cityResources"))
+				.put("worldSeed",payload.get("worldSeed"))
+				.put("terrainData",payload.get("terrainData"))
+				.put("cityQuests",payload.get("quests"));
+		
+		return store.put(List.of("monkeyCity", ""+userID, "cities", ""+cityID, "info"), newInfo)
+			&& store.put(List.of("monkeyCity", ""+userID, "cities", ""+cityID, "content"), newContent);
+		//return store.put(List.of("monkeyCity", ""+userID, "cities", ""+cityID), payload);
+	}
+	public JSONObject getCore(int userID, int cityID){
+		return store.get(List.of("monkeyCity", ""+userID, "core"), Defaults.CORE);
+	}
+	public JSONObject getCityThing(int userID, int cityID, String thing){
+		return store.get("monkeyCity", ""+userID, "cities", ""+cityID, thing);
+	}
+	public static Iterable<JSONObject> jIter(JSONArray array){
+		return (Iterable<JSONObject>)(()->Spliterators.iterator(jStream(array).spliterator()));
+	}
+	public static Stream<JSONObject> jStream(JSONArray array){
+		return IntStream.range(0,array.length())
+		.mapToObj(array::getJSONObject);
+	}
+	private static long key(JSONObject tile){
+		return ((long)tile.getInt("x")<<32)|(tile.getInt("y")&-1L);
+	}
+	public JSONObject mergeContent(JSONObject content, JSONObject update){
+		if(content==null)
+			content = new JSONObject();
+		var tiles = content.optJSONArray("tiles", new JSONArray());
+		var newTiles = update.optJSONArray("tiles", new JSONArray());
+		//System.out.println(content);
+		//System.out.println(tiles);
+		//System.out.println(newTiles);
+		var updateContent = update.optJSONObject("content", new JSONObject());
+		for(String key:updateContent.keySet()){
+			if(!key.equals("tiles"))
+				content.put(key,updateContent.get(key));
+		}
+		var tileMap = jStream(tiles).collect(Collectors.toMap(BMCData::key, x->x));
+		//System.out.println(tileMap);
+		for(var tile: jIter(newTiles)){
+			long key = key(tile);
+			//System.out.println(key);
+			var oldTile = tileMap.get(key);
+			if(oldTile==null)
+				tiles.put(tile);
+			else
+				oldTile.put("tileData",tile.getString("tileData"));
+		}
+		//System.out.println(tiles);
+		content.put("tiles",tiles);
+		return content;
+	}
+	//cityName INDEX LEVEL XP
+	public JSONObject mergeInfo(JSONObject info, JSONObject update){
+		if(info==null)
+			info = new JSONObject();
+		var change = update.getJSONObject("cityInfoChange");
+		if(change!=null)
+			info.put("cityName",update.get("cityName"))
+				.put("level", update.get("cityLevel")) 
+				.put("xp", info.optInt("xp") + change.optInt("xp"))
+				.put("xpDebt", info.optInt("xpDebt") + change.optInt("xpDebt"))
+				.put("honour", info.optInt("honour") + change.optInt("honour"));
+		return info;
+	}
+	public boolean updateContent(int userID, int cityID, JSONObject payload){
+		return store.update(List.of("monkeyCity", ""+userID, "cities", ""+cityID, "content"), x->mergeContent(x, payload));
+	}
+	public boolean updateInfo(int userID, int cityID, JSONObject payload){
+		return store.update(List.of("monkeyCity", ""+userID, "cities", ""+cityID, "info"), x->mergeInfo(x, payload));
+	}
+	public boolean putCityThing(int userID, int cityID, String thing, JSONObject payload) {
+		return switch (thing) {
+			case "content" -> updateContent(userID, cityID, payload);
+			case "info" -> updateInfo(userID, cityID, payload);
+			default -> store.put(List.of("monkeyCity", "" + userID, "cities", "" + cityID, thing), payload);
+		};
+	}
 }
+
 /**stuff like put(url, ..., ...)*/
-public static interface ObjectStore{
-	public default JSONObject get(String... url){
+public static interface ObjectStore {
+	public default JSONObject get(String... url) {
 		return get(String.join("/", url));
 	}
-	public default JSONObject get(Iterable<String> url){
-		return get(String.join("/", url));
+
+	public default JSONObject get(Iterable<String> url) {
+		return get(String.join("/", url)); 
 	}
-	public default JSONObject get(String url, JSONObject fallback){
+
+	public default JSONObject get(String url, JSONObject fallback) {
 		var ret = get(url);
 		return ret == null ? fallback : ret;
 	}
-	public default JSONObject get(Iterable<String> url, JSONObject fallback){
+
+	public default JSONObject get(Iterable<String> url, JSONObject fallback) {
 		var ret = get(url);
 		return ret == null ? fallback : ret;
 	}
+
+	public default boolean put(Iterable<String> url, JSONObject payload) {
+		return put(String.join("/", url), payload);
+	}
+
+	public default boolean update(Iterable<String> url, UnaryOperator<JSONObject> update) {
+		return update(String.join("/", url), update);
+	}
+
+	public default boolean delete(String... url) {
+		return delete(String.join("/", url));
+	}
+
+	public default boolean delete(Iterable<String> url) {
+		return delete(String.join("/", url));
+	}
+
 	public JSONObject get(String url);
+
 	public boolean has(String url);
+
 	public boolean delete(String url);
+
 	public boolean put(String url, JSONObject payload);
+
+	public default boolean update(String url, UnaryOperator<JSONObject> update) {
+		return put(url, update.apply(get(url)));
+	}
 }
+
 /**uses b64's of the urls so it is always in the same folder*/
-public static class FileObjectStore implements ObjectStore{
+public static class FileObjectStore implements ObjectStore {
 	private final Path root;
 	//we lock using this, without ever adding to it
-	private final ConcurrentMap<Path,Void> urlLock = new ConcurrentHashMap<>();
-	public FileObjectStore(Path root) throws IOException{
-		if(!Files.exists(root))
+	private final ConcurrentMap<Path, Void> urlLock = new ConcurrentHashMap<>();
+
+	public FileObjectStore(Path root) throws IOException {
+		if (!Files.exists(root))
 			Files.createDirectories(root);
-		if(!Files.isDirectory(root))
-			throw new IllegalArgumentException("Not a dir: "+root);
+		if (!Files.isDirectory(root))
+			throw new IllegalArgumentException("Not a dir: " + root);
 		this.root = root;
 	}
-	private Path map(String url){
+
+	public List<String> dump(){
+		try{
+			return Files.walk(root, 2).filter(Files::isRegularFile).peek(System.out::println)
+				.map(x -> {
+					try{
+					return x.getParent().getFileName().toString() + "->"
+						+ new String(Base64.getDecoder().decode(x.getFileName().toString().trim()), UTF_8)
+						+ " -> "
+						+ Files.readString(x);
+					}catch(IOException e){
+						return "";
+					}
+				}).toList();
+		}catch(IOException e){throw new RuntimeException(e);}
+	}
+
+	public Path map(String url) {
 		String newURL = Base64.getEncoder().encodeToString(url.getBytes(UTF_8));
 		CRC32 crc = new CRC32();
 		crc.update(url.getBytes(UTF_8));
-		int bucket = (int)(crc.getValue()) & 0x7ff;
-		return root.resolve(new StringBuilder()
-				.append(bucket)
-				.append(File.separatorChar)
-				.append(newURL)
-				.toString()
-			);
+		int bucket = (int) (crc.getValue()) & 0x7ff;
+		return root.resolve(new StringBuilder().append(bucket).append(File.separatorChar).append(newURL).toString());
 	}
+
 	@Override
-	public JSONObject get(String url){
+	public JSONObject get(String url) {
 		Path path = map(url);
 		AtomicReference<JSONObject> holder = new AtomicReference<>();//for stupid lambda thing
-		urlLock.compute(path,(k,v)->{
-			try{
+		urlLock.compute(path, (k, v) -> {
+			try {
 				holder.setOpaque(new JSONObject(Files.readString(path)));
-			}catch(IOException e){
+			} catch (IOException e) {
 				holder.setOpaque(null);
 			}
 			return null;
 		});
 		return holder.getOpaque();
 	}
+
 	@Override
-	public boolean has(String url){
+	public boolean has(String url) {
 		Path path = map(url);
 		AtomicReference<Boolean> holder = new AtomicReference<>();//for stupid lambda thing
-		urlLock.compute(path,(k,v)->{
+		urlLock.compute(path, (k, v) -> {
 			holder.setOpaque(Files.exists(path));
 			return null;
 		});
 		return holder.getOpaque();
 	}
+
 	@Override
-	public boolean put(String url, JSONObject payload){
+	public boolean put(String url, JSONObject payload) {
 		Path path = map(url);
 		AtomicReference<Boolean> holder = new AtomicReference<>();//for stupid lambda thing
-		urlLock.compute(path,(k,v)->{
-			try{
-				Files.createDirectories(path);
+		urlLock.compute(path, (k, v) -> {
+			try {
+				Files.createDirectories(path.getParent());
 				Files.writeString(path, payload.toString());
 				holder.setOpaque(true);
-			}catch(IOException e){
+			} catch (IOException e) {
 				holder.setOpaque(false);
 			}
 			return null;
 		});
 		return holder.getOpaque();
 	}
+
 	@Override
-	public boolean delete(String url){
+	public boolean update(String url, UnaryOperator<JSONObject> update) {
 		Path path = map(url);
 		AtomicReference<Boolean> holder = new AtomicReference<>();//for stupid lambda thing
-		urlLock.compute(path,(k,v)->{
-			try{
+		urlLock.compute(path, (k, v) -> {
+			try {
+				JSONObject input = Files.exists(path) ? new JSONObject(Files.readString(path)) : null;
+				Files.createDirectories(path.getParent());
+				Files.writeString(path, update.apply(input).toString());
+				holder.setOpaque(true);
+			} catch (IOException e) {
+				holder.setOpaque(false);
+			}
+			return null;
+		});
+		return holder.getOpaque();
+	}
+
+	@Override
+	public boolean delete(String url) {
+		Path path = map(url);
+		AtomicReference<Boolean> holder = new AtomicReference<>();//for stupid lambda thing
+		urlLock.compute(path, (k, v) -> {
+			try {
 				Files.delete(path);
 				holder.setOpaque(true);
-			}catch(IOException e){
+			} catch (IOException e) {
 				holder.setOpaque(false);
 			}
 			return null;
@@ -133,10 +361,11 @@ public static class FileObjectStore implements ObjectStore{
 %>
 <%
 
-var fos = new FileObjectStore(Path.of("."));
-fos.put("data/0/ach", new JSONObject());
-fos.delete("data/0/ach");
-fos.put("data/0/ach", new JSONObject());
+var fos = new FileObjectStore(Path.of("./objects"));
 %><%=
-fos.get("data/0/ach")
+fos.map("monkeyCity/24095321/cities")
+%><%=
+fos.get("monkeyCity/24095321/cities/0/content")
+%><%=
+fos.dump()
 %>
