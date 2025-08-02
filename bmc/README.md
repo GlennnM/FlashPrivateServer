@@ -1,5 +1,5 @@
-#BMC Server
-###Building
+# BMC Server
+### Building
 To build(starting from this folder) requires jdk17 and git - use git bash or powershell if on windows:
 
 1. `git clone https://github.com/GlennnM/Hydar-Web-Server ; cd Hydar-Web-Server`
@@ -11,7 +11,7 @@ To make client - either replace url in BMC SWF(https://web-monkey-city.ninjakiwi
 
 effect on achievements and stuff isn't entirely known(most likely your tiles ones will be reset), use an alt if you can!!!
 
-###Status
+### Status
 
 **working:** 
 - handshake (login) - can use NK auth if enabled
