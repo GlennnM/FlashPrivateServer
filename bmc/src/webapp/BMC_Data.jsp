@@ -42,10 +42,6 @@ public static class BMCData{
 	public JSONObject getCore(int userID){
 		return store.get(List.of("monkeyCity", ""+userID, "core"), Defaults.CORE);
 	}
-	//return success/failure thing?
-	public boolean putCore(int userID, JSONObject payload){
-		return store.put(List.of("monkeyCity", ""+userID, "core"), payload);
-	}
 	public JSONObject getCityList(int userID){
 		JSONArray ret = new JSONArray();
 		for(int i=0;i<=1;i++){
@@ -141,26 +137,20 @@ public static class BMCData{
 			content = new JSONObject();
 		var tiles = content.optJSONArray("tiles", new JSONArray());
 		var newTiles = update.optJSONArray("tiles", new JSONArray());
-		//System.out.println(content);
-		//System.out.println(tiles);
-		//System.out.println(newTiles);
 		var updateContent = update.optJSONObject("content", new JSONObject());
 		for(String key:updateContent.keySet()){
 			if(!key.equals("tiles"))
 				content.put(key,updateContent.get(key));
 		}
-		var tileMap = jStream(tiles).collect(Collectors.toMap(BMCData::key, x->x));
-		//System.out.println(tileMap);
+		var tileMap = jStream(tiles).collect(Collectors.toMap(BMCData::key, x->x, (x,y)->y));
 		for(var tile: jIter(newTiles)){
 			long key = key(tile);
-			//System.out.println(key);
 			var oldTile = tileMap.get(key);
 			if(oldTile==null)
 				tiles.put(tile);
 			else
 				oldTile.put("tileData",tile.getString("tileData"));
 		}
-		//System.out.println(tiles);
 		content.put("tiles",tiles);
 		return content;
 	}
@@ -176,6 +166,24 @@ public static class BMCData{
 				.put("xpDebt", info.optInt("xpDebt") + change.optInt("xpDebt"))
 				.put("honour", info.optInt("honour") + change.optInt("honour"));
 		return info;
+	}
+	public JSONObject mergeCore(JSONObject core, JSONObject update){
+		if(core==null)
+			core = new JSONObject();
+		for(String topKey: List.of("core", "monkeyKnowledge", "crates")){
+			JSONObject oldCore = core.optJSONObject(topKey, new JSONObject());
+			JSONObject newCore = update.optJSONObject(topKey);
+			if(newCore!=null){
+				for(String key:newCore.keySet()){
+					oldCore.put(key,newCore.get(key));
+				}
+			}
+			core.put(topKey, oldCore);
+		}
+		return core;
+	}
+	public boolean updateCore(int userID, JSONObject payload){
+		return store.update(List.of("monkeyCity", ""+userID, "core"), x->mergeCore(x, payload));
 	}
 	public boolean updateContent(int userID, int cityID, JSONObject payload){
 		return store.update(List.of("monkeyCity", ""+userID, "cities", ""+cityID, "content"), x->mergeContent(x, payload));

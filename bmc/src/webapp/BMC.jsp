@@ -85,18 +85,6 @@ if(request.getMethod().equals("POST")){
 			System.err.println("WARNING: AUTH SKIPPED!!!");
 		//we have succeeded
 		session.setAttribute("handshake", true);
-		
-		//If UID not in DB, create it with a new API ID. we need a db anyways theres stuff to store
-		//or do we???
-		//files moment
-		//Contact NK to verify token(??? sus)
-		//All other requests must verify the API id.
-		//the token is the real authenticator, so we can maybe just use a seeded API id???
-		//yes
-		//get_inventory??????
-		//below is the proof of auth
-		//session.setAttribute(api id...
-				
 		reply = new JSONObject()
 			.put("payload",new JSONObject())
 			.put("nkApiID",userID)
@@ -107,12 +95,10 @@ if(request.getMethod().equals("POST")){
 			.put("serverTime",sid);
 		break;
 		case "core":
-			//NOTE: most stuff here is actually user specific
-
 			if(action.equals("GET")){
 				reply = DATA.getCore(userID);
 			}else if(action.equals("PUT")){
-				boolean success = DATA.putCore(userID, json.getJSONObject("payload"));
+				boolean success = DATA.updateCore(userID, json.getJSONObject("payload"));
 				reply
 					.put("nkApiID",userID)
 					.put("sessionID",session.getId())
@@ -159,6 +145,15 @@ if(request.getMethod().equals("POST")){
 						.put("tid",json.get("tid"));
 				}
 			}
+			break;
+		case "crate":
+			//put with no payload = use 1 crate?
+			break;
+		case "pvp":
+			//core, friends, timestamp, quickmatch/honor/level???
+			break;
+		case "contest":
+			//join, ???
 			break;
 	}
 	response.resetBuffer();
