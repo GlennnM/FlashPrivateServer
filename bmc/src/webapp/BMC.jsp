@@ -182,9 +182,39 @@ if(request.getMethod().equals("POST")){
 			//put with no payload = use 1 crate?
 			break;
 		case "pvp":
+			cityID = request.getParameter("cityID");
 			//core, friends, timestamp, quickmatch/honor/level???
 			break;
 		case "contest":
+			target = request.getParameter("target");
+			cityID = request.getParameter("cityID");
+			int city = Integer.parseInt(cityID);
+			if(action.equals("GET")){
+
+				reply = target == null ? 
+						null:
+						switch(target){
+							case "history" -> DATA.getCTHistory(userID, city);
+							default -> null;
+						};
+				reply
+					.put("success", true);
+			}
+			else if(action.equals("PUT")){
+				reply = target == null ? 
+						null:
+						switch(target){
+							case "score" -> new JSONObject();
+							case "join" -> DATA.joinCT(userID, city, json.getJSONObject("payload"));
+							default -> null;
+						};
+				reply
+					.put("nkApiID",userID)
+					.put("sessionID",session.getId())
+					.put("success", true)
+					.put("sid",System.currentTimeMillis())
+					.put("tid",json.get("tid"));
+			}
 			//none(info about current ct prob), join, score/room, loot/room, history(TODO: generate based on ach?), history/room/claim, history/room/close
 			break;
 		case "knowledge":

@@ -145,6 +145,36 @@ public static class BMCData{
 		var crates =  getCore(userID).optJSONObject("crates");
 		return crates==null ? DEFAULT_CRATES() : crates;
 	}
+	public JSONObject getCTHistory(int userID, int cityID){
+		//contains room.id and stuff of last week's event
+		return new JSONObject();
+	}
+	public JSONObject joinCT(int userID, int cityID, JSONObject payload){
+		return new JSONObject()
+			.put("contestedTerritory", 
+				new JSONObject().put("cities", new JSONArray()
+					.put(new JSONObject().put("userName",payload.get("userName"))
+							.put("userName",payload.get("userName"))
+							.put("userID",userID)
+							.put("cityLevel",payload.get("cityLevel"))
+							.put("cityName",payload.get("cityName"))
+							))
+				.put("data",payload.get("data"))
+				.put("score",new JSONObject()
+						.put("current",0)
+						.put("best",0)
+						.put("time",0)
+						.put("durationTime",0)
+						.put("duration",0)
+						.put("durationWithoutCurrent",0)
+						)
+				.put("roomID",1)
+				.put("levelTier",1)
+				.put("minRounds",1)
+				.put("lastLootTime",-1)
+			);
+			
+	}
 	public JSONObject getCityThing(int userID, int cityID, String thing){
 		return store.get("monkeyCity", ""+userID, "cities", ""+cityID, thing);
 	}
