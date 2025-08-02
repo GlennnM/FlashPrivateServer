@@ -2,7 +2,7 @@
 ###Building
 To build(starting from this folder) requires jdk17 and git - use git bash or powershell if on windows:
 
-1. `git clone https://github.com/GlennnM/Hydar-Web-Server && cd Hydar-Web-Server`
+1. `git clone https://github.com/GlennnM/Hydar-Web-Server ; cd Hydar-Web-Server`
 2. `cp -R ../lib .`
 3. (WINDOWS) `./compile_hydar.bat ../flash.properties`<br>
  (OTHER) `./compile_hydar.sh ../flash.properties`
