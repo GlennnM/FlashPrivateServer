@@ -147,13 +147,30 @@ if(request.getMethod().equals("POST")){
 			}
 			break;
 		case "crate":
+			String target = request.getParameter("target");
+			if(action.equals("GET")){
+				reply = DATA.getCrates(userID);
+			}else if(action.equals("PUT")){
+				boolean success = target == null ? 
+						DATA.useCrate(userID): true;
+				reply
+					.put("nkApiID",userID)
+					.put("sessionID",session.getId())
+					.put("success", success)
+					.put("sid",System.currentTimeMillis())
+					.put("tid",json.get("tid"));
+			}
+			//none, request, send, get/put for crate, buy/sends(exists???), bonus(??????)
 			//put with no payload = use 1 crate?
 			break;
 		case "pvp":
 			//core, friends, timestamp, quickmatch/honor/level???
 			break;
 		case "contest":
-			//join, ???
+			//none(info about current ct prob), join, score/room, loot/room, history(TODO: generate based on ach?), history/room/claim, history/room/close
+			break;
+		case "knowledge":
+			//unused
 			break;
 	}
 	response.resetBuffer();

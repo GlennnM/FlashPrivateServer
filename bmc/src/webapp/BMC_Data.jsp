@@ -1,3 +1,4 @@
+<%@page import="java.util.concurrent.atomic.AtomicBoolean"%>
 <%@page import="java.util.Scanner"%>
 <%@page import="java.util.Spliterators"%>
 <%@page import="java.util.stream.Collectors"%>
@@ -118,6 +119,28 @@ public static class BMCData{
 	}
 	public JSONObject getCore(int userID, int cityID){
 		return store.get(List.of("monkeyCity", ""+userID, "core"), Defaults.CORE);
+	}
+	private JSONObject DEFAULT_CRATES(){
+		return new JSONObject()
+				.put("own",0)
+				.put("requested", new JSONArray())
+				.put("sent", new JSONArray())
+				.put("pending", new JSONArray())
+				.put("received", new JSONArray());
+	}
+	public boolean useCrate(int userID){
+		return store.update(List.of("monkeyCity", ""+userID, "core"),
+			core->{
+				var crates = core.optJSONObject("crates");
+				if(crates==null)
+					crates=DEFAULT_CRATES();
+				core.put("crates", crates.put("own",crates.optInt("own",0)-1));
+				return core;
+			});
+	}
+	public JSONObject getCrates(int userID){
+		var crates =  getCore(userID).optJSONObject("crates");
+		return crates==null ? DEFAULT_CRATES() : crates;
 	}
 	public JSONObject getCityThing(int userID, int cityID, String thing){
 		return store.get("monkeyCity", ""+userID, "cities", ""+cityID, thing);
