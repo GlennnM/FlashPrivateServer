@@ -25,6 +25,7 @@ effect on achievements and stuff isn't entirely known(most likely your tiles one
 - CT
 - crates
 - starting city based on tiles achievements?
+- performance(some things like tile format are very bad)
 - deployment *need to move leaderboards and stuff to https since this has auth
 - client *need to add NKMultiArchive into the main script to make it appear
 - maybe a beta with a swf or something on a test server before that
