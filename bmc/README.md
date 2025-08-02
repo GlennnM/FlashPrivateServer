@@ -1,10 +1,11 @@
 # BMC Server
 ### Building
-To build(starting from this folder) requires jdk17 and git - use git bash or powershell if on windows:
+Requires jdk17 and git. Use git bash or powershell if on windows.
 
-1. `git clone https://github.com/GlennnM/Hydar-Web-Server ; cd Hydar-Web-Server`
-2. `cp -R ../lib .`
-3. (WINDOWS) `./compile_hydar.bat ../flash.properties`<br>
+1. `git clone https://github.com/GlennnM/FlashPrivateServer ; cd FlashPrivateServer/bmc`
+2. `git clone https://github.com/GlennnM/Hydar-Web-Server ; cd Hydar-Web-Server`
+3. `cp -R ../lib .`
+4. (WINDOWS) `./compile_hydar.bat ../flash.properties`<br>
  (OTHER) `./compile_hydar.sh ../flash.properties`
 
 To make client - either replace url in BMC SWF(https://web-monkey-city.ninjakiwi.com/ -> http://localhost:5572)<br>or just play the game with a fiddler rule active that performs the same redirect
