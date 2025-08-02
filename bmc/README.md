@@ -8,7 +8,7 @@ Requires jdk17 and git. Use git bash or powershell if on windows.
 4. (WINDOWS) `./compile_hydar.bat ../flash.properties`<br>
  (OTHER) `./compile_hydar.sh ../flash.properties`
 
-To make client - either replace url in BMC SWF(https://web-monkey-city.ninjakiwi.com/ -> http://localhost:5572)<br>or just play the game with a fiddler rule active that performs the same redirect
+To make client - either replace url in BMC SWF(https://web-monkey-city.ninjakiwi.com/ -> http://localhost:5572)<br>or just play the game with a fiddler rule active that performs the same redirect, i.e.:<br> (`regex:^https://web-monkey-city.ninjakiwi.com/` -> `http://localhost:5572/`)
 
 effect on achievements and stuff isn't entirely known(most likely your tiles ones will be reset), use an alt if you can!!!
 
