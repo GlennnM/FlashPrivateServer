@@ -166,7 +166,11 @@ if(request.getMethod().equals("POST")){
 				reply = DATA.getCrates(userID);
 			}else if(action.equals("PUT")){
 				boolean success = target == null ? 
-						DATA.useCrate(userID): true;
+						DATA.useCrate(userID): 
+						switch(target){
+							case "bonus" -> DATA.modifyCrates(userID, json.getJSONObject("payload").optInt("amount"));
+							default -> true;
+						};
 				reply
 					.put("nkApiID",userID)
 					.put("sessionID",session.getId())

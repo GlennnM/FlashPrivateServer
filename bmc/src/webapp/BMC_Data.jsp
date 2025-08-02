@@ -129,12 +129,15 @@ public static class BMCData{
 				.put("received", new JSONArray());
 	}
 	public boolean useCrate(int userID){
+		return modifyCrates(userID, -1);
+	}
+	public boolean modifyCrates(int userID, int n){
 		return store.update(List.of("monkeyCity", ""+userID, "core"),
 			core->{
 				var crates = core.optJSONObject("crates");
 				if(crates==null)
 					crates=DEFAULT_CRATES();
-				core.put("crates", crates.put("own",crates.optInt("own",0)-1));
+				core.put("crates", crates.put("own",crates.optInt("own",0) + n));
 				return core;
 			});
 	}
