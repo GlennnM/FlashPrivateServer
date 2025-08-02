@@ -29,38 +29,44 @@
 <%@page import="java.util.TimeZone"%>
 <%@page import="java.time.ZoneId"%>
 <%@page import="java.time.LocalDateTime"%>
-<%!private static final LocalDateTime FEB_3_2025;
+<%!private static final LocalDateTime FEB_3_2025;//sas4 origin
+ private static final LocalDateTime APR_30_2025;//bmc origin
 	private static final ZoneId MINUS8 = ZoneId.of("GMT-8");
-	public static volatile JSONArray basicEvents = null;
+	public static volatile JSONArray basicEvents7 = null;
+	public static volatile JSONArray basicEvents14 = null;
 	static {
 		TimeZone MINUS8 = TimeZone.getTimeZone("GMT-8");
 		Calendar c = Calendar.getInstance(MINUS8);
+		
 		c.set(2025, 1, 3, 0, 0, 0);
 		FEB_3_2025 = LocalDateTime.ofInstant(c.toInstant(), ZoneId.of("GMT-8"));
+		
+		c.set(2025, 3, 30, 0, 0, 0);
+		APR_30_2025 = LocalDateTime.ofInstant(c.toInstant(), ZoneId.of("GMT-8"));
 	}
 
-	public static int offset2(LocalDateTime day) {
+	public static int offset(LocalDateTime day, LocalDateTime origin) {
 		//LocalDateTime now=LocalDateTime.now(MINUS8);
-		return (int) ChronoUnit.DAYS.between(FEB_3_2025, day) * (day.isAfter(FEB_3_2025) ? 1 : -1);
+		return (int) ChronoUnit.DAYS.between(origin, day) * (day.isAfter(origin) ? 1 : -1);
 	}
 
 	//1. getEventMap give list of json objects ready to go for a day
 	//2. if there were already events on that day, use those instead
 	//3. we don't care about things older than before startDay at all, but will add them from old SKU regardless
 	//new idea: "special events" file that will override what comes from here
-	public static List<JSONObject> getEvents(HttpServletRequest request, int startDay, int endDay) {//ie -90, 14
+	public static List<JSONObject> getEvents(HttpServletRequest request, int startDay, int endDay, int repeat, LocalDateTime origin, JSONArray basicEvents) {//ie -90, 14
 		LocalDateTime startTime = LocalDateTime.now(MINUS8).plusDays(startDay);
 		LocalDateTime endTime = LocalDateTime.now(MINUS8).plusDays(endDay);
-		int modifyStartBy = offset2(startTime) / 63;
-		int modifyEndBy = offset2(endTime) / 63;
+		int modifyStartBy = offset(startTime, origin) / repeat;
+		int modifyEndBy = offset(endTime, origin) / repeat;
 		List<JSONObject> finalEvents = new ArrayList<>();
 		for (int offsetBy = modifyStartBy - 1; offsetBy <= modifyEndBy + 1; offsetBy++) {
 			for (int i = 0; i < basicEvents.length(); i++) {
 				JSONObject event = new JSONObject(basicEvents.getJSONObject(i).toString());
 				LocalDateTime eventStart = LocalDateTime.ofInstant(Instant.ofEpochMilli(event.getLong("start")), MINUS8)
-						.plusDays(offsetBy * 63);
+						.plusDays(offsetBy * repeat);
 				LocalDateTime eventEnd = LocalDateTime.ofInstant(Instant.ofEpochMilli(event.getLong("end")), MINUS8)
-						.plusDays(offsetBy * 63);
+						.plusDays(offsetBy * repeat);
 				if (eventEnd.isAfter(startTime) && eventStart.isBefore(endTime)) {
 					String id = event.getString("id");
 					event.put("id", offsetBy == 0 ? id : "NEW" + offsetBy + "_" + id);
@@ -146,12 +152,23 @@
 		}
 		return new String(sku_dec, 14, sku_dec.length - 14, StandardCharsets.UTF_8);
 	}
+	public static void createSKU(int id, String sig, HttpServletRequest request)
+			throws IOException, NoSuchAlgorithmException {
+		switch(id){
+		case 7:
+			createSKU(id,"/99d5c454171a3f5027a0563eb784a366.json", sig, -8, 8, 28, request, APR_30_2025, basicEvents7);
+			break;
+		case 14:
+			createSKU(id,"/9a0a8254da299947492b4e1eb15291f1.json", sig, -30, 14, 63, request, FEB_3_2025, basicEvents14);
+			break;
+		}
+	}
 	/**
 	* Create SKU file, will be saved to file given by URL
 	* Should be run at least every few days on requests (use ctx.consumeSKU after)
 	* not all requests since that would make lag
 	*/
-	public synchronized static void createSKU(int id, String url, String sig, HttpServletRequest request)
+	public synchronized static void createSKU(int id, String url, String sig, int start, int end, int repeat, HttpServletRequest request, LocalDateTime origin, JSONArray basicEvents)
 			throws IOException, NoSuchAlgorithmException {
 		var sku_enc = request.getServletContext().getResourceAsStream("/" + id + "_ORIGIN.json").readAllBytes();
 		var sku_dec = decrypt(sku_enc);
@@ -160,7 +177,7 @@
 		var tmp = new JSONObject(data3.substring(data3.indexOf("{")));
 		var sku_real = new JSONObject(tmp.getString("data"));
 		var events = sku_real.getJSONObject("settings").getJSONArray("events");
-		List<JSONObject> newEvents = getEvents(request, -30, 14);
+		List<JSONObject> newEvents = getEvents(request, start, end, repeat, origin, basicEvents);
 		newEvents.addAll(IntStream.range(0, events.length()).mapToObj(events::getJSONObject)
 				.filter(x -> x.getLong("end") > System.currentTimeMillis()).toList());
 		sku_real.getJSONObject("settings").put("events", new JSONArray(newEvents));
@@ -180,20 +197,25 @@
 
 	}%>
 	<%
-if (basicEvents == null)
-	basicEvents = new JSONArray(
-	new String(request.getServletContext().getResourceAsStream("/basic_events.json").readAllBytes(),
+if (basicEvents7 == null)
+	basicEvents7 = new JSONArray(
+	new String(request.getServletContext().getResourceAsStream("/7_basic_events.json").readAllBytes(),
+			StandardCharsets.UTF_8));
+if (basicEvents14 == null)
+	basicEvents14 = new JSONArray(
+	new String(request.getServletContext().getResourceAsStream("/14_basic_events.json").readAllBytes(),
 			StandardCharsets.UTF_8));
 	%>
 <%--
 
 //createSKU(14,request);
-List<JSONObject> finalEvents = getEvents(request, -120, 120);
+List<JSONObject> finalEvents = getEvents(request, -120, 120, 63, FEB_3_2025, basicEvents14);
 out.println(finalEvents);
 
 //out.println("<br>");
 //for(var j:finalEvents){ 
-byte[] sku_enc = request.getServletContext().getResourceAsStream("/" + 14 + "_ORIGIN.json").readAllBytes();
+createSKU(7,"",request);
+byte[] sku_enc = request.getServletContext().getResourceAsStream("/99d5c454171a3f5027a0563eb784a366.json").readAllBytes();
 var sku_dec = decrypt(sku_enc);
 String data3 = new String(sku_dec);
 var tmp = new JSONObject(data3.substring(data3.indexOf("{")));
@@ -201,22 +223,25 @@ var sku_real = new JSONObject(tmp.getString("data"));
 var events = sku_real.getJSONObject("settings").getJSONArray("events");
 
 
-var eventList = IntStream.range(0,basicEvents.length())
-	.mapToObj(basicEvents::getJSONObject)
+var eventList = IntStream.range(0,events.length())
+	.mapToObj(events::getJSONObject)
 	.sorted(Comparator.comparing(x->x.getLong("start")))
 	.toList();
 //for(int i=0;i<events.length();i++){ 
 //	JSONObject j = new JSONObject(events.getJSONObject(i).toString());
 			//new JSONObject(((HashMap<String,Object>)basicEvents.getJSONObject(i).toMap()).clone() );
 	//System.out.println(j);
-Set<String> ids = Arrays.stream("m3y9ckvt,m3y9ckt1,m3y9cknh,m3y9cknh_MedalsEarned,m3y9ckq9,m3y9ckkp,m3y9ckhx,m3y9ckf5,m3y9ckcd,m3y9ck9l,m3y9ck6t,m3y9ck41,m3y9ck19,m3y9cjyh,m3y9cjsx,m3y9cjvp,m3y9cjnd,m3y9cjq5,m3y9cjht,m3y9cjkl,m3y9cjf1,m3y9cjc9,m3y9cj6p,m3y9cj9h,m3y9cj3x,m3y9cj15,m3y9civl,m3y9ciyd,m3y9ciq1,m3y9cist,m3y9cin9,m3y9cihp,m3y9cikh,m3y9ciex,m3y9cic5,m3y9ci6l,m3y9ci9d,m3y9ci9d_MedalsEarned,m3y9ci3t,m3y9ci11,m3y9chy9,m3y9chvh,m3y9chsp,m3y9chpx,m3y9chn5,m3y9chkd,m3y9chhl,m3y9chc1,m3y9chet,m3y9ch6h,m3y9ch99,m3y9ch0x,m3y9ch3p,m3y9cgy5,m3y9cgvd,m3y9cgpt,m3y9cgsl,m3y9cgn1,m3y9cgk9,m3y9cgep,m3y9cghh,m3y9cg95,m3y9cgbx,m3y9cg6d,m3y9cg0t,m3y9cg3l,m3y9cfy1,m3y9cfuz,m821gzyx,m821gzyx_MedalsEarned,m821gzw5,m821gztd,m821gzql,m821gznt,m821gzl1,m821gzi9,m821gzfh,m821gzcp,m821gz9x,m821gz75,m821gz1l,m821gz4d,m821gyw1,m821gyyt,m821gyqh,m821gyt9,m821gynp,m821gykx,m821gyfd,m821gyi5,m821gycl,m821gy9t,m821gy49,m821gy71,m821gxyp,m821gy1h,m821gxvx,m821gxqd,m821gxt5,m821gxnl,m821gxkt"
-				.split(",")).collect(Collectors.toSet());
-response.resetBuffer();
-for(var j:finalEvents){ 		 
+/**Set<String> ids = Arrays.stream(
+		"m8wtyl0h,m8wtyl39,m8wtyks5,m8wtykux,m8wtykml,m8wtykpd,m8wtykjt,m8wtyke9,m8wtykh1,m8wtyk8p,m8wtykbh,m8wtyk5x,m8wtyk0d,m8wtyk35,m8wtyjup,m8wtyjxl,m967sw6u,m967sw9m,m967sw1a,m967sw42,m967svyi,m967svsy,m967svvq,m967svne,m967svq6,m967svhu,m967svkm,m967svca,m967svf2,m967sv6q,m967sv9i,m967sv16,m967sv3y,m967susu,m967suvm,m967suye,m967suna,m967suq2,m967suhq,m967suki,m967suey,m967su9e,m967suc6,m967su3u,m967su6m,m967su12,m967stvi,m967stya,m967stpy,m967stsq,m967sthm,m967stke,m967stn6,m967steu,m967st9a,m967stc2,m967st6i,m967st0y,m967st3q,m967ssve,m967ssy6,m967sspu,m967sssm,m967sska,m967ssn2,m967sshi,m967ss96"
+		//"m3y9ckvt,m3y9ckt1,m3y9cknh,m3y9cknh_MedalsEarned,m3y9ckq9,m3y9ckkp,m3y9ckhx,m3y9ckf5,m3y9ckcd,m3y9ck9l,m3y9ck6t,m3y9ck41,m3y9ck19,m3y9cjyh,m3y9cjsx,m3y9cjvp,m3y9cjnd,m3y9cjq5,m3y9cjht,m3y9cjkl,m3y9cjf1,m3y9cjc9,m3y9cj6p,m3y9cj9h,m3y9cj3x,m3y9cj15,m3y9civl,m3y9ciyd,m3y9ciq1,m3y9cist,m3y9cin9,m3y9cihp,m3y9cikh,m3y9ciex,m3y9cic5,m3y9ci6l,m3y9ci9d,m3y9ci9d_MedalsEarned,m3y9ci3t,m3y9ci11,m3y9chy9,m3y9chvh,m3y9chsp,m3y9chpx,m3y9chn5,m3y9chkd,m3y9chhl,m3y9chc1,m3y9chet,m3y9ch6h,m3y9ch99,m3y9ch0x,m3y9ch3p,m3y9cgy5,m3y9cgvd,m3y9cgpt,m3y9cgsl,m3y9cgn1,m3y9cgk9,m3y9cgep,m3y9cghh,m3y9cg95,m3y9cgbx,m3y9cg6d,m3y9cg0t,m3y9cg3l,m3y9cfy1,m3y9cfuz,m821gzyx,m821gzyx_MedalsEarned,m821gzw5,m821gztd,m821gzql,m821gznt,m821gzl1,m821gzi9,m821gzfh,m821gzcp,m821gz9x,m821gz75,m821gz1l,m821gz4d,m821gyw1,m821gyyt,m821gyqh,m821gyt9,m821gynp,m821gykx,m821gyfd,m821gyi5,m821gycl,m821gy9t,m821gy49,m821gy71,m821gxyp,m821gy1h,m821gxvx,m821gxqd,m821gxt5,m821gxnl,m821gxkt"
+				.split(",")).collect(Collectors.toSet());*/
+//response.resetBuffer();
+for(var j:eventList){ 		 
 	Instant eventStart = Instant.ofEpochMilli(j.getLong("start"));
 	Instant eventEnd = Instant.ofEpochMilli(j.getLong("end"));
 	out.println(j.getString("id"));
 	out.println(j.getString("type"));
+	out.println(j.getJSONObject("metadata").getString("dataID"));
 	out.println(LocalDateTime.ofInstant(eventStart,ZoneId.of("GMT-8")));
 	out.println(LocalDateTime.ofInstant(eventEnd,ZoneId.of("GMT-8"))+"<br>");
 	//if(ids.contains(j.getString("id")))

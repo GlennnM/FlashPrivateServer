@@ -1,3 +1,4 @@
+<%@page import="java.util.concurrent.atomic.AtomicLong"%>
 <%@page import="java.util.concurrent.ConcurrentHashMap"%>
 <%@page import="java.util.concurrent.atomic.AtomicReference"%>
 <%@page import="java.util.Objects"%>
@@ -14,11 +15,13 @@
     pageEncoding="ISO-8859-1"%> 
 <%@ page import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
 <%@ include file="AMF_utils.jsp" %>
+<%@ include file="Create_SKU.jsp" %>
 <%@ include file="BMC_Data.jsp" %>
 <%! 
 static final Map<Integer,String> SESSIONS = new ConcurrentHashMap<>();
 static final boolean DO_NK_AUTH = false;
 static final BMCData DATA;
+static final AtomicLong LAST_SKU_UPDATE = new AtomicLong();
 static{
 	try{
 		DATA = new BMCData(new FileObjectStore(Path.of("./objects")));//TODO: obviously not .
@@ -28,6 +31,17 @@ static{
 }
 %>
 <%
+LAST_SKU_UPDATE.accumulateAndGet(System.currentTimeMillis(), (current, given)->{
+	try{
+		if(given - current > 24*3600){
+			createSKU(7,"",request);
+			return given;
+		}
+	}catch(IOException | NoSuchAlgorithmException ioe){
+		throw new RuntimeException(ioe);
+	}
+	return current;
+});
 if(request.getMethod().equals("POST")){   
 	int userID = Integer.parseInt(request.getParameter("userID"));
 	String operation =request.getParameter("operation");
