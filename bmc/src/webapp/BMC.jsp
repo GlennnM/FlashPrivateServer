@@ -194,7 +194,7 @@ if(request.getMethod().equals("POST")){
 				reply = target == null ? 
 						null:
 						switch(target){
-							case "score" -> new JSONObject();
+							case "score" -> DATA.getCTScores(userID, city, request.getParameter("room"));
 							case "history" -> DATA.getCTHistory(userID, city);
 							default -> null;
 						};

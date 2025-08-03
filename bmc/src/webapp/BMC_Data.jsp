@@ -1,3 +1,4 @@
+<%@page import="java.util.Comparator"%>
 <%@page import="java.util.concurrent.ThreadLocalRandom"%>
 <%@page import="java.util.UUID"%>
 <%@page import="java.util.concurrent.atomic.LongAdder"%>
@@ -166,9 +167,71 @@ public static class BMCData{
 				ct.put("lastLootTime", payload.getLong("lootTime"));
 			}
 			ret.setOpaque(room);
+			updateDurations(ct.getJSONObject("score"), ct.getInt("minRounds"));
 			return room;
 		});
 		return ret.getOpaque();
+	}
+	//for cases where bloons retook while someone was leader
+	//problem - what if they submitted bad scores during that time???
+	public void rollExtraTime(JSONObject scores, int minRounds){
+		long now = System.currentTimeMillis();
+		int leader = findLeader(scores, minRounds);
+		scores.keySet().stream()
+			.filter(x -> {
+				long time = scores.getJSONObject(x).optLong("time") ;
+				return time > 0;
+			})
+			.filter(x -> !x.equals(""+leader))
+			.forEach(id->{
+				JSONObject score = scores.getJSONObject(""+id);
+				long durationWithoutCurrent = Math.max(24*3600*1000, now - score.getLong("time"))
+						+ score.optLong("durationWithoutCurrent");
+				score
+					.put("durationWithoutCurrent", durationWithoutCurrent)
+					.put("current", 0)
+					.put("time", 0);
+			});
+	}
+	public void updateDurations(JSONObject scores, int minRounds){
+		long now = System.currentTimeMillis();
+		int leader = findLeader(scores, minRounds);
+		for(String id: scores.keySet()){
+			JSONObject score = scores.getJSONObject(""+id);
+			long time = score.getLong("time");
+			long durationTime = score.getLong("durationTime");
+			long duration = score.optLong("durationWithoutCurrent") + 
+					(id.equals(""+leader) ? (now - Math.max(time, durationTime)) : 0);
+			score
+				.put("duration", duration);
+		}
+	}
+	//assumes newScore was not previously the leader
+	public boolean becomesLeader(JSONObject scores, JSONObject newScore, int minRounds){
+		int score = newScore.optInt("score");
+		long time = newScore.optLong("time");
+		long now = System.currentTimeMillis();
+		if(score < minRounds || (now-time) >= 24 * 3600 * 1000) return false;
+		int leader = findLeader(scores, minRounds);
+		return leader < 0 || scores.getJSONObject(""+leader).optInt("current") < score;
+	}
+	//assumes time was already updated
+	//now need a fn to determine if a new score would become the leader
+	public int findLeader(JSONObject scores, int minRounds){
+		long now = System.currentTimeMillis();
+		return scores.keySet().stream()
+				.filter(x -> {
+					long time = scores.getJSONObject(x).optLong("time") ;
+					return time > 0 && (now - time) < 24 * 3600 * 1000;
+				})
+				.filter(x -> {
+					int round = scores.getJSONObject(x).optInt("current") ;
+					return round >= minRounds;
+				})
+				.sorted(Comparator.comparing(x -> -scores.getJSONObject(x).optInt("current")))
+				.mapToInt(Integer::parseInt)
+				.findFirst()
+				.orElse(-1);
 	}
 	//TODO: just use players list for verification instead of 2nd store check
 	public JSONObject updateCTScore(int userID, int cityID, String roomID, JSONObject payload){
@@ -180,25 +243,93 @@ public static class BMCData{
 			boolean pb = payload.optBoolean("isPersonalBest");
 			double lootTimeOffset = payload.optDouble("lootTimeOffset");
 			var ct = room.getJSONObject("contestedTerritory");
+			int minRounds = ct.getInt("minRounds");
 			var cities = ct.getJSONArray("cities");
 			if(jStream(cities).anyMatch(x->x.getInt("userID") == userID)){// verify if in ct room
-				var myScore = ct.getJSONObject("score").optJSONObject(""+userID);
-				if(myScore==null)
-					myScore=new JSONObject();
+				var scores = ct.getJSONObject("score");
+				var myScore = scores.optJSONObject(""+userID, new JSONObject());
+				int leader = findLeader(scores, minRounds);
+				
+				/**
+				-->was not winner?
+				---->can become winner?
+				------>update time, current, durationTime
+				------>for previous winner: add current duration into durationWithoutCurrent, reset time and current
+				---->can't become winner?
+				------>update current, don't update time or anything else
+				-->already winner?
+				---->if <current do nothing
+				---->update time, current
+				---->add current duration into durationWithoutCurrent
+				---->don't update durationTime
+				*/
+				rollExtraTime(scores, minRounds);
+				if(leader != userID){
+					if(becomesLeader(scores, payload, minRounds)){
+						System.out.println("NL -> L");
+						myScore
+							.put("durationTime", time)
+							.put("time", time);
+						ct.put("lastLootTime", time);
+						if(leader >= 0){
+							var oldLeader = scores.getJSONObject(""+leader);
+							long durationWithoutCurrent = (time - oldLeader.getLong("time"))
+									+ oldLeader.optLong("durationWithoutCurrent");
+							oldLeader
+								.put("durationWithoutCurrent", durationWithoutCurrent)
+								.put("current", 0)
+								.put("time", 0);
+						}
+					}else{
+						System.out.println("NL -> NL");
+						//already handled below...
+					}
+				}else{
+					System.out.println("L -> L");
+					//get more time, update durationTime so that way we don't count too much
+					if(score > myScore.optInt("current")){
+						System.out.println("L -> LL");
+						long previousDuration = time - myScore.getLong("durationTime");
+						long durationWithoutCurrent = previousDuration + myScore.optLong("durationWithoutCurrent");
+						myScore
+							.put("time", time)
+							.put("durationTime", time)
+							.put("durationWithoutCurrent", durationWithoutCurrent);
+						//current set below
+					}
+					else //do nothing
+						score = myScore.optInt("current");
+				}
+				//ct.put("lootTimeOffset", lootTimeOffset)
+				scores.put(""+userID, myScore);
+				updateDurations(scores, minRounds);
+				ct.put("lootTimeOffset", lootTimeOffset);
 				myScore
 					.put(pb ? "best" : "current",score)
 					.put("current", score)
 					.put("durationWithoutCurrent", myScore.optLong("durationWithoutCurrent"))
 					.put("durationTime", myScore.optLong("durationTime"))
 					.put("duration", myScore.optLong("duration"))
-					.put("time", time);	
-				ct//.put("lootTimeOffset", lootTimeOffset)
-					.getJSONObject("score").put(""+userID, myScore);
+					.put("time", myScore.optLong("time"));	
 			}
 			ret.setOpaque(room);
 			return room;
 		});
 		return ret.getOpaque();
+	}
+	public JSONObject getCTScores(int userID, int cityID, String roomID){
+		var room = store.get("monkeyCity","contest",""+cityID,"rooms", roomID);
+		var ct = room.getJSONObject("contestedTerritory");
+		var cities = ct.getJSONArray("cities");
+		if(jStream(cities).anyMatch(x->x.getInt("userID") == userID)){
+			var scores = store.get("monkeyCity","contest",""+cityID,"rooms", roomID)
+					.getJSONObject("contestedTerritory")
+					.getJSONObject("score");
+			//note - doesn't actually perform store update(just need client to see durations)
+			updateDurations(scores, ct.getInt("minRounds"));
+			return ct;
+		}
+		return new JSONObject();
 	}
 	public void addCTPlayer(JSONObject room, int userID, JSONObject player){
 		var cities = room.getJSONObject("contestedTerritory").getJSONArray("cities");
@@ -270,6 +401,9 @@ public static class BMCData{
 			roomID = room.getString("roomID");
 		}
 		ret.setOpaque(addCTPlayerToRoom(userID, cityID, roomID, payload));
+		var ct = ret.getOpaque().getJSONObject("contestedTerritory");
+		updateDurations(ct.getJSONObject("score"), ct.getInt("minRounds"));
+				
 		// user -> room id
 		store.put(List.of("monkeyCity",""+userID,"contest",""+cityID),
 				new JSONObject()
