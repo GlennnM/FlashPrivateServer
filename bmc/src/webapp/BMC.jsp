@@ -205,7 +205,8 @@ if(request.getMethod().equals("POST")){
 				reply = target == null ? 
 						null:
 						switch(target){
-							case "score" -> new JSONObject();
+							case "loot" ->  DATA.lootCT(userID, city, request.getParameter("room"), json.getJSONObject("payload"));
+							case "score" ->  DATA.updateCTScore(userID, city, request.getParameter("room"), json.getJSONObject("payload"));
 							case "join" -> DATA.joinCT(userID, city, json.getJSONObject("payload"));
 							default -> null;
 						};

@@ -185,6 +185,50 @@ public static class BMCData{
 	private static int week(long millis){
 		return (int)((millis/(1000*60*60*24) - 4) /7);
 	}
+	public JSONObject lootCT(int userID, int cityID, String roomID, JSONObject payload){
+		if(!roomID.equals(store.get("monkeyCity",""+userID,"contest",""+cityID).getString("roomID"))){
+			return null;
+		}
+
+		AtomicReference<JSONObject> ret = new AtomicReference<>();
+		store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
+			var ct = room.getJSONObject("contestedTerritory");
+			ct.put("lastLootTime", payload.getLong("lootTime"));
+			ret.setOpaque(room);
+			return room;
+		});
+		return ret.getOpaque();
+	}
+	//TODO: just use players list for verification instead of 2nd store check
+	public JSONObject updateCTScore(int userID, int cityID, String roomID, JSONObject payload){
+		if(!roomID.equals(store.get("monkeyCity",""+userID,"contest",""+cityID).getString("roomID"))){
+			return null;
+		}
+		AtomicReference<JSONObject> ret = new AtomicReference<>();
+		store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
+			//we need to return the entire new queue object, while extracting the new/found room
+			int score = payload.optInt("score");
+			long time = payload.optLong("time");
+			boolean pb = payload.optBoolean("isPersonalBest");
+			double lootTimeOffset = payload.optDouble("lootTimeOffset");
+			var ct = room.getJSONObject("contestedTerritory");
+			var myScore = ct.getJSONObject("score").optJSONObject(""+userID);
+			if(myScore==null)
+				myScore=new JSONObject();
+			myScore
+				.put(pb ? "best" : "current",score)
+				.put("current", score)
+				.put("durationWithoutCurrent", myScore.optLong("durationWithoutCurrent"))
+				.put("durationTime", myScore.optLong("durationTime"))
+				.put("duration", myScore.optLong("duration"))
+				.put("time", time);	
+			ct//.put("lootTimeOffset", lootTimeOffset)
+				.getJSONObject("score").put(""+userID, myScore);
+			ret.setOpaque(room);
+			return room;
+		});
+		return ret.getOpaque();
+	}
 	public JSONObject joinCT(int userID, int cityID, JSONObject payload){
 		int level = payload.getInt("cityLevel");
 		int tier = ctTier(level);
