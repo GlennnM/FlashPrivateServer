@@ -209,14 +209,6 @@ public static class BMCData{
 					.put("userID",userID)
 					.put("cityLevel",player.get("cityLevel"))
 					.put("cityName",player.get("cityName"))
-					.put("score",new JSONObject()
-						.put("current",0)
-						.put("best",0)
-						.put("time",0)
-						.put("durationTime",0)
-						.put("duration",0)
-						.put("durationWithoutCurrent",0)
-					)
 				);
 	}
 	public JSONObject addCTPlayerToRoom(int userID, int cityID, String roomID, JSONObject payload){
