@@ -36,6 +36,7 @@
     pageEncoding="ISO-8859-1"%> 
 <%@ page import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
 <%!
+static final long CT_QUEUE_TIME = 24L * 3600 * 1000 * 3;//time a new CT is joinable for
 public static class Defaults{
 	public static JSONObject CORE = new JSONObject().put("core",new JSONObject());
 }
@@ -231,8 +232,8 @@ public static class BMCData{
 					//if time > 0, you were the last leader(even though you would no longer be)
 					(time > 0 ? (Math.min(endOfWeek, now) -  Math.max(time, durationTime)) : 0);
 			score
-				.put("time", 0)
-				.put("durationTime", 0)
+				.put("time", time)
+				.put("durationTime", durationTime)
 				.put("duration", duration);
 		}
 	}
@@ -300,11 +301,9 @@ public static class BMCData{
 				if(leader != userID){
 					if(becomesLeader(scores, payload, minRounds)){
 						System.out.println("NL -> L");
-						myScore
-							.put("durationTime", time)
-							.put("time", time);
 						//ct.put("lastLootTime", time);
 						if(leader >= 0){
+							System.out.println("Updating old leader "+leader);
 							var oldLeader = scores.getJSONObject(""+leader);
 							long durationWithoutCurrent = (time - oldLeader.getLong("time"))
 									+ oldLeader.optLong("durationWithoutCurrent");
@@ -313,6 +312,9 @@ public static class BMCData{
 								.put("current", 0)
 								.put("time", 0);
 						}
+						myScore
+							.put("durationTime", time)
+							.put("time", time);
 					}else{
 						System.out.println("NL -> NL");
 						//already handled below...
@@ -423,10 +425,11 @@ public static class BMCData{
 		return room;
 	}
 
-	//TODO: make a consistent 'now' that is used everywhere instead of currenttimemillis()
+	//TODO: make a consistent 'now' that is passed to findLeader and stuff
 	public JSONObject joinCT(int userID, int cityID, JSONObject payload) {
 		int level = payload.getInt("cityLevel");
 		int tier = ctTier(level);
+		long now = System.currentTimeMillis();
 		AtomicReference<JSONObject> ret = new AtomicReference<>();//extracted room object
 		AtomicReference<String> retString = new AtomicReference<>();//extracted room id
 		//this should contain info about if the room in question is expired, etc
@@ -434,13 +437,14 @@ public static class BMCData{
 		var room = getOrArchiveRoomInfo(userID, cityID);//TODO: rename these vars to roomInfo or info or something
 		if (room == null || room.optString("roomID").isEmpty()) {
 			//then check queue
-			//TODO: queue needs to reset and store 
 			store.update(List.of("monkeyCity", "contest", "" + cityID, "queue"), queue -> {
 				//we need to return the entire new queue object, while extracting the new/found room
 				if (queue == null)
 					queue = new JSONObject();
 				var qRoom = queue.optJSONObject("" + tier);
-				if (qRoom == null || week(qRoom.optLong("at")) != week(System.currentTimeMillis())) {
+				if (qRoom == null || 
+						(now - qRoom.optLong("at")) > CT_QUEUE_TIME ||
+						week(qRoom.optLong("at")) != week(now)) {
 					//create the room
 					JSONObject newRoom = newCTRoom(level, cityID, payload);
 					ret.setOpaque(newRoom);
@@ -479,7 +483,7 @@ public static class BMCData{
 
 		// user -> room id
 		store.put(List.of("monkeyCity", "" + userID, "contest", "" + cityID),
-				new JSONObject().put("roomID", roomID).put("at", System.currentTimeMillis()));
+				new JSONObject().put("roomID", roomID).put("at", now));
 		return ret.getOpaque();
 		//this would be the "create ct" thing, if no matching room was found
 
@@ -652,7 +656,7 @@ public static class FileObjectStore implements ObjectStore {
 			throw new IllegalArgumentException("Not a dir: " + root);
 		this.root = root;
 	}
-
+	//TODO: web formatting to make this explorable since everything is json
 	public List<String> dump() {
 		try {
 			return Files.walk(root, 2).filter(Files::isRegularFile)//.peek(System.out::println)
