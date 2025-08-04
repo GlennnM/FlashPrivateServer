@@ -183,8 +183,24 @@ if(request.getMethod().equals("POST")){
 			break;
 		case "pvp":
 			cityID = request.getParameter("cityID");
+
+			reply
+				.put("success", true);
+
+			/**
+			.put("status", "ok")
+			.put("error", "bmc_tech")
+			.put("reason", "Not implemented");*/
+			
 			//core, friends, timestamp, quickmatch/honor/level???
 			break;
+			//need to add expiration of room -> disconnects and adds to history for all users
+			//relevant operations - join/history
+			//room needs to store when it was made
+			//on either join or history, remove the room from ct/user and add it to ct/user/history or smth
+			
+			//score - fail to set if inactive event
+			//detect end of week and don't allow 'now' to go past that
 		case "contest":
 			target = request.getParameter("target");
 			cityID = request.getParameter("cityID");
@@ -196,7 +212,7 @@ if(request.getMethod().equals("POST")){
 						switch(target){
 							case "score" -> DATA.getCTScores(userID, city, request.getParameter("room"));
 							case "history" -> DATA.getCTHistory(userID, city);
-							default -> null;
+							default -> DATA.getCT(userID, city);
 						};
 				reply
 					.put("success", true);
@@ -213,7 +229,7 @@ if(request.getMethod().equals("POST")){
 				reply
 					.put("nkApiID",userID)
 					.put("sessionID",session.getId())
-					.put("success", true)
+					.put("success", reply.optBoolean("success", true))
 					.put("sid",System.currentTimeMillis())
 					.put("tid",json.get("tid"));
 			}

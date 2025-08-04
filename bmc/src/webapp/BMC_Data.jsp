@@ -77,10 +77,12 @@ public static class BMCData{
 	public JSONObject getCity(int userID, int cityID){
 		var info = getCityThing(userID,cityID,"info");
 		var content = getCityThing(userID,cityID,"content");
+		var ct = getCT(userID,cityID);
 		return info==null? null: 
 			new JSONObject()
 				.put("cityInfo",info)
 				.put("content",content)
+				.put("contestedTerritory", ct)
 				.put("success", true);
 	}
 	//CONVERT TO NEW FORMAT
@@ -153,7 +155,8 @@ public static class BMCData{
 						.put("levelTier",ctTier(level))
 						.put("minRounds",ctMinRound(level))
 						.put("lastLootTime",System.currentTimeMillis())
-				);
+				)
+				.put("startTime",System.currentTimeMillis());
 		return newRoom;
 	}
 	private static int week(long millis){
@@ -194,6 +197,10 @@ public static class BMCData{
 					.put("current", 0)
 					.put("time", 0);
 			});
+	}
+	public void updateDurations(JSONObject room){
+		var ct = room.getJSONObject("contestedTerritory");
+		updateDurations(ct.getJSONObject("score"), ct.getInt("minRounds"));
 	}
 	public void updateDurations(JSONObject scores, int minRounds){
 		long now = System.currentTimeMillis();
@@ -349,11 +356,28 @@ public static class BMCData{
 		store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
 			//we need to return the entire new queue object, while extracting the new/found room
 			addCTPlayer(room, userID, payload);
+			updateDurations(room);
 			ret.setOpaque(room);
 			return room;
 		});
 		return ret.getOpaque();
 	}
+	public JSONObject getCT(int userID, int cityID){
+		AtomicReference<JSONObject> ret = new AtomicReference<>();//extracted room object
+		var room = store.get(List.of("monkeyCity",""+userID,"contest",""+cityID));
+		if(room==null || week(room.optLong("at")) != week(System.currentTimeMillis())){
+			return null;
+		}else{
+			String roomID = room.getString("roomID");
+			store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), r->{
+				updateDurations(r);
+				ret.setOpaque(r);
+				return r;
+			});
+		}
+		return ret.getOpaque().getJSONObject("contestedTerritory");
+	}
+		
 	public JSONObject joinCT(int userID, int cityID, JSONObject payload){
 		int level = payload.getInt("cityLevel");
 		int tier = ctTier(level);
@@ -644,7 +668,7 @@ public static class FileObjectStore implements ObjectStore {
 		});
 		return holder.getOpaque();
 	}
-
+	//TODO: make this return the result of the update instead of a boolean, we don't use the boolean anyways
 	@Override
 	public boolean update(String url, UnaryOperator<JSONObject> update) {
 		Path path = map(url);
