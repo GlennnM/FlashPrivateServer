@@ -33,480 +33,411 @@
 <%@page import="org.json.JSONObject"%>
 <%@page import="static java.nio.charset.StandardCharsets.UTF_8"%>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
-    pageEncoding="ISO-8859-1"%> 
-<%@ page import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
+	pageEncoding="ISO-8859-1"%>
+<%@ page
+	import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
+<%-- BMC DATA --%>
 <%!
-static final long CT_QUEUE_TIME = 24L * 3600 * 1000 * 3;//time a new CT is joinable for
-public static class Defaults{
-	public static JSONObject CORE = new JSONObject().put("core",new JSONObject());
-}
-/**does stuff like putCity(0,{},..)*/
-public static class BMCData{
-	private final ObjectStore store;
-	public BMCData(ObjectStore store){
-		this.store = store;
-	}
-	public JSONObject getCore(int userID){
-		return store.get(List.of("monkeyCity", ""+userID, "core"), Defaults.CORE);
-	}
-	public JSONObject getCityList(int userID){
-		JSONArray ret = new JSONArray();
-		for(int i=0;i<=1;i++){
-			var info = getCityThing(userID, i, "info");
-			if(info!=null){
-				JSONObject newThing = new JSONObject();
-				newThing
-					.put("name", info.get("cityName"))
-					.put("level", info.get("level"))
-					.put("attacks", new JSONArray())
-					.put("index", i);
-				ret.put(newThing);
-			}
+	static final long CT_QUEUE_TIME = 24L * 3600 * 1000 * 3;//time a new CT is joinable for
+	/**does stuff like putCity(0,{},..)*/
+	public static class BMCData{
+		private final ObjectStore store;
+		public BMCData(ObjectStore store){
+			this.store = store;
 		}
-		return new JSONObject()
-				.put("success", true)
-				.put("cityList", ret);
-	}
-	public JSONObject getCities(int userID){
-		return store.get("monkeyCity", ""+userID, "cities");
-	}
-	public boolean putCities(int userID, JSONObject payload){
-		int cityID = payload.getJSONObject("cityInfo").getInt("cityIndex");
-		return putCity(userID, cityID, payload);
-		//return store.put(List.of("monkeyCity", ""+userID, "cities"), payload);
-	}
-	public JSONObject getCity(int userID, int cityID){
-		var info = getCityThing(userID,cityID,"info");
-		var content = getCityThing(userID,cityID,"content");
-		var ct = getCT(userID,cityID);
-		return info==null? null: 
-			new JSONObject()
-				.put("cityInfo",info)
-				.put("content",content)
-				.put("contestedTerritory", ct)
-				.put("success", true);
-	}
-	//CONVERT TO NEW FORMAT
-	public boolean putCity(int userID, int cityID, JSONObject payload){
+		%>
+		<%-- CITIES --%>
+		<%!
+		public JSONObject getCityList(int userID){
+			JSONArray ret = new JSONArray();
+			for(int i=0;i<=1;i++){
+				var info = getCityThing(userID, i, "info");
+				if(info!=null){
+					JSONObject newThing = new JSONObject();
+					newThing
+						.put("name", info.get("cityName"))
+						.put("level", info.get("level"))
+						.put("attacks", new JSONArray())
+						.put("index", i);
+					ret.put(newThing);
+				}
+			}
+			return new JSONObject()
+					.put("success", true)
+					.put("cityList", ret);
+		}
+		public JSONObject getCities(int userID){
+			return store.get("monkeyCity", ""+userID, "cities");
+		}
+		public boolean putCities(int userID, JSONObject payload){
+			int cityID = payload.getJSONObject("cityInfo").getInt("cityIndex");
+			return putCity(userID, cityID, payload);
+			//return store.put(List.of("monkeyCity", ""+userID, "cities"), payload);
+		}
+		public JSONObject getCity(int userID, int cityID){
+			var info = getCityThing(userID,cityID,"info");
+			var content = getCityThing(userID,cityID,"content");
+			var ct = getCT(userID,cityID);
+			return info==null? null: 
+				new JSONObject()
+					.put("cityInfo",info)
+					.put("content",content)
+					.put("contestedTerritory", ct)
+					.put("success", true);
+		}
+		//CONVERT TO NEW FORMAT
+		public boolean putCity(int userID, int cityID, JSONObject payload){
+			
+			var info = payload.getJSONObject("cityInfo");
+			var newInfo = new JSONObject()
+					.put("index",cityID)
+					.put("level",info.opt("cityLevel"))
+					.put("cityName",info.get("name"))
+					.put("xp",info.optInt("xp"))
+					.put("xpDebt",info.optInt("xpDebt"))
+					.put("userName",payload.get("userName"))
+					.put("userClan",payload.get("userClan"))
+					.putOpt("pacifistExpiresAt",payload.opt("pacifistExpiresAt"))
+					;
+			var newContent = new JSONObject()
+					.put("tiles",payload.get("tiles"))
+					.put("cityResources",payload.get("cityResources"))
+					.put("worldSeed",payload.get("worldSeed"))
+					.put("terrainData",payload.get("terrainData"))
+					.put("cityQuests",payload.get("quests"));
+			
+			return store.put(List.of("monkeyCity", ""+userID, "cities", ""+cityID, "info"), newInfo)
+				&& store.put(List.of("monkeyCity", ""+userID, "cities", ""+cityID, "content"), newContent);
+			//return store.put(List.of("monkeyCity", ""+userID, "cities", ""+cityID), payload);
+		}
+		public JSONObject getCore(int userID){
+			return store.get(List.of("monkeyCity", ""+userID, "core"), Util.BLANK_CORE);
+		}
+		public boolean updateCore(int userID, JSONObject payload) {
+			return store.update(List.of("monkeyCity", "" + userID, "core"), x -> Util.mergeCore(x, payload));
+		}
+
+	
+		public boolean updateContent(int userID, int cityID, JSONObject payload) {
+			return store.update(List.of("monkeyCity", "" + userID, "cities", "" + cityID, "content"),
+					x -> Util.mergeContent(x, payload));
+		}
+	
+		public boolean updateInfo(int userID, int cityID, JSONObject payload) {
+			return store.update(List.of("monkeyCity", "" + userID, "cities", "" + cityID, "info"),
+					x -> Util.mergeInfo(x, payload));
+		}
+
+		public JSONObject getCityThing(int userID, int cityID, String thing) {
+			return store.get("monkeyCity", "" + userID, "cities", "" + cityID, thing);
+		}
+
+		public boolean putCityThing(int userID, int cityID, String thing, JSONObject payload) {
+			return switch (thing) {
+			case "content" -> updateContent(userID, cityID, payload);
+			case "info" -> updateInfo(userID, cityID, payload);
+			default -> store.put(List.of("monkeyCity", "" + userID, "cities", "" + cityID, thing), payload);
+			};
+		}
+		%>
+		<%-- CRATES --%>
+		<%!
+		public boolean useCrate(int userID){
+			return modifyCrates(userID, -1);
+		}
+		public boolean modifyCrates(int userID, int n){
+			return store.update(List.of("monkeyCity", ""+userID, "core"),
+				core->{
+					var crates = core.optJSONObject("crates");
+					if(crates==null)
+						crates = Util.DEFAULT_CRATES();
+					core.put("crates", crates.put("own",crates.optInt("own",0) + n));
+					return core;
+				});
+		}
+		public JSONObject getCrates(int userID){
+			var crates =  getCore(userID).optJSONObject("crates");
+			return crates==null ? Util.DEFAULT_CRATES() : crates;
+		}
+		%>
+		<%-- CT - ROOMS --%>
+		<%!
+		//if main city data (/cities/x) contains ct data, this is used, otherwise it will check /history
+		public JSONObject getCT(int userID, int cityID){
+			AtomicReference<JSONObject> ret = new AtomicReference<>();//extracted room object
+			var room = getOrArchiveRoomInfo(userID, cityID);
+			if(room==null || room.optString("roomID").isEmpty()){
+				return null;
+			}else{
+				String roomID = room.getString("roomID");
+				store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), r->{
+					CTUtil.updateDurations(r);
+					ret.setOpaque(r);
+					return r;
+				});
+			}
+			return ret.getOpaque().getJSONObject("contestedTerritory");
+		}
+
+		//TODO: make a consistent 'now' that is passed to findLeader and stuff
+		public JSONObject joinCT(int userID, int cityID, JSONObject payload) {
+			int level = payload.getInt("cityLevel");
+			int tier = CTUtil.ctTier(level);
+			long now = System.currentTimeMillis();
+			AtomicReference<JSONObject> ret = new AtomicReference<>();//extracted room object
+			AtomicReference<String> retString = new AtomicReference<>();//extracted room id
+			//this should contain info about if the room in question is expired, etc
+			String roomID;
+			var room = getOrArchiveRoomInfo(userID, cityID);//TODO: rename these vars to roomInfo or info or something
+			if (room == null || room.optString("roomID").isEmpty()) {
+				//then check queue
+				store.update(List.of("monkeyCity", "contest", "" + cityID, "queue"), queue -> {
+					//we need to return the entire new queue object, while extracting the new/found room
+					if (queue == null)
+						queue = new JSONObject();
+					var qRoom = queue.optJSONObject("" + tier);
+					if (qRoom == null || 
+							(now - qRoom.optLong("at")) > CT_QUEUE_TIME ||
+							CTUtil.week(qRoom.optLong("at")) != CTUtil.week(now)) {
+						//create the room
+						JSONObject newRoom = CTUtil.newCTRoom(level, cityID, payload);
+						ret.setOpaque(newRoom);
+						String newRoomID = newRoom.getJSONObject("contestedTerritory").getString("roomID");
+						qRoom = new JSONObject().put("id", newRoomID).put("players", new JSONArray()).put("at",
+								System.currentTimeMillis());
+						queue.put("" + tier, qRoom);
+					}
+					String newRoomID = qRoom.getString("id");
+					JSONArray players = qRoom.getJSONArray("players");
+					if(!players.toList().contains(userID))
+						players.put(userID);
+					qRoom.put("players", players);
+					if (players.length() >= 6)
+						queue.remove("" + tier);
+					retString.setOpaque(newRoomID);
+					//ret.setOpaque(newRoom);
+					return queue;
+				});
+				//if a new room was created, store it before adding the player
+				if (ret.getOpaque() != null) {
+					roomID = ret.getOpaque().getJSONObject("contestedTerritory").getString("roomID");
+					store.put(List.of("monkeyCity", "contest", "" + cityID, "rooms", roomID), ret.getOpaque());
+				}
+				//room was reused, extract id
+				else if (retString.getOpaque() != null) {
+					roomID = retString.getOpaque();
+				} else {
+					throw new IllegalStateException("should have either ret or retString");
+				}
+			} else {
+				roomID = room.getString("roomID");
+			}
+			ret.setOpaque(addCTPlayerToRoom(userID, cityID, roomID, payload));
+			CTUtil.updateDurations(ret.getOpaque());
+	
+			// user -> room id
+			store.put(List.of("monkeyCity", "" + userID, "contest", "" + cityID),
+					new JSONObject().put("roomID", roomID).put("at", now));
+			return ret.getOpaque();
+			//this would be the "create ct" thing, if no matching room was found
+	
+		}
 		
-		var info = payload.getJSONObject("cityInfo");
-		var newInfo = new JSONObject()
-				.put("index",cityID)
-				.put("level",info.opt("cityLevel"))
-				.put("cityName",info.get("name"))
-				.put("xp",info.optInt("xp"))
-				.put("xpDebt",info.optInt("xpDebt"))
-				.put("userName",payload.get("userName"))
-				.put("userClan",payload.get("userClan"))
-				.putOpt("pacifistExpiresAt",payload.opt("pacifistExpiresAt"))
-				;
-		var newContent = new JSONObject()
-				.put("tiles",payload.get("tiles"))
-				.put("cityResources",payload.get("cityResources"))
-				.put("worldSeed",payload.get("worldSeed"))
-				.put("terrainData",payload.get("terrainData"))
-				.put("cityQuests",payload.get("quests"));
-		
-		return store.put(List.of("monkeyCity", ""+userID, "cities", ""+cityID, "info"), newInfo)
-			&& store.put(List.of("monkeyCity", ""+userID, "cities", ""+cityID, "content"), newContent);
-		//return store.put(List.of("monkeyCity", ""+userID, "cities", ""+cityID), payload);
-	}
-	public JSONObject getCore(int userID, int cityID){
-		return store.get(List.of("monkeyCity", ""+userID, "core"), Defaults.CORE);
-	}
-	private static JSONObject DEFAULT_CRATES(){
-		return new JSONObject()
-				.put("own",0)
-				.put("requested", new JSONArray())
-				.put("sent", new JSONArray())
-				.put("pending", new JSONArray())
-				.put("received", new JSONArray());
-	}
-	public boolean useCrate(int userID){
-		return modifyCrates(userID, -1);
-	}
-	public boolean modifyCrates(int userID, int n){
-		return store.update(List.of("monkeyCity", ""+userID, "core"),
-			core->{
-				var crates = core.optJSONObject("crates");
-				if(crates==null)
-					crates=DEFAULT_CRATES();
-				core.put("crates", crates.put("own",crates.optInt("own",0) + n));
-				return core;
+		public JSONObject addCTPlayerToRoom(int userID, int cityID, String roomID, JSONObject payload){
+			AtomicReference<JSONObject> ret = new AtomicReference<>();
+			store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
+				//we need to return the entire new queue object, while extracting the new/found room
+				CTUtil.addCTPlayer(room, userID, payload);
+				CTUtil.updateDurations(room);
+				ret.setOpaque(room);
+				return room;
 			});
-	}
-	public JSONObject getCrates(int userID){
-		var crates =  getCore(userID).optJSONObject("crates");
-		return crates==null ? DEFAULT_CRATES() : crates;
-	}
-	public JSONObject closeCTHistory(int userID, int cityID, String roomID, String action){
-		//action can be claim and close but claim is unused
-		store.update(List.of("monkeyCity",""+userID,"contest",""+cityID), info->{
-			//NOTE: does not use room id
-			info.remove("history");
-			return info;
-		});
-		return new JSONObject();
-	}
-	public JSONObject getCTHistory(int userID, int cityID){
-		var room = getOrArchiveRoomInfo(userID, cityID);
-		JSONObject history;
-		//contains room for previous thing
-		//remove on /claim or /close?
-		System.out.println(room);
-		if(room==null || (history=room.optJSONObject("history")) == null){
+			return ret.getOpaque();
+		}
+		%>
+		<%-- CT - SCORES --%>
+		<%! 
+		
+		public JSONObject updateCTScore(int userID, int cityID, String roomID, JSONObject payload){
+			AtomicReference<JSONObject> ret = new AtomicReference<>();
+			store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
+				//we need to return the entire new queue object, while extracting the new/found room
+				int score = payload.optInt("score");
+				long time = payload.optLong("time");
+				boolean pb = payload.optBoolean("isPersonalBest");
+				double lootTimeOffset = payload.optDouble("lootTimeOffset");
+				var ct = room.getJSONObject("contestedTerritory");
+				int minRounds = ct.getInt("minRounds");
+				long startTime = ct.optLong("startTime");
+				if(CTUtil.week(startTime) != CTUtil.week(time)){
+					return room;
+				}
+				var cities = ct.getJSONArray("cities");
+				if(Util.jStream(cities).anyMatch(x->x.getInt("userID") == userID)){// verify if in ct room
+					var scores = ct.getJSONObject("score");
+					var myScore = scores.optJSONObject(""+userID, new JSONObject());
+					int leader = CTUtil.findLeader(scores, minRounds);
+					
+					/**
+					-->was not winner?
+					---->can become winner?
+					------>update time, current, durationTime
+					------>for previous winner: add current duration into durationWithoutCurrent, reset time and current
+					---->can't become winner?
+					------>update current, don't update time or anything else
+					-->already winner?
+					---->if <current do nothing
+					---->update time, current
+					---->add current duration into durationWithoutCurrent
+					---->don't update durationTime
+					*/
+					CTUtil.rollExtraTime(scores, startTime, minRounds);
+					if(leader != userID){
+						if(CTUtil.becomesLeader(scores, payload, minRounds)){
+							System.out.println("NL -> L");
+							//ct.put("lastLootTime", time);
+							if(leader >= 0){
+								System.out.println("Updating old leader "+leader);
+								var oldLeader = scores.getJSONObject(""+leader);
+								long durationWithoutCurrent = (time - oldLeader.getLong("time"))
+										+ oldLeader.optLong("durationWithoutCurrent");
+								oldLeader
+									.put("durationWithoutCurrent", durationWithoutCurrent)
+									.put("current", 0)
+									.put("time", 0);
+							}
+							myScore
+								.put("durationTime", time)
+								.put("time", time);
+						}else{
+							System.out.println("NL -> NL");
+							//already handled below...
+						}
+					}else{
+						System.out.println("L -> L");
+						//get more time, update durationTime so that way we don't count too much
+						if(score > myScore.optInt("current")){
+							System.out.println("L -> LL");
+							long previousDuration = time - myScore.getLong("durationTime");
+							long durationWithoutCurrent = previousDuration + myScore.optLong("durationWithoutCurrent");
+							myScore
+								.put("time", time)
+								.put("durationTime", time)
+								.put("durationWithoutCurrent", durationWithoutCurrent);
+							//current set below
+						}
+						else //do nothing
+							score = myScore.optInt("current");
+					}
+					//ct.put("lootTimeOffset", lootTimeOffset)
+					scores.put(""+userID, myScore);
+					CTUtil.updateDurations(scores, startTime, minRounds);
+					ct.put("lootTimeOffset", lootTimeOffset);
+					myScore
+						.put("best",Math.max(score, myScore.optInt("best")))
+						.put("current", score)
+						.put("durationWithoutCurrent", myScore.optLong("durationWithoutCurrent"))
+						.put("durationTime", myScore.optLong("durationTime"))
+						.put("duration", myScore.optLong("duration"))
+						.put("time", myScore.optLong("time"));	
+				}
+				ret.setOpaque(room);
+				return room;
+			});
+			return ret.getOpaque();
+		}
+		
+		public JSONObject getCTScores(int userID, int cityID, String roomID){
+			var room = store.get("monkeyCity","contest",""+cityID,"rooms", roomID);
+			var ct = room.getJSONObject("contestedTerritory");
+			var cities = ct.getJSONArray("cities");
+			if(Util.jStream(cities).anyMatch(x->x.getInt("userID") == userID)){
+				var scores = store.get("monkeyCity","contest",""+cityID,"rooms", roomID)
+						.getJSONObject("contestedTerritory")
+						.getJSONObject("score");
+				//note - doesn't actually perform store update(just need client to see durations)
+				CTUtil.updateDurations(room);
+				return ct;
+			}
 			return new JSONObject();
 		}
-		return history;
-	}
-	public JSONObject newCTRoom(int level, int cityID, JSONObject payload){
-		String roomID = "" + ThreadLocalRandom.current().nextLong();
-		var newRoom = new JSONObject()
-				.put("contestedTerritory", 
-					new JSONObject()
-						.put("cities", new JSONArray())
-						.put("score",new JSONObject())
-						.put("data",payload.get("data"))
-						.put("roomID", roomID)
-						.put("levelTier",ctTier(level))
-						.put("minRounds",ctMinRound(level))
-						.put("lastLootTime",System.currentTimeMillis())
-						.put("startTime",System.currentTimeMillis())
-				);
-		return newRoom;
-	}
-	private static int week(long millis){
-		return (int)((millis/(1000*60*60*24) - 4) /7);
-	}
-	//TODO: seems to always give 200 on game start due to sanity check failing
-	public JSONObject lootCT(int userID, int cityID, String roomID, JSONObject payload){
-		AtomicReference<JSONObject> ret = new AtomicReference<>();
-		store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
-			var ct = room.getJSONObject("contestedTerritory");
-			var cities = ct.getJSONArray("cities");
-			//TODO: check if ended??
-			long startTime = ct.optLong("startTime");
-			if(jStream(cities).anyMatch(x->x.getInt("userID") == userID)){// verify if in ct room
-				ct.put("lastLootTime", payload.getLong("lootTime"));
-			}
-			updateDurations(room);
-			ret.setOpaque(room);
-			return room;
-		});
-		return ret.getOpaque();
-	}
-	//for cases where bloons retook while someone was leader
-	//problem - what if they submitted bad scores during that time???
-	public void rollExtraTime(JSONObject scores, long roomStartTime, int minRounds){
-		long now = System.currentTimeMillis();
-		long endOfWeek = (week(roomStartTime) + 1L) * 24 * 3600 * 1000 * 7;
-		int leader = findLeader(scores, minRounds);
-		scores.keySet().stream()
-			.filter(x -> {
-				long time = scores.getJSONObject(x).optLong("time") ;
-				return time > 0;
-			})
-			.filter(x -> !x.equals(""+leader))
-			.forEach(id->{
-				JSONObject score = scores.getJSONObject(""+id);
-				long durationWithoutCurrent = Math.max(24*3600*1000, Math.min(endOfWeek, now) -  score.getLong("time"))
-						+ score.optLong("durationWithoutCurrent");
-				score
-					.put("durationWithoutCurrent", durationWithoutCurrent)
-					.put("current", 0)
-					.put("time", 0);
-			});
-	}
-	public void updateDurations(JSONObject room){
-		var ct = room.getJSONObject("contestedTerritory");
-		updateDurations(ct.getJSONObject("score"), ct.optLong("startTime"), ct.getInt("minRounds"));
-	}
-	public void updateDurations(JSONObject scores, long roomStartTime, int minRounds){
-		long now = System.currentTimeMillis();
-		long endOfWeek = (week(roomStartTime) + 1L) * 24 * 3600 * 1000 * 7;
-		for(String id: scores.keySet()){
-			JSONObject score = scores.getJSONObject(""+id);
-			long time = score.getLong("time");
-			long durationTime = score.getLong("durationTime");
-			long duration = score.optLong("durationWithoutCurrent") + 
-					//if time > 0, you were the last leader(even though you would no longer be)
-					(time > 0 ? (Math.min(endOfWeek, now) -  Math.max(time, durationTime)) : 0);
-			score
-				.put("time", time)
-				.put("durationTime", durationTime)
-				.put("duration", duration);
-		}
-	}
-	//assumes newScore was not previously the leader
-	public boolean becomesLeader(JSONObject scores, JSONObject newScore, int minRounds){
-		int score = newScore.optInt("score");
-		long time = newScore.optLong("time");
-		long now = System.currentTimeMillis();
-		if(score < minRounds || (now-time) >= 24 * 3600 * 1000 || week(now) != week(time)) return false;
-		int leader = findLeader(scores, minRounds);
-		return leader < 0 || scores.getJSONObject(""+leader).optInt("current") < score;
-	}
-	//assumes time was already updated
-	//now need a fn to determine if a new score would become the leader
-	public int findLeader(JSONObject scores, int minRounds){
-		long now = System.currentTimeMillis();
-		return scores.keySet().stream()
-				.filter(x -> {
-					long time = scores.getJSONObject(x).optLong("time") ;
-					return time > 0  && (now - time) < 24 * 3600 * 1000;
-				})
-				.filter(x -> {
-					int round = scores.getJSONObject(x).optInt("current") ;
-					return round >= minRounds;
-				})
-				.sorted(Comparator.comparing(x -> -scores.getJSONObject(x).optInt("current")))
-				.mapToInt(Integer::parseInt)
-				.findFirst()
-				.orElse(-1);
-	}
-	public JSONObject updateCTScore(int userID, int cityID, String roomID, JSONObject payload){
-		AtomicReference<JSONObject> ret = new AtomicReference<>();
-		store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
-			//we need to return the entire new queue object, while extracting the new/found room
-			int score = payload.optInt("score");
-			long time = payload.optLong("time");
-			boolean pb = payload.optBoolean("isPersonalBest");
-			double lootTimeOffset = payload.optDouble("lootTimeOffset");
-			var ct = room.getJSONObject("contestedTerritory");
-			int minRounds = ct.getInt("minRounds");
-			long startTime = ct.optLong("startTime");
-			if(week(startTime) != week(time)){
+		//TODO: seems to always give 200 on game start due to sanity check failing
+		public JSONObject lootCT(int userID, int cityID, String roomID, JSONObject payload){
+			AtomicReference<JSONObject> ret = new AtomicReference<>();
+			store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
+				var ct = room.getJSONObject("contestedTerritory");
+				var cities = ct.getJSONArray("cities");
+				//TODO: check if ended??
+				long startTime = ct.optLong("startTime");
+				if(Util.jStream(cities).anyMatch(x->x.getInt("userID") == userID)){// verify if in ct room
+					ct.put("lastLootTime", payload.getLong("lootTime"));
+				}
+				CTUtil.updateDurations(room);
+				ret.setOpaque(room);
 				return room;
-			}
-			var cities = ct.getJSONArray("cities");
-			if(jStream(cities).anyMatch(x->x.getInt("userID") == userID)){// verify if in ct room
-				var scores = ct.getJSONObject("score");
-				var myScore = scores.optJSONObject(""+userID, new JSONObject());
-				int leader = findLeader(scores, minRounds);
-				
-				/**
-				-->was not winner?
-				---->can become winner?
-				------>update time, current, durationTime
-				------>for previous winner: add current duration into durationWithoutCurrent, reset time and current
-				---->can't become winner?
-				------>update current, don't update time or anything else
-				-->already winner?
-				---->if <current do nothing
-				---->update time, current
-				---->add current duration into durationWithoutCurrent
-				---->don't update durationTime
-				*/
-				rollExtraTime(scores, startTime, minRounds);
-				if(leader != userID){
-					if(becomesLeader(scores, payload, minRounds)){
-						System.out.println("NL -> L");
-						//ct.put("lastLootTime", time);
-						if(leader >= 0){
-							System.out.println("Updating old leader "+leader);
-							var oldLeader = scores.getJSONObject(""+leader);
-							long durationWithoutCurrent = (time - oldLeader.getLong("time"))
-									+ oldLeader.optLong("durationWithoutCurrent");
-							oldLeader
-								.put("durationWithoutCurrent", durationWithoutCurrent)
-								.put("current", 0)
-								.put("time", 0);
-						}
-						myScore
-							.put("durationTime", time)
-							.put("time", time);
-					}else{
-						System.out.println("NL -> NL");
-						//already handled below...
-					}
-				}else{
-					System.out.println("L -> L");
-					//get more time, update durationTime so that way we don't count too much
-					if(score > myScore.optInt("current")){
-						System.out.println("L -> LL");
-						long previousDuration = time - myScore.getLong("durationTime");
-						long durationWithoutCurrent = previousDuration + myScore.optLong("durationWithoutCurrent");
-						myScore
-							.put("time", time)
-							.put("durationTime", time)
-							.put("durationWithoutCurrent", durationWithoutCurrent);
-						//current set below
-					}
-					else //do nothing
-						score = myScore.optInt("current");
-				}
-				//ct.put("lootTimeOffset", lootTimeOffset)
-				scores.put(""+userID, myScore);
-				updateDurations(scores, startTime, minRounds);
-				ct.put("lootTimeOffset", lootTimeOffset);
-				myScore
-					.put("best",Math.max(score, myScore.optInt("best")))
-					.put("current", score)
-					.put("durationWithoutCurrent", myScore.optLong("durationWithoutCurrent"))
-					.put("durationTime", myScore.optLong("durationTime"))
-					.put("duration", myScore.optLong("duration"))
-					.put("time", myScore.optLong("time"));	
-			}
-			ret.setOpaque(room);
-			return room;
-		});
-		return ret.getOpaque();
-	}
-	public JSONObject getCTScores(int userID, int cityID, String roomID){
-		var room = store.get("monkeyCity","contest",""+cityID,"rooms", roomID);
-		var ct = room.getJSONObject("contestedTerritory");
-		var cities = ct.getJSONArray("cities");
-		if(jStream(cities).anyMatch(x->x.getInt("userID") == userID)){
-			var scores = store.get("monkeyCity","contest",""+cityID,"rooms", roomID)
-					.getJSONObject("contestedTerritory")
-					.getJSONObject("score");
-			//note - doesn't actually perform store update(just need client to see durations)
-			updateDurations(room);
-			return ct;
-		}
-		return new JSONObject();
-	}
-	public void addCTPlayer(JSONObject room, int userID, JSONObject player){
-		var cities = room.getJSONObject("contestedTerritory").getJSONArray("cities");
-		if(jStream(cities).noneMatch(x->x.getInt("userID") == userID))
-			cities
-				.put(new JSONObject()
-					.put("userName",player.get("userName"))
-					.put("userID",userID)
-					.put("cityLevel",player.get("cityLevel"))
-					.put("cityName",player.get("cityName"))
-				);
-	}
-	public JSONObject addCTPlayerToRoom(int userID, int cityID, String roomID, JSONObject payload){
-		AtomicReference<JSONObject> ret = new AtomicReference<>();
-		store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
-			//we need to return the entire new queue object, while extracting the new/found room
-			addCTPlayer(room, userID, payload);
-			updateDurations(room);
-			ret.setOpaque(room);
-			return room;
-		});
-		return ret.getOpaque();
-	}
-	//if main city data (/cities/x) contains ct data, this is used, otherwise it will check /history
-	public JSONObject getCT(int userID, int cityID){
-		AtomicReference<JSONObject> ret = new AtomicReference<>();//extracted room object
-		var room = getOrArchiveRoomInfo(userID, cityID);
-		if(room==null || room.optString("roomID").isEmpty()){
-			return null;
-		}else{
-			String roomID = room.getString("roomID");
-			store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), r->{
-				updateDurations(r);
-				ret.setOpaque(r);
-				return r;
 			});
+			return ret.getOpaque();
 		}
-		return ret.getOpaque().getJSONObject("contestedTerritory");
-	}
-	public JSONObject getOrArchiveRoomInfo(int userID, int cityID){
-
-		var room = store.get("monkeyCity",""+userID,"contest",""+cityID);
-		if(room == null){
-			return null;
-		} else {
-			long at = room.optLong("at");
-			if (at != 0 && week(at) != week(System.currentTimeMillis())) {
-				JSONObject roomData = store.get("monkeyCity", "contest", "" + cityID, "rooms", room.getString("roomID"));
-				updateDurations(roomData);
-				var ct = roomData.get("contestedTerritory");
-				room.put("history", new JSONObject().put("room",ct));
-				room.remove("roomID");
-				room.remove("at");
-				store.put(List.of("monkeyCity",""+userID,"contest",""+cityID), room);
-				//TODO: remove player from room and then delete it when no players left?
-			}
-		}
-		return room;
-	}
-
-	//TODO: make a consistent 'now' that is passed to findLeader and stuff
-	public JSONObject joinCT(int userID, int cityID, JSONObject payload) {
-		int level = payload.getInt("cityLevel");
-		int tier = ctTier(level);
-		long now = System.currentTimeMillis();
-		AtomicReference<JSONObject> ret = new AtomicReference<>();//extracted room object
-		AtomicReference<String> retString = new AtomicReference<>();//extracted room id
-		//this should contain info about if the room in question is expired, etc
-		String roomID;
-		var room = getOrArchiveRoomInfo(userID, cityID);//TODO: rename these vars to roomInfo or info or something
-		if (room == null || room.optString("roomID").isEmpty()) {
-			//then check queue
-			store.update(List.of("monkeyCity", "contest", "" + cityID, "queue"), queue -> {
-				//we need to return the entire new queue object, while extracting the new/found room
-				if (queue == null)
-					queue = new JSONObject();
-				var qRoom = queue.optJSONObject("" + tier);
-				if (qRoom == null || 
-						(now - qRoom.optLong("at")) > CT_QUEUE_TIME ||
-						week(qRoom.optLong("at")) != week(now)) {
-					//create the room
-					JSONObject newRoom = newCTRoom(level, cityID, payload);
-					ret.setOpaque(newRoom);
-					String newRoomID = newRoom.getJSONObject("contestedTerritory").getString("roomID");
-					qRoom = new JSONObject().put("id", newRoomID).put("players", new JSONArray()).put("at",
-							System.currentTimeMillis());
-					queue.put("" + tier, qRoom);
-				}
-				String newRoomID = qRoom.getString("id");
-				JSONArray players = qRoom.getJSONArray("players");
-				if(!players.toList().contains(userID))
-					players.put(userID);
-				qRoom.put("players", players);
-				if (players.length() >= 6)
-					queue.remove("" + tier);
-				retString.setOpaque(newRoomID);
-				//ret.setOpaque(newRoom);
-				return queue;
-			});
-			//if a new room was created, store it before adding the player
-			if (ret.getOpaque() != null) {
-				roomID = ret.getOpaque().getJSONObject("contestedTerritory").getString("roomID");
-				store.put(List.of("monkeyCity", "contest", "" + cityID, "rooms", roomID), ret.getOpaque());
-			}
-			//room was reused, extract id
-			else if (retString.getOpaque() != null) {
-				roomID = retString.getOpaque();
+		%>
+		<%-- CT - HISTORY --%>
+		<%! 
+		//gets CT room info, updating it to check if it expired first
+		public JSONObject getOrArchiveRoomInfo(int userID, int cityID){
+			var room = store.get("monkeyCity",""+userID,"contest",""+cityID);
+			if(room == null){
+				return null;
 			} else {
-				throw new IllegalStateException("should have either ret or retString");
+				long at = room.optLong("at");
+				if (at != 0 && CTUtil.week(at) != CTUtil.week(System.currentTimeMillis())) {
+					JSONObject roomData = store.get("monkeyCity", "contest", "" + cityID, "rooms", room.getString("roomID"));
+					CTUtil.updateDurations(roomData);
+					var ct = roomData.get("contestedTerritory");
+					room.put("history", new JSONObject().put("room",ct));
+					room.remove("roomID");
+					room.remove("at");
+					store.put(List.of("monkeyCity",""+userID,"contest",""+cityID), room);
+					//TODO: remove player from room and then delete it when no players left?
+				}
 			}
-		} else {
-			roomID = room.getString("roomID");
+			return room;
 		}
-		ret.setOpaque(addCTPlayerToRoom(userID, cityID, roomID, payload));
-		updateDurations(ret.getOpaque());
+	
+		public JSONObject getCTHistory(int userID, int cityID){
+			var room = getOrArchiveRoomInfo(userID, cityID);
+			JSONObject history;
+			//contains room for previous thing
+			//remove on /claim or /close?
+			if(room==null || (history=room.optJSONObject("history")) == null){
+				return new JSONObject();
+			}
+			return history;
+		}
+		
+		public JSONObject closeCTHistory(int userID, int cityID, String roomID, String action){
+			//action can be claim and close but claim is unused
+			store.update(List.of("monkeyCity",""+userID,"contest",""+cityID), info->{
+				//NOTE: does not use room id
+				info.remove("history");
+				return info;
+			});
+			return new JSONObject();
+		}
+		
+		%>
+<%!
+	
+	}
+%>
+<%-- Util --%>
+<%!
+public static class Util{
 
-		// user -> room id
-		store.put(List.of("monkeyCity", "" + userID, "contest", "" + cityID),
-				new JSONObject().put("roomID", roomID).put("at", now));
-		return ret.getOpaque();
-		//this would be the "create ct" thing, if no matching room was found
 
+	private static long key(JSONObject tile) {
+		return ((long) tile.getInt("x") << 32) | (tile.getInt("y") & -1L);
 	}
 
-	public static int ctMinRound(int level) {
-		int tier = ctTier(level);
-		/**TODO: SET TO 1 FOR TESTING*/
-		return 0 == 0 ? 1 : switch (tier) {
-		case 1, 2, 3, 4 -> 2 + tier * 4;
-		case 5 -> 22;
-		default -> 24 + (tier - 6); //6-9
-		};
-	}
-
-	public static int ctTier(int level) {
-		return Math.min(9, (level - 5) / 4 + 1);
-	}
-
-	public JSONObject getCityThing(int userID, int cityID, String thing) {
-		return store.get("monkeyCity", "" + userID, "cities", "" + cityID, thing);
-	}
-
+	public static JSONObject BLANK_CORE = new JSONObject().put("core",new JSONObject());
 	public static Iterable<JSONObject> jIter(JSONArray array) {
 		return (Iterable<JSONObject>) (() -> Spliterators.iterator(jStream(array).spliterator()));
 	}
@@ -515,9 +446,6 @@ public static class BMCData{
 		return IntStream.range(0, array.length()).mapToObj(array::getJSONObject);
 	}
 
-	private static long key(JSONObject tile) {
-		return ((long) tile.getInt("x") << 32) | (tile.getInt("y") & -1L);
-	}
 
 	public static JSONObject mergeContent(JSONObject content, JSONObject update) {
 		if (content == null)
@@ -529,7 +457,7 @@ public static class BMCData{
 			if (!key.equals("tiles"))
 				content.put(key, updateContent.get(key));
 		}
-		var tileMap = jStream(tiles).collect(Collectors.toMap(BMCData::key, x -> x, (x, y) -> y));
+		var tileMap = jStream(tiles).collect(Collectors.toMap(Util::key, x -> x, (x, y) -> y));
 		for (var tile : jIter(newTiles)) {
 			long key = key(tile);
 			var oldTile = tileMap.get(key);
@@ -571,79 +499,181 @@ public static class BMCData{
 		return core;
 	}
 
-	public boolean updateCore(int userID, JSONObject payload) {
-		return store.update(List.of("monkeyCity", "" + userID, "core"), x -> mergeCore(x, payload));
+	private static JSONObject DEFAULT_CRATES(){
+		return new JSONObject()
+				.put("own",0)
+				.put("requested", new JSONArray())
+				.put("sent", new JSONArray())
+				.put("pending", new JSONArray())
+				.put("received", new JSONArray());
+	}
+}
+%>
+<%-- CTUtil --%>
+<%!
+public static class CTUtil {
+
+	public static JSONObject newCTRoom(int level, int cityID, JSONObject payload) {
+		String roomID = "" + ThreadLocalRandom.current().nextLong();
+		var newRoom = new JSONObject().put("contestedTerritory",
+				new JSONObject().put("cities", new JSONArray()).put("score", new JSONObject())
+						.put("data", payload.get("data")).put("roomID", roomID).put("levelTier", ctTier(level))
+						.put("minRounds", ctMinRound(level)).put("lastLootTime", System.currentTimeMillis())
+						.put("startTime", System.currentTimeMillis()));
+		return newRoom;
 	}
 
-	public boolean updateContent(int userID, int cityID, JSONObject payload) {
-		return store.update(List.of("monkeyCity", "" + userID, "cities", "" + cityID, "content"),
-				x -> mergeContent(x, payload));
+
+	public static void addCTPlayer(JSONObject room, int userID, JSONObject player){
+		var cities = room.getJSONObject("contestedTerritory").getJSONArray("cities");
+		if(Util.jStream(cities).noneMatch(x->x.getInt("userID") == userID))
+			cities
+				.put(new JSONObject()
+					.put("userName",player.get("userName"))
+					.put("userID",userID)
+					.put("cityLevel",player.get("cityLevel"))
+					.put("cityName",player.get("cityName"))
+				);
+	}
+	
+	private static int week(long millis) {
+		return (int) ((millis / (1000 * 60 * 60 * 24) - 4) / 7);
 	}
 
-	public boolean updateInfo(int userID, int cityID, JSONObject payload) {
-		return store.update(List.of("monkeyCity", "" + userID, "cities", "" + cityID, "info"),
-				x -> mergeInfo(x, payload));
+	//for cases where bloons retook while someone was leader
+	//problem - what if they submitted bad scores during that time???
+	public static void rollExtraTime(JSONObject scores, long roomStartTime, int minRounds) {
+		long now = System.currentTimeMillis();
+		long endOfWeek = (week(roomStartTime) + 1L) * 24 * 3600 * 1000 * 7;
+		int leader = findLeader(scores, minRounds);
+		scores.keySet().stream().filter(x -> {
+			long time = scores.getJSONObject(x).optLong("time");
+			return time > 0;
+		}).filter(x -> !x.equals("" + leader)).forEach(id -> {
+			JSONObject score = scores.getJSONObject("" + id);
+			long durationWithoutCurrent = Math.max(24 * 3600 * 1000,
+					Math.min(endOfWeek, now) - score.getLong("time")) + score.optLong("durationWithoutCurrent");
+			score.put("durationWithoutCurrent", durationWithoutCurrent).put("current", 0).put("time", 0);
+		});
 	}
 
-	public boolean putCityThing(int userID, int cityID, String thing, JSONObject payload) {
-		return switch (thing) {
-		case "content" -> updateContent(userID, cityID, payload);
-		case "info" -> updateInfo(userID, cityID, payload);
-		default -> store.put(List.of("monkeyCity", "" + userID, "cities", "" + cityID, thing), payload);
+	public static void updateDurations(JSONObject room) {
+		var ct = room.getJSONObject("contestedTerritory");
+		updateDurations(ct.getJSONObject("score"), ct.optLong("startTime"), ct.getInt("minRounds"));
+	}
+
+	public static void updateDurations(JSONObject scores, long roomStartTime, int minRounds) {
+		long now = System.currentTimeMillis();
+		long endOfWeek = (week(roomStartTime) + 1L) * 24 * 3600 * 1000 * 7;
+		for (String id : scores.keySet()) {
+			JSONObject score = scores.getJSONObject("" + id);
+			long time = score.getLong("time");
+			long durationTime = score.getLong("durationTime");
+			long duration = score.optLong("durationWithoutCurrent") +
+			//if time > 0, you were the last leader(even though you would no longer be)
+					(time > 0 ? (Math.min(endOfWeek, now) - Math.max(time, durationTime)) : 0);
+			score.put("time", time).put("durationTime", durationTime).put("duration", duration);
+		}
+	}
+
+	//assumes time was already updated
+	//now need a fn to determine if a new score would become the leader
+	public static int findLeader(JSONObject scores, int minRounds) {
+		long now = System.currentTimeMillis();
+		return scores.keySet().stream().filter(x -> {
+			long time = scores.getJSONObject(x).optLong("time");
+			return time > 0 && (now - time) < 24 * 3600 * 1000;
+		}).filter(x -> {
+			int round = scores.getJSONObject(x).optInt("current");
+			return round >= minRounds;
+		}).sorted(Comparator.comparing(x -> -scores.getJSONObject(x).optInt("current"))).mapToInt(Integer::parseInt)
+				.findFirst().orElse(-1);
+	}
+	
+	//assumes newScore was not previously the leader
+	public static boolean becomesLeader(JSONObject scores, JSONObject newScore, int minRounds) {
+		int score = newScore.optInt("score");
+		long time = newScore.optLong("time");
+		long now = System.currentTimeMillis();
+		if (score < minRounds || (now - time) >= 24 * 3600 * 1000 || week(now) != week(time))
+			return false;
+		int leader = findLeader(scores, minRounds);
+		return leader < 0 || scores.getJSONObject("" + leader).optInt("current") < score;
+	}
+
+	public static int ctMinRound(int level) {
+		int tier = ctTier(level);
+		/**TODO: SET TO 1 FOR TESTING*/
+		return 0 == 0 ? 1 : switch (tier) {
+		case 1, 2, 3, 4 -> 2 + tier * 4;
+		case 5 -> 22;
+		default -> 24 + (tier - 6); //6-9
 		};
 	}
-}
 
-/**stuff like put(url, ..., ...)*/
-public static interface ObjectStore {
-	public default JSONObject get(String... url) {
-		return get(String.join("/", url));
-	}
-
-	public default JSONObject get(Iterable<String> url) {
-		return get(String.join("/", url));
-	}
-
-	public default JSONObject get(String url, JSONObject fallback) {
-		var ret = get(url);
-		return ret == null ? fallback : ret;
-	}
-
-	public default JSONObject get(Iterable<String> url, JSONObject fallback) {
-		var ret = get(url);
-		return ret == null ? fallback : ret;
-	}
-
-	public default boolean put(Iterable<String> url, JSONObject payload) {
-		return put(String.join("/", url), payload);
-	}
-
-	public default boolean update(Iterable<String> url, UnaryOperator<JSONObject> update) {
-		return update(String.join("/", url), update);
-	}
-
-	public default boolean delete(String... url) {
-		return delete(String.join("/", url));
-	}
-
-	public default boolean delete(Iterable<String> url) {
-		return delete(String.join("/", url));
-	}
-
-	public JSONObject get(String url);
-
-	public boolean has(String url);
-
-	public boolean delete(String url);
-
-	public boolean put(String url, JSONObject payload);
-
-	public default boolean update(String url, UnaryOperator<JSONObject> update) {
-		return put(url, update.apply(get(url)));
+	public static int ctTier(int level) {
+		return Math.min(9, (level - 5) / 4 + 1);
 	}
 }
+%>
+<%-- for folding - Window > Preferences >Web> JSP Files > Editor > templates > declaration > type = 'All JSP' --%>
+<%-- ObjectStore --%>
 
-/**uses b64's of the urls so it is always in the same folder*/
+<%!
+	/**stuff like put(url, ..., ...)*/
+	public static interface ObjectStore {
+		public default JSONObject get(String... url) {
+			return get(String.join("/", url));
+		}
+	
+		public default JSONObject get(Iterable<String> url) {
+			return get(String.join("/", url));
+		}
+	
+		public default JSONObject get(String url, JSONObject fallback) {
+			var ret = get(url);
+			return ret == null ? fallback : ret;
+		}
+	
+		public default JSONObject get(Iterable<String> url, JSONObject fallback) {
+			var ret = get(url);
+			return ret == null ? fallback : ret;
+		}
+	
+		public default boolean put(Iterable<String> url, JSONObject payload) {
+			return put(String.join("/", url), payload);
+		}
+	
+		public default boolean update(Iterable<String> url, UnaryOperator<JSONObject> update) {
+			return update(String.join("/", url), update);
+		}
+	
+		public default boolean delete(String... url) {
+			return delete(String.join("/", url));
+		}
+	
+		public default boolean delete(Iterable<String> url) {
+			return delete(String.join("/", url));
+		}
+	
+		public JSONObject get(String url);
+	
+		public boolean has(String url);
+	
+		public boolean delete(String url);
+	
+		public boolean put(String url, JSONObject payload);
+	
+		public default boolean update(String url, UnaryOperator<JSONObject> update) {
+			return put(url, update.apply(get(url)));
+		}
+	}
+%>
+<%-- FileObjectStore --%>
+<%!
+/**
+uses b64's of the urls so it is always in the same folder
+*/
 public static class FileObjectStore implements ObjectStore {
 	private final Path root;
 	//we lock using this, without ever adding to it
@@ -764,6 +794,7 @@ public static class FileObjectStore implements ObjectStore {
 //public static class DBObjectStore ?!?!!
 //public static class S3ObjectStore ?!???!?!?!?!?!
 %>
+
 <%
 
 var fos = new FileObjectStore(Path.of("./objects"));
