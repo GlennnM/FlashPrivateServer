@@ -53,11 +53,11 @@ if(request.getMethod().equals("POST")){
 	String action = json.optString("action"); 
 	System.out.println("->"+action);
 	JSONObject reply = new JSONObject();
-	//if(!operation.equals("handshake"))
-	//	if(!Objects.equals(sessionID,SESSIONS.get(userID)))
-	//		throw new RuntimeException("No handshake");//TODO: error about same sessions
+	if(DO_NK_AUTH && !operation.equals("handshake"))
+		if(!Objects.equals(sessionID,SESSIONS.get(userID)))
+			throw new RuntimeException("No handshake");//TODO: error about same sessions
 	switch(operation){
-	case "handshake": 
+	case "handshake":  
 		sessionID = session.getId();
 		SESSIONS.put(userID,sessionID);
 		sid = System.currentTimeMillis();
@@ -226,6 +226,7 @@ if(request.getMethod().equals("POST")){
 							case "loot" ->  DATA.lootCT(userID, city, request.getParameter("room"), json.getJSONObject("payload"));
 							case "score" ->  DATA.updateCTScore(userID, city, request.getParameter("room"), json.getJSONObject("payload"));
 							case "join" -> DATA.joinCT(userID, city, json.getJSONObject("payload"));
+							case "history" -> DATA.closeCTHistory(userID, city, request.getParameter("room"), request.getParameter("action"));
 							default -> null;
 						};
 				reply

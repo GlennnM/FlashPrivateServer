@@ -138,6 +138,15 @@ public static class BMCData{
 		var crates =  getCore(userID).optJSONObject("crates");
 		return crates==null ? DEFAULT_CRATES() : crates;
 	}
+	public JSONObject closeCTHistory(int userID, int cityID, String roomID, String action){
+		//action can be claim and close but claim is unused
+		store.update(List.of("monkeyCity",""+userID,"contest",""+cityID), info->{
+			//NOTE: does not use room id
+			info.remove("history");
+			return info;
+		});
+		return new JSONObject();
+	}
 	public JSONObject getCTHistory(int userID, int cityID){
 		var room = getOrArchiveRoomInfo(userID, cityID);
 		JSONObject history;
@@ -161,8 +170,8 @@ public static class BMCData{
 						.put("levelTier",ctTier(level))
 						.put("minRounds",ctMinRound(level))
 						.put("lastLootTime",System.currentTimeMillis())
-				)
-				.put("startTime",System.currentTimeMillis());
+						.put("startTime",System.currentTimeMillis())
+				);
 		return newRoom;
 	}
 	private static int week(long millis){
@@ -175,7 +184,7 @@ public static class BMCData{
 			var ct = room.getJSONObject("contestedTerritory");
 			var cities = ct.getJSONArray("cities");
 			//TODO: check if ended??
-			long startTime = room.optLong("startTime");
+			long startTime = ct.optLong("startTime");
 			if(jStream(cities).anyMatch(x->x.getInt("userID") == userID)){// verify if in ct room
 				ct.put("lastLootTime", payload.getLong("lootTime"));
 			}
@@ -187,9 +196,9 @@ public static class BMCData{
 	}
 	//for cases where bloons retook while someone was leader
 	//problem - what if they submitted bad scores during that time???
-	public void rollExtraTime(JSONObject scores, long roomStart, int minRounds){
+	public void rollExtraTime(JSONObject scores, long roomStartTime, int minRounds){
 		long now = System.currentTimeMillis();
-		long endOfWeek = (week(roomStart) + 1L) * 24 * 3600 * 1000;
+		long endOfWeek = (week(roomStartTime) + 1L) * 24 * 3600 * 1000 * 7;
 		int leader = findLeader(scores, minRounds);
 		scores.keySet().stream()
 			.filter(x -> {
@@ -209,19 +218,21 @@ public static class BMCData{
 	}
 	public void updateDurations(JSONObject room){
 		var ct = room.getJSONObject("contestedTerritory");
-		updateDurations(ct.getJSONObject("score"), room.optLong("startTime"), ct.getInt("minRounds"));
+		updateDurations(ct.getJSONObject("score"), ct.optLong("startTime"), ct.getInt("minRounds"));
 	}
-	public void updateDurations(JSONObject scores, long roomStart, int minRounds){
+	public void updateDurations(JSONObject scores, long roomStartTime, int minRounds){
 		long now = System.currentTimeMillis();
-		int leader = findLeader(scores, minRounds);
-		long endOfWeek = (week(roomStart) + 1L) * 24 * 3600 * 1000;
+		long endOfWeek = (week(roomStartTime) + 1L) * 24 * 3600 * 1000 * 7;
 		for(String id: scores.keySet()){
 			JSONObject score = scores.getJSONObject(""+id);
 			long time = score.getLong("time");
 			long durationTime = score.getLong("durationTime");
 			long duration = score.optLong("durationWithoutCurrent") + 
-					(id.equals(""+leader) ? (Math.min(endOfWeek, now) -  Math.max(time, durationTime)) : 0);
+					//if time > 0, you were the last leader(even though you would no longer be)
+					(time > 0 ? (Math.min(endOfWeek, now) -  Math.max(time, durationTime)) : 0);
 			score
+				.put("time", 0)
+				.put("durationTime", 0)
 				.put("duration", duration);
 		}
 	}
@@ -262,7 +273,7 @@ public static class BMCData{
 			double lootTimeOffset = payload.optDouble("lootTimeOffset");
 			var ct = room.getJSONObject("contestedTerritory");
 			int minRounds = ct.getInt("minRounds");
-			long startTime = room.optLong("startTime");
+			long startTime = ct.optLong("startTime");
 			if(week(startTime) != week(time)){
 				return room;
 			}
@@ -375,6 +386,7 @@ public static class BMCData{
 		});
 		return ret.getOpaque();
 	}
+	//if main city data (/cities/x) contains ct data, this is used, otherwise it will check /history
 	public JSONObject getCT(int userID, int cityID){
 		AtomicReference<JSONObject> ret = new AtomicReference<>();//extracted room object
 		var room = getOrArchiveRoomInfo(userID, cityID);
