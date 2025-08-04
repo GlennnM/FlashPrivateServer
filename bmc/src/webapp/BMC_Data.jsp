@@ -138,10 +138,16 @@ public static class BMCData{
 		var crates =  getCore(userID).optJSONObject("crates");
 		return crates==null ? DEFAULT_CRATES() : crates;
 	}
-	//TODO: implement
 	public JSONObject getCTHistory(int userID, int cityID){
-		//contains room.id and stuff of last week's event
-		return new JSONObject();
+		var room = getOrArchiveRoomInfo(userID, cityID);
+		JSONObject history;
+		//contains room for previous thing
+		//remove on /claim or /close?
+		System.out.println(room);
+		if(room==null || (history=room.optJSONObject("history")) == null){
+			return new JSONObject();
+		}
+		return history;
 	}
 	public JSONObject newCTRoom(int level, int cityID, JSONObject payload){
 		String roomID = "" + ThreadLocalRandom.current().nextLong();
@@ -168,19 +174,22 @@ public static class BMCData{
 		store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
 			var ct = room.getJSONObject("contestedTerritory");
 			var cities = ct.getJSONArray("cities");
+			//TODO: check if ended??
+			long startTime = room.optLong("startTime");
 			if(jStream(cities).anyMatch(x->x.getInt("userID") == userID)){// verify if in ct room
 				ct.put("lastLootTime", payload.getLong("lootTime"));
 			}
+			updateDurations(room);
 			ret.setOpaque(room);
-			updateDurations(ct.getJSONObject("score"), ct.getInt("minRounds"));
 			return room;
 		});
 		return ret.getOpaque();
 	}
 	//for cases where bloons retook while someone was leader
 	//problem - what if they submitted bad scores during that time???
-	public void rollExtraTime(JSONObject scores, int minRounds){
+	public void rollExtraTime(JSONObject scores, long roomStart, int minRounds){
 		long now = System.currentTimeMillis();
+		long endOfWeek = (week(roomStart) + 1L) * 24 * 3600 * 1000;
 		int leader = findLeader(scores, minRounds);
 		scores.keySet().stream()
 			.filter(x -> {
@@ -190,7 +199,7 @@ public static class BMCData{
 			.filter(x -> !x.equals(""+leader))
 			.forEach(id->{
 				JSONObject score = scores.getJSONObject(""+id);
-				long durationWithoutCurrent = Math.max(24*3600*1000, now - score.getLong("time"))
+				long durationWithoutCurrent = Math.max(24*3600*1000, Math.min(endOfWeek, now) -  score.getLong("time"))
 						+ score.optLong("durationWithoutCurrent");
 				score
 					.put("durationWithoutCurrent", durationWithoutCurrent)
@@ -200,17 +209,18 @@ public static class BMCData{
 	}
 	public void updateDurations(JSONObject room){
 		var ct = room.getJSONObject("contestedTerritory");
-		updateDurations(ct.getJSONObject("score"), ct.getInt("minRounds"));
+		updateDurations(ct.getJSONObject("score"), room.optLong("startTime"), ct.getInt("minRounds"));
 	}
-	public void updateDurations(JSONObject scores, int minRounds){
+	public void updateDurations(JSONObject scores, long roomStart, int minRounds){
 		long now = System.currentTimeMillis();
 		int leader = findLeader(scores, minRounds);
+		long endOfWeek = (week(roomStart) + 1L) * 24 * 3600 * 1000;
 		for(String id: scores.keySet()){
 			JSONObject score = scores.getJSONObject(""+id);
 			long time = score.getLong("time");
 			long durationTime = score.getLong("durationTime");
 			long duration = score.optLong("durationWithoutCurrent") + 
-					(id.equals(""+leader) ? (now - Math.max(time, durationTime)) : 0);
+					(id.equals(""+leader) ? (Math.min(endOfWeek, now) -  Math.max(time, durationTime)) : 0);
 			score
 				.put("duration", duration);
 		}
@@ -220,7 +230,7 @@ public static class BMCData{
 		int score = newScore.optInt("score");
 		long time = newScore.optLong("time");
 		long now = System.currentTimeMillis();
-		if(score < minRounds || (now-time) >= 24 * 3600 * 1000) return false;
+		if(score < minRounds || (now-time) >= 24 * 3600 * 1000 || week(now) != week(time)) return false;
 		int leader = findLeader(scores, minRounds);
 		return leader < 0 || scores.getJSONObject(""+leader).optInt("current") < score;
 	}
@@ -231,7 +241,7 @@ public static class BMCData{
 		return scores.keySet().stream()
 				.filter(x -> {
 					long time = scores.getJSONObject(x).optLong("time") ;
-					return time > 0 && (now - time) < 24 * 3600 * 1000;
+					return time > 0  && (now - time) < 24 * 3600 * 1000;
 				})
 				.filter(x -> {
 					int round = scores.getJSONObject(x).optInt("current") ;
@@ -242,7 +252,6 @@ public static class BMCData{
 				.findFirst()
 				.orElse(-1);
 	}
-	//TODO: just use players list for verification instead of 2nd store check
 	public JSONObject updateCTScore(int userID, int cityID, String roomID, JSONObject payload){
 		AtomicReference<JSONObject> ret = new AtomicReference<>();
 		store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
@@ -253,6 +262,10 @@ public static class BMCData{
 			double lootTimeOffset = payload.optDouble("lootTimeOffset");
 			var ct = room.getJSONObject("contestedTerritory");
 			int minRounds = ct.getInt("minRounds");
+			long startTime = room.optLong("startTime");
+			if(week(startTime) != week(time)){
+				return room;
+			}
 			var cities = ct.getJSONArray("cities");
 			if(jStream(cities).anyMatch(x->x.getInt("userID") == userID)){// verify if in ct room
 				var scores = ct.getJSONObject("score");
@@ -272,7 +285,7 @@ public static class BMCData{
 				---->add current duration into durationWithoutCurrent
 				---->don't update durationTime
 				*/
-				rollExtraTime(scores, minRounds);
+				rollExtraTime(scores, startTime, minRounds);
 				if(leader != userID){
 					if(becomesLeader(scores, payload, minRounds)){
 						System.out.println("NL -> L");
@@ -311,7 +324,7 @@ public static class BMCData{
 				}
 				//ct.put("lootTimeOffset", lootTimeOffset)
 				scores.put(""+userID, myScore);
-				updateDurations(scores, minRounds);
+				updateDurations(scores, startTime, minRounds);
 				ct.put("lootTimeOffset", lootTimeOffset);
 				myScore
 					.put("best",Math.max(score, myScore.optInt("best")))
@@ -335,7 +348,7 @@ public static class BMCData{
 					.getJSONObject("contestedTerritory")
 					.getJSONObject("score");
 			//note - doesn't actually perform store update(just need client to see durations)
-			updateDurations(scores, ct.getInt("minRounds"));
+			updateDurations(room);
 			return ct;
 		}
 		return new JSONObject();
@@ -364,8 +377,8 @@ public static class BMCData{
 	}
 	public JSONObject getCT(int userID, int cityID){
 		AtomicReference<JSONObject> ret = new AtomicReference<>();//extracted room object
-		var room = store.get(List.of("monkeyCity",""+userID,"contest",""+cityID));
-		if(room==null || week(room.optLong("at")) != week(System.currentTimeMillis())){
+		var room = getOrArchiveRoomInfo(userID, cityID);
+		if(room==null || room.optString("roomID").isEmpty()){
 			return null;
 		}else{
 			String roomID = room.getString("roomID");
@@ -377,164 +390,190 @@ public static class BMCData{
 		}
 		return ret.getOpaque().getJSONObject("contestedTerritory");
 	}
-		
-	public JSONObject joinCT(int userID, int cityID, JSONObject payload){
+	public JSONObject getOrArchiveRoomInfo(int userID, int cityID){
+
+		var room = store.get("monkeyCity",""+userID,"contest",""+cityID);
+		if(room == null){
+			return null;
+		} else {
+			long at = room.optLong("at");
+			if (at != 0 && week(at) != week(System.currentTimeMillis())) {
+				JSONObject roomData = store.get("monkeyCity", "contest", "" + cityID, "rooms", room.getString("roomID"));
+				updateDurations(roomData);
+				var ct = roomData.get("contestedTerritory");
+				room.put("history", new JSONObject().put("room",ct));
+				room.remove("roomID");
+				room.remove("at");
+				store.put(List.of("monkeyCity",""+userID,"contest",""+cityID), room);
+				//TODO: remove player from room and then delete it when no players left?
+			}
+		}
+		return room;
+	}
+
+	//TODO: make a consistent 'now' that is used everywhere instead of currenttimemillis()
+	public JSONObject joinCT(int userID, int cityID, JSONObject payload) {
 		int level = payload.getInt("cityLevel");
 		int tier = ctTier(level);
 		AtomicReference<JSONObject> ret = new AtomicReference<>();//extracted room object
 		AtomicReference<String> retString = new AtomicReference<>();//extracted room id
 		//this should contain info about if the room in question is expired, etc
-		var room = store.get(List.of("monkeyCity",""+userID,"contest",""+cityID));
 		String roomID;
-		if(room==null || week(room.optLong("at")) != week(System.currentTimeMillis())){
+		var room = getOrArchiveRoomInfo(userID, cityID);//TODO: rename these vars to roomInfo or info or something
+		if (room == null || room.optString("roomID").isEmpty()) {
 			//then check queue
 			//TODO: queue needs to reset and store 
-			store.update(List.of("monkeyCity","contest",""+cityID,"queue"),queue->{
+			store.update(List.of("monkeyCity", "contest", "" + cityID, "queue"), queue -> {
 				//we need to return the entire new queue object, while extracting the new/found room
-				if(queue == null)
-					queue=new JSONObject();
-				var qRoom = queue.optJSONObject(""+tier);
-				int players = 0;
-				if(qRoom == null || week(qRoom.optLong("at")) != week(System.currentTimeMillis())){
+				if (queue == null)
+					queue = new JSONObject();
+				var qRoom = queue.optJSONObject("" + tier);
+				if (qRoom == null || week(qRoom.optLong("at")) != week(System.currentTimeMillis())) {
 					//create the room
-					players = 0;
 					JSONObject newRoom = newCTRoom(level, cityID, payload);
 					ret.setOpaque(newRoom);
 					String newRoomID = newRoom.getJSONObject("contestedTerritory").getString("roomID");
-					qRoom = new JSONObject()
-							.put("id",newRoomID)
-							.put("players",0)
-							.put("at", System.currentTimeMillis());
-					queue.put(""+tier, qRoom);
+					qRoom = new JSONObject().put("id", newRoomID).put("players", new JSONArray()).put("at",
+							System.currentTimeMillis());
+					queue.put("" + tier, qRoom);
 				}
 				String newRoomID = qRoom.getString("id");
-				players = qRoom.optInt("players")+1;
+				JSONArray players = qRoom.getJSONArray("players");
+				if(!players.toList().contains(userID))
+					players.put(userID);
 				qRoom.put("players", players);
-				if(players>=6)
-					queue.remove(""+tier);
+				if (players.length() >= 6)
+					queue.remove("" + tier);
 				retString.setOpaque(newRoomID);
 				//ret.setOpaque(newRoom);
 				return queue;
 			});
 			//if a new room was created, store it before adding the player
-			if(ret.getOpaque() != null){
+			if (ret.getOpaque() != null) {
 				roomID = ret.getOpaque().getJSONObject("contestedTerritory").getString("roomID");
-				store.put(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), ret.getOpaque());
+				store.put(List.of("monkeyCity", "contest", "" + cityID, "rooms", roomID), ret.getOpaque());
 			}
 			//room was reused, extract id
-			else if(retString.getOpaque() != null){
+			else if (retString.getOpaque() != null) {
 				roomID = retString.getOpaque();
-			}else{
+			} else {
 				throw new IllegalStateException("should have either ret or retString");
 			}
 		} else {
 			roomID = room.getString("roomID");
 		}
 		ret.setOpaque(addCTPlayerToRoom(userID, cityID, roomID, payload));
-		var ct = ret.getOpaque().getJSONObject("contestedTerritory");
-		updateDurations(ct.getJSONObject("score"), ct.getInt("minRounds"));
-				
+		updateDurations(ret.getOpaque());
+
 		// user -> room id
-		store.put(List.of("monkeyCity",""+userID,"contest",""+cityID),
-				new JSONObject()
-					.put("roomID", roomID)
-					.put("at",System.currentTimeMillis())
-				);
+		store.put(List.of("monkeyCity", "" + userID, "contest", "" + cityID),
+				new JSONObject().put("roomID", roomID).put("at", System.currentTimeMillis()));
 		return ret.getOpaque();
 		//this would be the "create ct" thing, if no matching room was found
-		
-			
+
 	}
-	public static int ctMinRound(int level){
+
+	public static int ctMinRound(int level) {
 		int tier = ctTier(level);
 		/**TODO: SET TO 1 FOR TESTING*/
-		return 0==0?1:
-			switch(tier){
-			case 1, 2, 3, 4 -> 2 + tier * 4;
-			case 5 -> 22;
-			default -> 24 + (tier-6); //6-9
+		return 0 == 0 ? 1 : switch (tier) {
+		case 1, 2, 3, 4 -> 2 + tier * 4;
+		case 5 -> 22;
+		default -> 24 + (tier - 6); //6-9
 		};
 	}
-	public static int ctTier(int level){
-		return Math.min(9, (level-5)/4 + 1);
+
+	public static int ctTier(int level) {
+		return Math.min(9, (level - 5) / 4 + 1);
 	}
-	public JSONObject getCityThing(int userID, int cityID, String thing){
-		return store.get("monkeyCity", ""+userID, "cities", ""+cityID, thing);
+
+	public JSONObject getCityThing(int userID, int cityID, String thing) {
+		return store.get("monkeyCity", "" + userID, "cities", "" + cityID, thing);
 	}
-	public static Iterable<JSONObject> jIter(JSONArray array){
-		return (Iterable<JSONObject>)(()->Spliterators.iterator(jStream(array).spliterator()));
+
+	public static Iterable<JSONObject> jIter(JSONArray array) {
+		return (Iterable<JSONObject>) (() -> Spliterators.iterator(jStream(array).spliterator()));
 	}
-	public static Stream<JSONObject> jStream(JSONArray array){
-		return IntStream.range(0,array.length())
-		.mapToObj(array::getJSONObject);
+
+	public static Stream<JSONObject> jStream(JSONArray array) {
+		return IntStream.range(0, array.length()).mapToObj(array::getJSONObject);
 	}
-	private static long key(JSONObject tile){
-		return ((long)tile.getInt("x")<<32)|(tile.getInt("y")&-1L);
+
+	private static long key(JSONObject tile) {
+		return ((long) tile.getInt("x") << 32) | (tile.getInt("y") & -1L);
 	}
-	public static JSONObject mergeContent(JSONObject content, JSONObject update){
-		if(content==null)
+
+	public static JSONObject mergeContent(JSONObject content, JSONObject update) {
+		if (content == null)
 			content = new JSONObject();
 		var tiles = content.optJSONArray("tiles", new JSONArray());
 		var newTiles = update.optJSONArray("tiles", new JSONArray());
 		var updateContent = update.optJSONObject("content", new JSONObject());
-		for(String key:updateContent.keySet()){
-			if(!key.equals("tiles"))
-				content.put(key,updateContent.get(key));
+		for (String key : updateContent.keySet()) {
+			if (!key.equals("tiles"))
+				content.put(key, updateContent.get(key));
 		}
-		var tileMap = jStream(tiles).collect(Collectors.toMap(BMCData::key, x->x, (x,y)->y));
-		for(var tile: jIter(newTiles)){
+		var tileMap = jStream(tiles).collect(Collectors.toMap(BMCData::key, x -> x, (x, y) -> y));
+		for (var tile : jIter(newTiles)) {
 			long key = key(tile);
 			var oldTile = tileMap.get(key);
-			if(oldTile==null)
+			if (oldTile == null)
 				tiles.put(tile);
 			else
-				oldTile.put("tileData",tile.getString("tileData"));
+				oldTile.put("tileData", tile.getString("tileData"));
 		}
-		content.put("tiles",tiles);
+		content.put("tiles", tiles);
 		return content;
 	}
+
 	//cityName INDEX LEVEL XP
-	public static JSONObject mergeInfo(JSONObject info, JSONObject update){
-		if(info==null)
+	public static JSONObject mergeInfo(JSONObject info, JSONObject update) {
+		if (info == null)
 			info = new JSONObject();
 		var change = update.getJSONObject("cityInfoChange");
-		if(change!=null)
-			info.put("cityName",update.get("cityName"))
-				.put("level", update.get("cityLevel")) 
-				.put("xp", info.optInt("xp") + change.optInt("xp"))
-				.put("xpDebt", info.optInt("xpDebt") + change.optInt("xpDebt"))
-				.put("honour", info.optInt("honour") + change.optInt("honour"));
+		if (change != null)
+			info.put("cityName", update.get("cityName")).put("level", update.get("cityLevel"))
+					.put("xp", info.optInt("xp") + change.optInt("xp"))
+					.put("xpDebt", info.optInt("xpDebt") + change.optInt("xpDebt"))
+					.put("honour", info.optInt("honour") + change.optInt("honour"));
 		return info;
 	}
-	public static JSONObject mergeCore(JSONObject core, JSONObject update){
-		if(core==null)
+
+	public static JSONObject mergeCore(JSONObject core, JSONObject update) {
+		if (core == null)
 			core = new JSONObject();
-		for(String topKey: List.of("core", "monkeyKnowledge", "crates")){
+		for (String topKey : List.of("core", "monkeyKnowledge", "crates")) {
 			JSONObject oldCore = core.optJSONObject(topKey, new JSONObject());
 			JSONObject newCore = update.optJSONObject(topKey);
-			if(newCore!=null){
-				for(String key:newCore.keySet()){
-					oldCore.put(key,newCore.get(key));
+			if (newCore != null) {
+				for (String key : newCore.keySet()) {
+					oldCore.put(key, newCore.get(key));
 				}
 			}
 			core.put(topKey, oldCore);
 		}
 		return core;
 	}
-	public boolean updateCore(int userID, JSONObject payload){
-		return store.update(List.of("monkeyCity", ""+userID, "core"), x->mergeCore(x, payload));
+
+	public boolean updateCore(int userID, JSONObject payload) {
+		return store.update(List.of("monkeyCity", "" + userID, "core"), x -> mergeCore(x, payload));
 	}
-	public boolean updateContent(int userID, int cityID, JSONObject payload){
-		return store.update(List.of("monkeyCity", ""+userID, "cities", ""+cityID, "content"), x->mergeContent(x, payload));
+
+	public boolean updateContent(int userID, int cityID, JSONObject payload) {
+		return store.update(List.of("monkeyCity", "" + userID, "cities", "" + cityID, "content"),
+				x -> mergeContent(x, payload));
 	}
-	public boolean updateInfo(int userID, int cityID, JSONObject payload){
-		return store.update(List.of("monkeyCity", ""+userID, "cities", ""+cityID, "info"), x->mergeInfo(x, payload));
+
+	public boolean updateInfo(int userID, int cityID, JSONObject payload) {
+		return store.update(List.of("monkeyCity", "" + userID, "cities", "" + cityID, "info"),
+				x -> mergeInfo(x, payload));
 	}
+
 	public boolean putCityThing(int userID, int cityID, String thing, JSONObject payload) {
 		return switch (thing) {
-			case "content" -> updateContent(userID, cityID, payload);
-			case "info" -> updateInfo(userID, cityID, payload);
-			default -> store.put(List.of("monkeyCity", "" + userID, "cities", "" + cityID, thing), payload);
+		case "content" -> updateContent(userID, cityID, payload);
+		case "info" -> updateInfo(userID, cityID, payload);
+		default -> store.put(List.of("monkeyCity", "" + userID, "cities", "" + cityID, thing), payload);
 		};
 	}
 }
@@ -546,7 +585,7 @@ public static interface ObjectStore {
 	}
 
 	public default JSONObject get(Iterable<String> url) {
-		return get(String.join("/", url)); 
+		return get(String.join("/", url));
 	}
 
 	public default JSONObject get(String url, JSONObject fallback) {
@@ -592,7 +631,7 @@ public static interface ObjectStore {
 public static class FileObjectStore implements ObjectStore {
 	private final Path root;
 	//we lock using this, without ever adding to it
-	private final ConcurrentMap<String, Void> urlLock = new ConcurrentHashMap<>(1024*1024);
+	private final ConcurrentMap<String, Void> urlLock = new ConcurrentHashMap<>(1024 * 1024);
 
 	public FileObjectStore(Path root) throws IOException {
 		if (!Files.exists(root))
@@ -602,20 +641,21 @@ public static class FileObjectStore implements ObjectStore {
 		this.root = root;
 	}
 
-	public List<String> dump(){
-		try{
+	public List<String> dump() {
+		try {
 			return Files.walk(root, 2).filter(Files::isRegularFile)//.peek(System.out::println)
-				.map(x -> {
-					try{
-					return x.getParent().getFileName().toString() + "->"
-						+ new String(Base64.getDecoder().decode(x.getFileName().toString().trim()), UTF_8)
-						+ " -> "
-						+ Files.readString(x);
-					}catch(IOException e){
-						return "";
-					}
-				}).toList();
-		}catch(IOException e){throw new RuntimeException(e);}
+					.map(x -> {
+						try {
+							return x.getParent().getFileName().toString() + "->"
+									+ new String(Base64.getDecoder().decode(x.getFileName().toString().trim()), UTF_8)
+									+ " -> " + Files.readString(x);
+						} catch (IOException e) {
+							return "";
+						}
+					}).toList();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public Path map(String url) {
@@ -668,12 +708,13 @@ public static class FileObjectStore implements ObjectStore {
 		});
 		return holder.getOpaque();
 	}
+
 	//TODO: make this return the result of the update instead of a boolean, we don't use the boolean anyways
 	@Override
 	public boolean update(String url, UnaryOperator<JSONObject> update) {
 		Path path = map(url);
 		AtomicReference<Boolean> holder = new AtomicReference<>();//for stupid lambda thing
-		System.out.println("-->"+path);
+		System.out.println("-->" + path);
 		urlLock.compute(path.toString(), (k, v) -> {
 			try {
 				JSONObject input = Files.exists(path) ? new JSONObject(Files.readString(path)) : null;

@@ -214,6 +214,8 @@ if(request.getMethod().equals("POST")){
 							case "history" -> DATA.getCTHistory(userID, city);
 							default -> DATA.getCT(userID, city);
 						};
+				if(reply==null)
+					reply = new JSONObject();
 				reply
 					.put("success", true);
 			}
@@ -240,7 +242,7 @@ if(request.getMethod().equals("POST")){
 			break;
 	}
 	response.resetBuffer();
-	out.print(reply.toString());
+	out.print(reply);
 	return;
 }else{
 	%><html><body>
