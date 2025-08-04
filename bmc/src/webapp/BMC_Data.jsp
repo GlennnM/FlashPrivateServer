@@ -136,6 +136,7 @@ public static class BMCData{
 		var crates =  getCore(userID).optJSONObject("crates");
 		return crates==null ? DEFAULT_CRATES() : crates;
 	}
+	//TODO: implement
 	public JSONObject getCTHistory(int userID, int cityID){
 		//contains room.id and stuff of last week's event
 		return new JSONObject();
@@ -151,13 +152,14 @@ public static class BMCData{
 						.put("roomID", roomID)
 						.put("levelTier",ctTier(level))
 						.put("minRounds",ctMinRound(level))
-						.put("lastLootTime",-1)
+						.put("lastLootTime",System.currentTimeMillis())
 				);
 		return newRoom;
 	}
 	private static int week(long millis){
 		return (int)((millis/(1000*60*60*24) - 4) /7);
 	}
+	//TODO: seems to always give 200 on game start due to sanity check failing
 	public JSONObject lootCT(int userID, int cityID, String roomID, JSONObject payload){
 		AtomicReference<JSONObject> ret = new AtomicReference<>();
 		store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
@@ -270,7 +272,7 @@ public static class BMCData{
 						myScore
 							.put("durationTime", time)
 							.put("time", time);
-						ct.put("lastLootTime", time);
+						//ct.put("lastLootTime", time);
 						if(leader >= 0){
 							var oldLeader = scores.getJSONObject(""+leader);
 							long durationWithoutCurrent = (time - oldLeader.getLong("time"))
@@ -305,7 +307,7 @@ public static class BMCData{
 				updateDurations(scores, minRounds);
 				ct.put("lootTimeOffset", lootTimeOffset);
 				myScore
-					.put(pb ? "best" : "current",score)
+					.put("best",Math.max(score, myScore.optInt("best")))
 					.put("current", score)
 					.put("durationWithoutCurrent", myScore.optLong("durationWithoutCurrent"))
 					.put("durationTime", myScore.optLong("durationTime"))
@@ -362,19 +364,23 @@ public static class BMCData{
 		String roomID;
 		if(room==null || week(room.optLong("at")) != week(System.currentTimeMillis())){
 			//then check queue
+			//TODO: queue needs to reset and store 
 			store.update(List.of("monkeyCity","contest",""+cityID,"queue"),queue->{
 				//we need to return the entire new queue object, while extracting the new/found room
 				if(queue == null)
 					queue=new JSONObject();
 				var qRoom = queue.optJSONObject(""+tier);
 				int players = 0;
-				if(qRoom == null){
+				if(qRoom == null || week(qRoom.optLong("at")) != week(System.currentTimeMillis())){
 					//create the room
 					players = 0;
 					JSONObject newRoom = newCTRoom(level, cityID, payload);
 					ret.setOpaque(newRoom);
 					String newRoomID = newRoom.getJSONObject("contestedTerritory").getString("roomID");
-					qRoom = new JSONObject().put("id",newRoomID).put("players",0);
+					qRoom = new JSONObject()
+							.put("id",newRoomID)
+							.put("players",0)
+							.put("at", System.currentTimeMillis());
 					queue.put(""+tier, qRoom);
 				}
 				String newRoomID = qRoom.getString("id");
@@ -417,7 +423,9 @@ public static class BMCData{
 	}
 	public static int ctMinRound(int level){
 		int tier = ctTier(level);
-		return switch(tier){
+		/**TODO: SET TO 1 FOR TESTING*/
+		return 0==0?1:
+			switch(tier){
 			case 1, 2, 3, 4 -> 2 + tier * 4;
 			case 5 -> 22;
 			default -> 24 + (tier-6); //6-9
