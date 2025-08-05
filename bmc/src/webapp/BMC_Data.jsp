@@ -176,7 +176,8 @@
 					return r;
 				});
 			}
-			return ret.getOpaque().getJSONObject("contestedTerritory");
+			return CTUtil.hideLeaderDuration(ret.getOpaque())
+					.getJSONObject("contestedTerritory");
 		}
 
 		//TODO: make a consistent 'now' that is passed to findLeader and stuff
@@ -238,7 +239,7 @@
 			// user -> room id
 			store.put(List.of("monkeyCity", "" + userID, "contest", "" + cityID),
 					new JSONObject().put("roomID", roomID).put("at", now));
-			return ret.getOpaque();
+			return CTUtil.hideLeaderDuration(ret.getOpaque());
 			//this would be the "create ct" thing, if no matching room was found
 	
 		}
@@ -252,7 +253,7 @@
 				ret.setOpaque(room);
 				return room;
 			});
-			return ret.getOpaque();
+			return CTUtil.hideLeaderDuration(ret.getOpaque());
 		}
 		%>
 		<%-- CT - SCORES --%>
@@ -304,6 +305,7 @@
 								oldLeader
 									.put("durationWithoutCurrent", durationWithoutCurrent)
 									.put("current", 0)
+									.put("durationTime", 0)
 									.put("time", 0);
 							}
 							myScore
@@ -315,15 +317,15 @@
 						}
 					}else{
 						System.out.println("L -> L");
-						//get more time, update durationTime so that way we don't count too much
+						//get more time, but leave durationtime as is
 						if(score > myScore.optInt("current")){
 							System.out.println("L -> LL");
-							long previousDuration = time - myScore.getLong("durationTime");
+							long previousDuration = time - myScore.getLong("time");
 							long durationWithoutCurrent = previousDuration + myScore.optLong("durationWithoutCurrent");
 							myScore
 								.put("time", time)
-								.put("durationTime", time)
-								.put("durationWithoutCurrent", durationWithoutCurrent);
+								.put("durationTime", myScore.optLong("durationTime"))
+								.put("durationWithoutCurrent", durationWithoutCurrent);//???????
 							//current set below
 						}
 						else //do nothing
@@ -344,7 +346,7 @@
 				ret.setOpaque(room);
 				return room;
 			});
-			return ret.getOpaque();
+			return CTUtil.hideLeaderDuration(ret.getOpaque());
 		}
 		
 		public JSONObject getCTScores(int userID, int cityID, String roomID){
@@ -357,7 +359,7 @@
 						.getJSONObject("score");
 				//note - doesn't actually perform store update(just need client to see durations)
 				CTUtil.updateDurations(room);
-				return ct;
+				return CTUtil.hideLeaderDuration(room);
 			}
 			return new JSONObject();
 		}
@@ -376,7 +378,7 @@
 				ret.setOpaque(room);
 				return room;
 			});
-			return ret.getOpaque();
+			return CTUtil.hideLeaderDuration(ret.getOpaque());
 		}
 		%>
 		<%-- CT - HISTORY --%>
@@ -561,7 +563,19 @@ public static class CTUtil {
 		var ct = room.getJSONObject("contestedTerritory");
 		updateDurations(ct.getJSONObject("score"), ct.optLong("startTime"), ct.getInt("minRounds"));
 	}
-
+	//when the ct is active, the client would add calculated duration to the regular duration
+	//only hidden from the client, the actual durations need that value
+	//but add in the time before capture extended
+	public static JSONObject hideLeaderDuration(JSONObject room) {
+		var scores = room.getJSONObject("contestedTerritory").getJSONObject("score");
+		for (String id : scores.keySet()) {
+			var score = scores.getJSONObject(id);
+			if(score.optLong("time") > 0)
+				//why is this a thing
+				score.put("duration", (score.optLong("time") - score.optLong("durationTime")));
+		}
+		return room;
+	}
 	public static void updateDurations(JSONObject scores, long roomStartTime, int minRounds) {
 		long now = System.currentTimeMillis();
 		long endOfWeek = (week(roomStartTime) + 1L) * 24 * 3600 * 1000 * 7;
