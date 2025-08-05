@@ -31,7 +31,7 @@ effect on achievements and stuff isn't entirely known(most likely your tiles one
 - deployment *need to move leaderboards and stuff to https since this has auth
 - client *need to add NKMultiArchive into the main script to make it appear
 - maybe a beta with a swf or something on a test server before that
-- session persistence, maintenance/other server msgs?
+- maintenance/other server msgs?
 
 eventually: support for different storage backend, save transfer of some kind(ideally client should let you switch servers on title screen to see if nk one is alive), pvp bots
 

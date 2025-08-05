@@ -25,6 +25,9 @@ static final AtomicLong LAST_SKU_UPDATE = new AtomicLong();
 static{
 	try{
 		DATA = new BMCData(new FileObjectStore(Path.of("./objects")));//TODO: obviously not .
+		var prevSessions = DATA.store.get("monkeyCity/sessions");
+		if(prevSessions != null)
+			prevSessions.toMap().forEach((k,v) -> SESSIONS.put(Integer.parseInt(k), v.toString()));
 	}catch(IOException ioe){
 		throw new RuntimeException(ioe);
 	}
@@ -53,13 +56,12 @@ if(request.getMethod().equals("POST")){
 	String action = json.optString("action"); 
 	System.out.println("->"+action);
 	JSONObject reply = new JSONObject();
-	if(DO_NK_AUTH && !operation.equals("handshake"))
+	if(!operation.equals("handshake"))
 		if(!Objects.equals(sessionID,SESSIONS.get(userID)))
 			throw new RuntimeException("No handshake");//TODO: error about same sessions
 	switch(operation){
 	case "handshake":  
 		sessionID = session.getId();
-		SESSIONS.put(userID,sessionID);
 		sid = System.currentTimeMillis();
 		
 		if(DO_NK_AUTH){
@@ -98,6 +100,8 @@ if(request.getMethod().equals("POST")){
 			System.err.println("WARNING: AUTH SKIPPED!!!");
 		}
 		//we have succeeded
+		SESSIONS.put(userID,sessionID);
+		DATA.store.put("monkeyCity/sessions", new JSONObject(SESSIONS));
 		session.setAttribute("handshake", true);
 		reply = new JSONObject()
 			.put("payload",new JSONObject())
