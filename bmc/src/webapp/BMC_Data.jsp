@@ -114,18 +114,18 @@
 			return store.get(List.of("monkeyCity", ""+userID, "core"), Util.BLANK_CORE);
 		}
 		public boolean updateCore(int userID, JSONObject payload) {
-			return store.update(List.of("monkeyCity", "" + userID, "core"), x -> Util.mergeCore(x, payload));
+			return store.update(List.of("monkeyCity", "" + userID, "core"), x -> Util.mergeCore(x, payload)) != null;
 		}
 
 	
 		public boolean updateContent(int userID, int cityID, JSONObject payload) {
 			return store.update(List.of("monkeyCity", "" + userID, "cities", "" + cityID, "content"),
-					x -> Util.mergeContent(x, payload));
+					x -> Util.mergeContent(x, payload)) != null;
 		}
 	
 		public boolean updateInfo(int userID, int cityID, JSONObject payload) {
 			return store.update(List.of("monkeyCity", "" + userID, "cities", "" + cityID, "info"),
-					x -> Util.mergeInfo(x, payload));
+					x -> Util.mergeInfo(x, payload)) != null;
 		}
 
 		public JSONObject getCityThing(int userID, int cityID, String thing) {
@@ -153,7 +153,7 @@
 						crates = Util.DEFAULT_CRATES();
 					core.put("crates", crates.put("own",crates.optInt("own",0) + n));
 					return core;
-				});
+				}) != null;
 		}
 		public JSONObject getCrates(int userID){
 			var crates =  getCore(userID).optJSONObject("crates");
@@ -164,19 +164,18 @@
 		<%!
 		//if main city data (/cities/x) contains ct data, this is used, otherwise it will check /history
 		public JSONObject getCT(int userID, int cityID){
-			AtomicReference<JSONObject> ret = new AtomicReference<>();//extracted room object
+			JSONObject ret;//extracted room object
 			var room = getOrArchiveRoomInfo(userID, cityID);
 			if(room==null || room.optString("roomID").isEmpty()){
 				return null;
 			}else{
 				String roomID = room.getString("roomID");
-				store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), r->{
+				ret = store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), r->{
 					CTUtil.updateDurations(r);
-					ret.setOpaque(r);
 					return r;
 				});
 			}
-			return CTUtil.hideLeaderDuration(ret.getOpaque())
+			return CTUtil.hideLeaderDuration(ret)
 					.getJSONObject("contestedTerritory");
 		}
 
@@ -185,13 +184,13 @@
 			int level = payload.getInt("cityLevel");
 			int tier = CTUtil.ctTier(level);
 			long now = System.currentTimeMillis();
-			AtomicReference<JSONObject> ret = new AtomicReference<>();//extracted room object
-			AtomicReference<String> retString = new AtomicReference<>();//extracted room id
-			//this should contain info about if the room in question is expired, etc
+			JSONObject newRoom;
 			String roomID;
-			var room = getOrArchiveRoomInfo(userID, cityID);//TODO: rename these vars to roomInfo or info or something
-			if (room == null || room.optString("roomID").isEmpty()) {
+			var roomInfo = getOrArchiveRoomInfo(userID, cityID);
+			if (roomInfo == null || roomInfo.optString("roomID").isEmpty()) {
 				//then check queue
+				var ret = new AtomicReference<JSONObject>();
+				var retID = new AtomicReference<String>();
 				store.update(List.of("monkeyCity", "contest", "" + cityID, "queue"), queue -> {
 					//we need to return the entire new queue object, while extracting the new/found room
 					if (queue == null)
@@ -201,67 +200,56 @@
 							(now - qRoom.optLong("at")) > CT_QUEUE_TIME ||
 							CTUtil.week(qRoom.optLong("at")) != CTUtil.week(now)) {
 						//create the room
-						JSONObject newRoom = CTUtil.newCTRoom(level, cityID, payload);
-						ret.setOpaque(newRoom);
-						String newRoomID = newRoom.getJSONObject("contestedTerritory").getString("roomID");
+						ret.setPlain(CTUtil.newCTRoom(level, cityID, payload));
+						String newRoomID = ret.getPlain().getJSONObject("contestedTerritory").getString("roomID");
 						qRoom = new JSONObject().put("id", newRoomID).put("players", new JSONArray()).put("at",
 								System.currentTimeMillis());
 						queue.put("" + tier, qRoom);
 					}
-					String newRoomID = qRoom.getString("id");
+					retID.setPlain(qRoom.getString("id"));
 					JSONArray players = qRoom.getJSONArray("players");
 					if(!players.toList().contains(userID))
 						players.put(userID);
 					qRoom.put("players", players);
 					if (players.length() >= 6)
 						queue.remove("" + tier);
-					retString.setOpaque(newRoomID);
-					//ret.setOpaque(newRoom);
+					//ret.setPlain(newRoom);
 					return queue;
 				});
 				//if a new room was created, store it before adding the player
-				if (ret.getOpaque() != null) {
-					roomID = ret.getOpaque().getJSONObject("contestedTerritory").getString("roomID");
-					store.put(List.of("monkeyCity", "contest", "" + cityID, "rooms", roomID), ret.getOpaque());
-				}
-				//room was reused, extract id
-				else if (retString.getOpaque() != null) {
-					roomID = retString.getOpaque();
-				} else {
-					throw new IllegalStateException("should have either ret or retString");
-				}
+				roomID = retID.getPlain();
+				if (ret.getPlain() != null) {//if a new room was made
+					store.put(List.of("monkeyCity", "contest", "" + cityID, "rooms", roomID), ret.getPlain());
+				} 
+				
 			} else {
-				roomID = room.getString("roomID");
+				roomID = roomInfo.getString("roomID");
 			}
-			ret.setOpaque(addCTPlayerToRoom(userID, cityID, roomID, payload));
-			CTUtil.updateDurations(ret.getOpaque());
+			newRoom = addCTPlayerToRoom(userID, cityID, roomID, payload);
+			CTUtil.updateDurations(newRoom);
 	
 			// user -> room id
 			store.put(List.of("monkeyCity", "" + userID, "contest", "" + cityID),
 					new JSONObject().put("roomID", roomID).put("at", now));
-			return CTUtil.hideLeaderDuration(ret.getOpaque());
-			//this would be the "create ct" thing, if no matching room was found
+			return CTUtil.hideLeaderDuration(newRoom);
 	
 		}
 		
 		public JSONObject addCTPlayerToRoom(int userID, int cityID, String roomID, JSONObject payload){
-			AtomicReference<JSONObject> ret = new AtomicReference<>();
-			store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
+			var ret = store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
 				//we need to return the entire new queue object, while extracting the new/found room
 				CTUtil.addCTPlayer(room, userID, payload);
 				CTUtil.updateDurations(room);
-				ret.setOpaque(room);
 				return room;
 			});
-			return CTUtil.hideLeaderDuration(ret.getOpaque());
+			return CTUtil.hideLeaderDuration(ret);
 		}
 		%>
 		<%-- CT - SCORES --%>
 		<%! 
 		
 		public JSONObject updateCTScore(int userID, int cityID, String roomID, JSONObject payload){
-			AtomicReference<JSONObject> ret = new AtomicReference<>();
-			store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
+			var ret = store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
 				//we need to return the entire new queue object, while extracting the new/found room
 				int score = payload.optInt("score");
 				long time = payload.optLong("time");
@@ -343,10 +331,9 @@
 						.put("duration", myScore.optLong("duration"))
 						.put("time", myScore.optLong("time"));	
 				}
-				ret.setOpaque(room);
 				return room;
 			});
-			return CTUtil.hideLeaderDuration(ret.getOpaque());
+			return CTUtil.hideLeaderDuration(ret);
 		}
 		
 		public JSONObject getCTScores(int userID, int cityID, String roomID){
@@ -365,8 +352,7 @@
 		}
 		//TODO: seems to always give 200 on game start due to sanity check failing
 		public JSONObject lootCT(int userID, int cityID, String roomID, JSONObject payload){
-			AtomicReference<JSONObject> ret = new AtomicReference<>();
-			store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
+			var ret = store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
 				var ct = room.getJSONObject("contestedTerritory");
 				var cities = ct.getJSONArray("cities");
 				//TODO: check if ended??
@@ -375,10 +361,9 @@
 					ct.put("lastLootTime", payload.getLong("lootTime"));
 				}
 				CTUtil.updateDurations(room);
-				ret.setOpaque(room);
 				return room;
 			});
-			return CTUtil.hideLeaderDuration(ret.getOpaque());
+			return CTUtil.hideLeaderDuration(ret);
 		}
 		%>
 		<%-- CT - HISTORY --%>
@@ -658,7 +643,7 @@ public static class CTUtil {
 			return put(String.join("/", url), payload);
 		}
 	
-		public default boolean update(Iterable<String> url, UnaryOperator<JSONObject> update) {
+		public default JSONObject update(Iterable<String> url, UnaryOperator<JSONObject> update) {
 			return update(String.join("/", url), update);
 		}
 	
@@ -678,8 +663,10 @@ public static class CTUtil {
 	
 		public boolean put(String url, JSONObject payload);
 	
-		public default boolean update(String url, UnaryOperator<JSONObject> update) {
-			return put(url, update.apply(get(url)));
+		public default JSONObject update(String url, UnaryOperator<JSONObject> update) {
+			var input = get(url);
+			put(url, update.apply(get(url)));
+			return input;
 		}
 	}
 %>
@@ -732,13 +719,13 @@ public static class FileObjectStore implements ObjectStore {
 		AtomicReference<JSONObject> holder = new AtomicReference<>();//for stupid lambda thing
 		urlLock.compute(path.toString(), (k, v) -> {
 			try {
-				holder.setOpaque(new JSONObject(Files.readString(path)));
+				holder.setPlain(new JSONObject(Files.readString(path)));
 			} catch (IOException e) {
-				holder.setOpaque(null);
+				holder.setPlain(null);
 			}
 			return null;
 		});
-		return holder.getOpaque();
+		return holder.getPlain();
 	}
 
 	@Override
@@ -746,10 +733,10 @@ public static class FileObjectStore implements ObjectStore {
 		Path path = map(url);
 		AtomicReference<Boolean> holder = new AtomicReference<>();//for stupid lambda thing
 		urlLock.compute(path.toString(), (k, v) -> {
-			holder.setOpaque(Files.exists(path));
+			holder.setPlain(Files.exists(path));
 			return null;
 		});
-		return holder.getOpaque();
+		return holder.getPlain();
 	}
 
 	@Override
@@ -760,33 +747,33 @@ public static class FileObjectStore implements ObjectStore {
 			try {
 				Files.createDirectories(path.getParent());
 				Files.writeString(path, payload.toString());
-				holder.setOpaque(true);
+				holder.setPlain(true);
 			} catch (IOException e) {
-				holder.setOpaque(false);
+				holder.setPlain(false);
 			}
 			return null;
 		});
-		return holder.getOpaque();
+		return holder.getPlain();
 	}
 
-	//TODO: make this return the result of the update instead of a boolean, we don't use the boolean anyways
 	@Override
-	public boolean update(String url, UnaryOperator<JSONObject> update) {
+	public JSONObject update(String url, UnaryOperator<JSONObject> update) {
 		Path path = map(url);
-		AtomicReference<Boolean> holder = new AtomicReference<>();//for stupid lambda thing
+		AtomicReference<JSONObject> holder = new AtomicReference<>();//for stupid lambda thing
 		System.out.println("-->" + path);
 		urlLock.compute(path.toString(), (k, v) -> {
 			try {
 				JSONObject input = Files.exists(path) ? new JSONObject(Files.readString(path)) : null;
 				Files.createDirectories(path.getParent());
-				Files.writeString(path, update.apply(input).toString());
-				holder.setOpaque(true);
+				JSONObject output = update.apply(input);
+				Files.writeString(path, output.toString());
+				holder.setPlain(output);
 			} catch (IOException e) {
-				holder.setOpaque(false);
+				holder.setPlain(null);
 			}
 			return null;
 		});
-		return holder.getOpaque();
+		return holder.getPlain();
 	}
 
 	@Override
@@ -796,13 +783,13 @@ public static class FileObjectStore implements ObjectStore {
 		urlLock.compute(path.toString(), (k, v) -> {
 			try {
 				Files.delete(path);
-				holder.setOpaque(true);
+				holder.setPlain(true);
 			} catch (IOException e) {
-				holder.setOpaque(false);
+				holder.setPlain(false);
 			}
 			return null;
 		});
-		return holder.getOpaque();
+		return holder.getPlain();
 	}
 }
 //public static class DBObjectStore ?!?!!
