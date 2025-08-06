@@ -247,6 +247,7 @@ if(request.getMethod().equals("POST")){
 			break;
 	}
 	response.resetBuffer();
+	response.setContentType("application/json");
 	out.print(reply);
 	return;
 }else{
