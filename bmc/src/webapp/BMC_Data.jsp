@@ -151,7 +151,7 @@
 					var crates = core.optJSONObject("crates");
 					if(crates==null)
 						crates = Util.DEFAULT_CRATES();
-					core.put("crates", crates.put("own",crates.optInt("own",0) + n));
+					core.put("crates", crates.put("own",crates.optInt("own") + n));
 					return core;
 				}) != null;
 		}
@@ -654,7 +654,9 @@ public static class CTUtil {
 		public default boolean delete(Iterable<String> url) {
 			return delete(String.join("/", url));
 		}
-	
+
+		public List<String> list();
+		
 		public JSONObject get(String url);
 	
 		public boolean has(String url);
@@ -704,7 +706,17 @@ public static class FileObjectStore implements ObjectStore {
 			throw new RuntimeException(e);
 		}
 	}
-
+	@Override
+	public List<String> list() {
+		try {
+			return Files.walk(root, 2).filter(Files::isRegularFile)//.peek(System.out::println)
+					.map(x -> new String(Base64.getDecoder().decode(x.getFileName().toString().trim()), UTF_8))
+					.sorted()
+					.toList();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 	public Path map(String url) {
 		String newURL = Base64.getEncoder().encodeToString(url.getBytes(UTF_8));
 		CRC32 crc = new CRC32();
@@ -794,15 +806,4 @@ public static class FileObjectStore implements ObjectStore {
 }
 //public static class DBObjectStore ?!?!!
 //public static class S3ObjectStore ?!???!?!?!?!?!
-%>
-
-<%
-
-var fos = new FileObjectStore(Path.of("./objects"));
-%><%=
-fos.map("monkeyCity/24095321/cities")
-%><%=
-fos.get("monkeyCity/24095321/cities/0/content")
-%><%=
-fos.dump()
 %>
