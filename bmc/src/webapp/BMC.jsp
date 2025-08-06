@@ -19,7 +19,6 @@
 <%@ include file="BMC_Data.jsp" %>
 <%! 
 static final Map<Integer,String> SESSIONS = new ConcurrentHashMap<>();
-static final boolean DO_NK_AUTH = false;
 static final BMCData DATA;
 static final AtomicLong LAST_SKU_UPDATE = new AtomicLong();
 static{
@@ -64,7 +63,7 @@ if(request.getMethod().equals("POST")){
 		sessionID = session.getId();
 		sid = System.currentTimeMillis();
 		
-		if(DO_NK_AUTH){
+		if(!("false".equals(request.getServletContext().getInitParameter("DO_NK_AUTH")))){
 			HttpClient client = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
 			AMFMessage nkAuth = new AMFMessage();
 			var serializer = ByteAMF.serializer();
