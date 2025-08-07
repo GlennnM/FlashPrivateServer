@@ -38,6 +38,22 @@
 	import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
 <%-- BMC DATA --%>
 <%!
+static{
+	//VERY DUMB THING TO DO AN UPDATE THAT SHOULD HAPPEN ANYWAYS BUT isnt implemented FIXME:remove
+	var hydar = xyz.hydar.ee.Hydar.hydars.get(0);
+	if(hydar.ee.ctx.getAttribute("done")==null){
+		new Thread(()->{
+			try{
+				Thread.sleep(100);
+				hydar.ee.ctx.setAttribute("done", 1);
+				hydar.ee.compile(Path.of("../src/webapp/BMC.jsp"));
+				hydar.ee.ctx.setAttribute("done", null);
+			}catch(InterruptedException e){
+				Thread.currentThread().interrupt();
+			}
+		}).start();
+	}
+}
 	static final long CT_QUEUE_TIME = 24L * 3600 * 1000 * 3;//time a new CT is joinable for
 	/**does stuff like putCity(0,{},..)*/
 	public static class BMCData{
@@ -284,7 +300,8 @@
 					if(leader != userID){
 						if(CTUtil.becomesLeader(scores, payload, minRounds)){
 							System.out.println("NL -> L");
-							//ct.put("lastLootTime", time);
+							ct.put("lastLootTime", time);
+							ct.put("lootTimeOffset", lootTimeOffset);
 							if(leader >= 0){
 								System.out.println("Updating old leader "+leader);
 								var oldLeader = scores.getJSONObject(""+leader);
@@ -310,6 +327,7 @@
 							System.out.println("L -> LL");
 							long previousDuration = time - myScore.getLong("time");
 							long durationWithoutCurrent = previousDuration + myScore.optLong("durationWithoutCurrent");
+							ct.put("lootTimeOffset", lootTimeOffset);
 							myScore
 								.put("time", time)
 								.put("durationTime", myScore.optLong("durationTime"))
@@ -322,7 +340,6 @@
 					//ct.put("lootTimeOffset", lootTimeOffset)
 					scores.put(""+userID, myScore);
 					CTUtil.updateDurations(scores, startTime, minRounds);
-					ct.put("lootTimeOffset", lootTimeOffset);
 					myScore
 						.put("best",Math.max(score, myScore.optInt("best")))
 						.put("current", score)
@@ -350,7 +367,7 @@
 			}
 			return new JSONObject();
 		}
-		//TODO: seems to always give 200 on game start due to sanity check failing
+		//lootTimeOffset is a 'claim reward', we set it and reset it after 1 claim, claiming from self included
 		public JSONObject lootCT(int userID, int cityID, String roomID, JSONObject payload){
 			var ret = store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
 				var ct = room.getJSONObject("contestedTerritory");
@@ -358,7 +375,8 @@
 				//TODO: check if ended??
 				long startTime = ct.optLong("startTime");
 				if(Util.jStream(cities).anyMatch(x->x.getInt("userID") == userID)){// verify if in ct room
-					ct.put("lastLootTime", payload.getLong("lootTime"));
+					ct.put("lastLootTime", payload.getLong("lootTime"))
+					.put("lootTimeOffset", 0);
 				}
 				CTUtil.updateDurations(room);
 				return room;
