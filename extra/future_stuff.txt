@@ -1,14 +1,3 @@
-mp rewrite:
-sas3/countersnipe, loadable config, multiple game server ip's, better logging, restart w/o killing connections, other stuff in TODOs
-
-other NK flash stuff: 
-1. downloading save as file with archive app.asar mod
-->bmc too
-2. sql setup for accounts
-3. AMF gateway and web-monkey-city.ninjakiwi or whatever
-4. actually working ui(login/register) with app.asar mod
-5. optional: battles stats/fd/tk
-
 notes on nk AMF services=========================
 "OBJ"=object(usually turned to map/jsonobject by most amf frameworks
 [X]=list
@@ -21,7 +10,7 @@ num is always a double
 
 
 #data:
-#names: BTD4 BTD5 Battles SAS3 SAS4 MonkeyCity BSM2 "SAS TD" "Battle Panic" "Battle Blocks Defense" fd/tk
+#names: BTD4 BTD5 Battles SAS3 SAS4 MonkeyCity BSM2 "SAS TD" "Battle Panic" "Battle Blocks Defense" fd/tk ???? cant find them
 
 #ui:
 #create/transfer acc
@@ -48,9 +37,9 @@ game.get_store
 	[Obj{salethumb:STR thumbnail:STR cost:NUM quantity:NUM hidden:NUM itemname:STR iscombo:NUM salecost:NUM description:STR id:NUM maxbuyable:NUM maxquantity:NUM}...]
 game.get_my_achievements
 	REQUEST:
-	[game,uID,token]
+	[uID,token, game]
 	RESPONSE:
-	NULL
+	[Obj{perc:NUM hidden:NUM thumb:STR ach_name:STR desc:STR id:NUM uid:NUM cred:NUM pts:NUM}]
 game.save_data
 	REQUEST:
 	[uid, token, game, {important:bool gcash:num data:str transid:num glevel:num gxp:num gnum:num}]
@@ -111,11 +100,6 @@ user.get_inventory
 	[game,uID,token,username]
 	RESPONSE:
 	[Obj{thumbnail:STR cost:NUM quantity:NUM hidden:NUM itemname:STR iscombo:NUM salecost:NUM description:STR id:NUM maxbuyable:NUM maxquantity:NUM}...]
-user.get_my_achievements -> might not exist
-	REQUEST:
-	[uID,token,game]
-	RESPONSE:
-	[Obj{perc:NUM hidden:NUM thumb:STR ach_name:STR desc:STR id:NUM uid:NUM cred:NUM pts:NUM}]
 user.set_achievement
 	REQUEST:
 	[uID,token,game,ach_id:num,perc:num,username]
