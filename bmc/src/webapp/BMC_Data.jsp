@@ -6,7 +6,7 @@
 <%@page import="java.util.concurrent.atomic.AtomicBoolean"%>
 <%@page import="java.util.Scanner"%>
 <%@page import="java.util.Spliterators"%>
-<%@page import="java.util.stream.Collectors"%>
+<%@page import="static java.util.stream.Collectors.*"%>
 <%@page import="java.util.stream.Stream"%>
 <%@page import="java.util.stream.IntStream"%>
 <%@page import="java.util.function.UnaryOperator"%>
@@ -60,6 +60,15 @@ static{
 		private final ObjectStore store;
 		public BMCData(ObjectStore store){
 			this.store = store;
+		}
+		//save initial achievements for a user
+		public void saveAchIfNew(int userID, JSONArray ach){
+			store.update(List.of("monkeyCity",""+userID,"achievements"), (old)->{
+				if(old == null){//compact(we only need %)
+					return new JSONObject(Util.jStream(ach).collect(toMap(x->x.getInt("id"), x->x.optInt("perc"))));
+				}
+				return old;
+			});
 		}
 		%>
 		<%-- CITIES --%>
@@ -462,7 +471,7 @@ public static class Util{
 			if (!key.equals("tiles"))
 				content.put(key, updateContent.get(key));
 		}
-		var tileMap = jStream(tiles).collect(Collectors.toMap(Util::key, x -> x, (x, y) -> y));
+		var tileMap = jStream(tiles).collect(toMap(Util::key, x -> x, (x, y) -> y));
 		for (var tile : jIter(newTiles)) {
 			long key = key(tile);
 			var oldTile = tileMap.get(key);
