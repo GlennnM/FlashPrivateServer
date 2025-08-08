@@ -34,7 +34,6 @@ if(op!=null){
 	switch(op){
 	case "delete":
 		store.delete(key);
-		keys = store.list();
 		return;
 	case "get":
 		response.resetBuffer();
@@ -43,10 +42,10 @@ if(op!=null){
 		return;
 	case "put":
 		store.put(key, new JSONObject(request.getParameter("data")));
-		keys = store.list();
 		return;
 	}
 }
+keys = store.list();
 %>
 
 
