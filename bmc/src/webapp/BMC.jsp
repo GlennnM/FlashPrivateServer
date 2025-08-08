@@ -68,7 +68,7 @@ if(request.getMethod().equals("POST")){
 			AMFMessage nkAuth = new AMFMessage();
 			var serializer = ByteAMF.serializer();
 			AMFBody body;
-			if(DATA.store.has("monkeyCity",""+userID,"achievements")){
+			if(!DATA.store.has("monkeyCity",""+userID,"achievements")){
 				body = new AMFBody("game.get_my_achievements", "/1", List.of(userID, token, "MonkeyCity"), AMFBody.DATA_TYPE_ARRAY);
 			}else{
 				body = new AMFBody("user.get_koins", "/1", List.of(userID, token), AMFBody.DATA_TYPE_ARRAY);
