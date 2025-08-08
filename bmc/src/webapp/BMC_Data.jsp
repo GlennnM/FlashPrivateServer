@@ -67,7 +67,7 @@ static{
 				if(old == null){//compact(we only need %)
 					return new JSONObject(Util.jStream(ach).collect(toMap(x->x.getInt("id"), x->x.optInt("perc"))));
 				}
-				return old;
+				return FileObjectStore.UNCHANGED;
 			});
 		}
 		%>
@@ -197,7 +197,7 @@ static{
 				String roomID = room.getString("roomID");
 				ret = store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), r->{
 					CTUtil.updateDurations(r);
-					return r;
+					return FileObjectStore.UNCHANGED;
 				});
 			}
 			return CTUtil.hideLeaderDuration(ret)
@@ -706,6 +706,11 @@ uses b64's of the urls so it is always in the same folder
 */
 public static class FileObjectStore implements ObjectStore {
 	private final Path root;
+	/**
+		allows you to specify that an update() did nothing. 
+		update() will still return your input value with any mutations
+	*/
+	public static final JSONObject UNCHANGED = new JSONObject();
 	//we lock using this, without ever adding to it
 	private final ConcurrentMap<String, Void> urlLock = new ConcurrentHashMap<>(1024 * 1024);
 
@@ -805,7 +810,11 @@ public static class FileObjectStore implements ObjectStore {
 				JSONObject input = Files.exists(path) ? new JSONObject(Files.readString(path)) : null;
 				Files.createDirectories(path.getParent());
 				JSONObject output = update.apply(input);
-				Files.writeString(path, output.toString());
+				if(output != UNCHANGED){
+					Files.writeString(path, output.toString());
+				}else {
+					output = input;
+				}
 				holder.setPlain(output);
 			} catch (IOException e) {
 				holder.setPlain(null);
