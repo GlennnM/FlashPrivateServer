@@ -63,11 +63,17 @@ if(request.getMethod().equals("POST")){
 		sessionID = session.getId();
 		sid = System.currentTimeMillis();
 		
-		if(!("true".equals(request.getServletContext().getInitParameter("DO_NK_AUTH")))){
+		if(!("false".equals(request.getServletContext().getInitParameter("DO_NK_AUTH")))){
 			HttpClient client = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
 			AMFMessage nkAuth = new AMFMessage();
 			var serializer = ByteAMF.serializer();
-			var body = new AMFBody("game.get_my_achievements", "/1", List.of(userID, token, "MonkeyCity"), AMFBody.DATA_TYPE_ARRAY);
+			AMFBody body;
+			if(DATA.store.has("monkeyCity",""+userID,"achievements")){
+				body = new AMFBody("game.get_my_achievements", "/1", List.of(userID, token, "MonkeyCity"), AMFBody.DATA_TYPE_ARRAY);
+			}else{
+				body = new AMFBody("user.get_koins", "/1", List.of(userID, token), AMFBody.DATA_TYPE_ARRAY);
+			}
+					
 			nkAuth.addBody(body);
 			serializer.serialize(nkAuth);
 			byte[] amfPayload = serializer.get();
@@ -93,7 +99,8 @@ if(request.getMethod().equals("POST")){
 			AMFBody b = bodies.iterator().next(); 
 			if(b.getTarget().contains("onStatus") )
 				throw new RuntimeException("Auth failure 500");
-			DATA.saveAchIfNew(userID, new JSONArray((List<?>)b.getValue()));
+			if(b.getValue() instanceof List<?> ach)//koins would give an object(Map)
+				DATA.saveAchIfNew(userID, new JSONArray(ach));
 			
 		} else {
 			System.err.println("WARNING: AUTH SKIPPED!!!");

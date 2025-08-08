@@ -655,7 +655,14 @@ public static class CTUtil {
 		public default JSONObject get(Iterable<String> url) {
 			return get(String.join("/", url));
 		}
+		
+		public default boolean has(String... url) {
+			return has(String.join("/", url));
+		}
 	
+		public default boolean has(Iterable<String> url) {
+			return has(String.join("/", url));
+		}
 		public default JSONObject get(String url, JSONObject fallback) {
 			var ret = get(url);
 			return ret == null ? fallback : ret;
