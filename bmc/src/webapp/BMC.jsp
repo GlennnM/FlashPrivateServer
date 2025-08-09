@@ -55,9 +55,18 @@ if(request.getMethod().equals("POST")){
 	String action = json.optString("action"); 
 	System.out.println("->"+action);
 	JSONObject reply = new JSONObject();
+	response.resetBuffer();
+	response.setContentType("application/json");
 	if(!operation.equals("handshake"))
-		if(!Objects.equals(sessionID,SESSIONS.get(userID)))
-			throw new RuntimeException("No handshake");//TODO: error about same sessions
+		if(sessionID==null || !Objects.equals(sessionID,SESSIONS.get(userID))){
+			reply.put("sessionID",-1).put("success",false).put("status", "ok")
+			.put("error", "bmc_tech")
+			.put("bmc_code", "try_again")
+			.put("reason", "No handshake");
+			out.print(reply);
+			return;
+			//throw new RuntimeException("No handshake");//TODO: error about same sessions
+		}
 	switch(operation){
 	case "handshake":  
 		sessionID = session.getId();
@@ -252,8 +261,6 @@ if(request.getMethod().equals("POST")){
 			//unused
 			break;
 	}
-	response.resetBuffer();
-	response.setContentType("application/json");
 	out.print(reply);
 	return;
 }else{
