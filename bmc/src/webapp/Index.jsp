@@ -31,6 +31,7 @@ if(!("true".equals(request.getServletContext().getInitParameter("LOAD_INDEX"))))
 String op = request.getParameter("op");
 String key = request.getParameter("key");
 if(op!=null){
+	key = key.trim();
 	switch(op){
 	case "delete":
 		store.delete(key);
