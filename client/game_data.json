@@ -1,0 +1,1252 @@
+{
+   "disableApp":{
+      "disableApp":false,
+      "html":"<i class='fad fa-3x fa-exclamation-triangle mb-2'></i><div>Due to problems with Adobe Flash End-of-Life,<br>the Ninja Kiwi Archive has been disabled.<br>⸻<br>We are continuing to look into solutions to get<br>the Ninja Kiwi Archive working again.<br><a class='text-danger' target='_blank' href='https://www.adobe.com/uk/products/flashplayer/end-of-life.html'>Flash EOL</a><br><a class='text-danger' target='_blank' href='https://support.ninjakiwi.com'>Ninja Kiwi Support</a></div>"
+   },
+   "disableShop":{
+      "disableShop":false,
+      "html":"The NK Coin store has been temporarily disabled"
+   },
+   "bloonstd5":{
+      "game":"bloonstd5",
+      "gameTitle":"Bloons TD 5",
+      "swfSize":{
+         "width":800,
+         "height":620
+      },
+      "swfURL":"https://assets.ninjakiwi.com/Games/gameswfs/btd5-dat.swf?v=20190114",
+      "thumbURL":"/img/thumbs/bloonstd5.jpg",
+      "nkBar":true,
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Featured Games",
+         "Tower Defense Games",
+         "Bloons Games"
+      ]
+   },
+   "monkeycity":{
+      "game":"monkeycity",
+      "gameTitle":"Monkey City",
+      "swfSize":{
+         "width":840,
+         "height":640
+      },
+      "swfURL":"https://assets.nkstatic.com/Games/gameswfs/monkeycity/MonkeyCity_secure.swf?v=20171109d",
+      "thumbURL":"/img/thumbs/monkeycity.jpg",
+      "nkBar":true,
+      "playable":false,
+      "maintainAspectRatio":false,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Featured Games",
+         "Tower Defense Games",
+         "Bloons Games",
+         "Multiplayer Games"
+      ]
+   },
+   "bloonstdbattles":{
+      "game":"bloonstdbattles",
+      "gameTitle":"Bloons TD Battles",
+      "swfSize":{
+         "width":800,
+         "height":620
+      },
+      "swfURL":"https://assets.ninjakiwi.com/Games/gameswfs/btdbattles-dat.swf?v=20160725-01",
+      "thumbURL":"/img/thumbs/bloonstdbattles.jpg",
+      "playable":false,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Featured Games",
+         "Tower Defense Games",
+         "Action Games",
+         "Arcade Games",
+         "Multiplayer Games",
+         "Bloons Games"
+      ]
+   },
+   "bloonstd4":{
+      "game":"bloonstd4",
+      "gameTitle":"Bloons TD 4",
+      "swfSize":{
+         "width":620,
+         "height":640
+      },
+      "swfURL":"https://games.nkstatic.com/Games/gameswfs/bloonstd4_moved.swf",
+      "thumbURL":"/img/thumbs/bloonstd4.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Tower Defense Games",
+         "Bloons Games"
+      ]
+   },
+   "bloonstd4expansion":{
+      "game":"bloonstd4expansion",
+      "gameTitle":"Bloons TD 4 Expansion",
+      "swfSize":{
+         "width":620,
+         "height":640
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/bloonstd4exp.swf?v=2",
+      "thumbURL":"/img/thumbs/bloonstd4expansion.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Tower Defense Games",
+         "Bloons Games"
+      ]
+   },
+   "sas4":{
+      "game":"sas4",
+      "gameTitle":"SAS: Zombie Assault 4",
+      "swfSize":{
+         "width":800,
+         "height":620
+      },
+      "swfURL":"https://assets.nkstatic.com/Games/gameswfs/sas4/sas4.swf?v=20180815-03",
+      "thumbURL":"/img/thumbs/sas4.jpg",
+      "nkBar":true,
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Action Games",
+         "Multiplayer Games"
+      ]
+   },
+   "bloonstd":{
+      "game":"bloonstd",
+      "gameTitle":"Bloons TD",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/bloonstd_moved.swf",
+      "thumbURL":"/img/thumbs/bloonstd.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Tower Defense Games",
+         "Bloons Games"
+      ]
+   },
+   "bloonstd3":{
+      "game":"bloonstd3",
+      "gameTitle":"Bloons TD 3",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://games.nkstatic.com/Games/gameswfs/bloonstd3_noad.swf",
+      "thumbURL":"/img/thumbs/bloonstd3.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Tower Defense Games",
+         "Bloons Games"
+      ]
+   },
+   "sas3":{
+      "game":"sas3",
+      "gameTitle":"SAS: Zombie Assault 3",
+      "swfSize":{
+         "width":800,
+         "height":620
+      },
+      "swfURL":"https://assets.nkstatic.com/Games/gameswfs/SAS3_https2.swf?v=20140529-01",
+      "thumbURL":"/img/thumbs/sas3.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Featured Games",
+         "Action Games",
+         "Multiplayer Games"
+      ]
+   },
+   "bsm2":{
+      "game":"bsm2",
+      "gameTitle":"Bloons Super Monkey 2",
+      "swfSize":{
+         "width":800,
+         "height":620
+      },
+      "swfURL":"https://games.nkstatic.com/Games/gameswfs/BSM2-dat-2016.swf?v=20161204",
+      "thumbURL":"/img/thumbs/bsm2.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":false,
+      "resizable":false,
+      "categories":[
+         "Featured Games",
+         "Bloons Games",
+         "Arcade Games"
+      ]
+   },
+   "destructotruck":{
+      "game":"destructotruck",
+      "gameTitle":"Destructotruck",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/destructotruck.swf",
+      "thumbURL":"/img/thumbs/destructotruck.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Action Games"
+      ]
+   },
+   "bloons":{
+      "game":"bloons",
+      "gameTitle":"Bloons",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://games.nkstatic.com/Games/gameswfs/mochi_migration/bloons.swf",
+      "thumbURL":"/img/thumbs/bloons.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "countersnipe":{
+      "game":"countersnipe",
+      "gameTitle":"Counter Snipe",
+      "swfSize":{
+         "width":800,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/countersnipe.swf?v=20140428",
+      "thumbURL":"/img/thumbs/countersnipe.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Action Games",
+         "Multiplayer Games"
+      ]
+   },
+   "sastd":{
+      "game":"sastd",
+      "gameTitle":"SAS Zombie Assault TD",
+      "swfSize":{
+         "width":800,
+         "height":620
+      },
+      "swfURL":"http://ninjakiwifiles.com/Games/gameswfs/zatd-dat_https.swf?v=20130905",
+      "thumbURL":"/img/thumbs/sastd.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Tower Defense Games",
+         "Action Games"
+      ]
+   },
+   "battlepanic":{
+      "game":"battlepanic",
+      "gameTitle":"Battle Panic",
+      "swfSize":{
+         "width":800,
+         "height":620
+      },
+      "swfURL":"https://games.nkstatic.com/Games/gameswfs/bpanic.swf?v=2015-02-04-035",
+      "thumbURL":"/img/thumbs/battlepanic.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Featured Games",
+         "Tower Defense Games",
+         "Strategy Games"
+      ]
+   },
+   "bloons2":{
+      "game":"bloons2",
+      "gameTitle":"Bloons 2",
+      "swfSize":{
+         "width":778,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/bloons2_nohighscore.swf",
+      "thumbURL":"/img/thumbs/bloons2.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "bloons2spring":{
+      "game":"bloons2spring",
+      "gameTitle":"Bloons 2 Spring",
+      "swfSize":{
+         "width":780,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/bloons2_spring_fling.swf",
+      "thumbURL":"/img/thumbs/bloons2spring.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "bloons2xmas":{
+      "game":"bloons2xmas",
+      "gameTitle":"Bloons 2 Christmas",
+      "swfSize":{
+         "width":780,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/bloons2xmas.swf",
+      "thumbURL":"/img/thumbs/bloons2xmas.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "orcassault":{
+      "game":"orcassault",
+      "gameTitle":"Knight Orc Assault",
+      "swfSize":{
+         "width":800,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/KnightElite2.swf",
+      "thumbURL":"/img/thumbs/orcassault.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Featured Games",
+         "Action Games"
+      ]
+   },
+   "sas":{
+      "game":"sas",
+      "gameTitle":"SAS Zombie Assault",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/SAS.swf",
+      "thumbURL":"/img/thumbs/sas.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Action Games"
+      ]
+   },
+   "sas2":{
+      "game":"sas2",
+      "gameTitle":"SAS: Zombie Assault 2",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/SAS2.swf",
+      "thumbURL":"/img/thumbs/sas2.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Action Games"
+      ]
+   },
+   "sas2insaneasylum":{
+      "game":"sas2insaneasylum",
+      "gameTitle":"SAS2: Insane Asylum",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/SAS2-Asylum.swf",
+      "thumbURL":"/img/thumbs/sas2insaneasylum.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Action Games"
+      ]
+   },
+   "bloonsjunior":{
+      "game":"bloonsjunior",
+      "gameTitle":"Bloons Junior",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/bloonsjunior.swf",
+      "thumbURL":"/img/thumbs/bloonsjunior.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "llod":{
+      "game":"llod",
+      "gameTitle":"Last Line of Defense",
+      "swfSize":{
+         "width":700,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/llod-2.swf",
+      "thumbURL":"/img/thumbs/llod.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Featured Games",
+         "Action Games"
+      ]
+   },
+   "morebloons":{
+      "game":"morebloons",
+      "gameTitle":"More Bloons",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/morebloons.swf",
+      "thumbURL":"/img/thumbs/morebloons.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "evenmorebloons":{
+      "game":"evenmorebloons",
+      "gameTitle":"Even More Bloons",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/evenmorebloons.swf",
+      "thumbURL":"/img/thumbs/evenmorebloons.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "bloonspop3":{
+      "game":"bloonspop3",
+      "gameTitle":"Bloons Pop 3",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/popthree1.swf",
+      "thumbURL":"/img/thumbs/bloonspop3.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "zombietrailerpark":{
+      "game":"zombietrailerpark",
+      "gameTitle":"Zombie Trailer Park",
+      "swfSize":{
+         "width":800,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/ztp.swf?v=01",
+      "thumbURL":"/img/thumbs/zombietrailerpark.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":false,
+      "resizable":false,
+      "categories":[
+         "Featured Games",
+         "Strategy Games"
+      ]
+   },
+   "meeblings":{
+      "game":"meeblings",
+      "gameTitle":"Meeblings",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/Meeblings.swf",
+      "thumbURL":"/img/thumbs/meeblings.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Puzzle Games"
+      ]
+   },
+   "meeblingspp1":{
+      "game":"meeblingspp1",
+      "gameTitle":"Meeblings Player Pack",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/Meeblings_player_pack.swf",
+      "thumbURL":"/img/thumbs/meeblingspp1.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Puzzle Games"
+      ]
+   },
+   "meeblings2":{
+      "game":"meeblings2",
+      "gameTitle":"Meeblings 2",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/Meeblings-2.swf",
+      "thumbURL":"/img/thumbs/meeblings2.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Puzzle Games"
+      ]
+   },
+   "brilliantcrystals":{
+      "game":"brilliantcrystals",
+      "gameTitle":"Brilliant Crystals",
+      "swfSize":{
+         "width":800,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/bcrystals.swf",
+      "thumbURL":"/img/thumbs/brilliantcrystals.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Puzzle Games"
+      ]
+   },
+   "bloonspp1":{
+      "game":"bloonspp1",
+      "gameTitle":"Bloons Player Pack 1",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/bloonspp1.swf",
+      "thumbURL":"/img/thumbs/bloonspp1.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "powerpool":{
+      "game":"powerpool",
+      "gameTitle":"Powerpool",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/Powerpool.swf",
+      "thumbURL":"/img/thumbs/powerpool.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Arcade Games"
+      ]
+   },
+   "powerpoolfrenzy":{
+      "game":"powerpoolfrenzy",
+      "gameTitle":"Powerpool Frenzy",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/Powerpool-Frenzy.swf",
+      "thumbURL":"/img/thumbs/powerpoolfrenzy.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Arcade Games"
+      ]
+   },
+   "powerpool2":{
+      "game":"powerpool2",
+      "gameTitle":"Powerpool 2",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/Powerpool2.swf",
+      "thumbURL":"/img/thumbs/powerpool2.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Arcade Games"
+      ]
+   },
+   "bloonsinsanity":{
+      "game":"bloonsinsanity",
+      "gameTitle":"Bloons Insanity",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/bloonsinsanity.swf",
+      "thumbURL":"/img/thumbs/bloonsinsanity.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "bloonstd2":{
+      "game":"bloonstd2",
+      "gameTitle":"Bloons TD 2",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/bloonstd2_nobloonsworld.swf",
+      "thumbURL":"/img/thumbs/bloonstd2.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games",
+         "Tower Defense Games"
+      ]
+   },
+   "bloonspp2":{
+      "game":"bloonspp2",
+      "gameTitle":"Bloons Player Pack 2",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/bloonspp2.swf",
+      "thumbURL":"/img/thumbs/bloonspp2.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "bloonspp3":{
+      "game":"bloonspp3",
+      "gameTitle":"Bloons Player Pack 3",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/bloonspp3.swf",
+      "thumbURL":"/img/thumbs/bloonspp3.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "bloonspp4":{
+      "game":"bloonspp4",
+      "gameTitle":"Bloons Player Pack 4",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/bloonspp4.swf",
+      "thumbURL":"/img/thumbs/bloonspp4.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "bloonspp5":{
+      "game":"bloonspp5",
+      "gameTitle":"Bloons Player Pack 5",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/bloonspp5.swf",
+      "thumbURL":"/img/thumbs/bloonspp5.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "bsm":{
+      "game":"bsm",
+      "gameTitle":"Bloons Super Monkey",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/bloonssupermonkey.swf?v=20130515-1",
+      "thumbURL":"/img/thumbs/bsm.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games",
+         "Arcade Games"
+      ]
+   },
+   "potionpanic2":{
+      "game":"potionpanic2",
+      "gameTitle":"Potion Panic 2",
+      "swfSize":{
+         "width":800,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/potionpanic2.swf",
+      "thumbURL":"/img/thumbs/potionpanic2.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Action Games"
+      ]
+   },
+   "shinju":{
+      "game":"shinju",
+      "gameTitle":"Shinju",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/shinju.swf",
+      "thumbURL":"/img/thumbs/shinju.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Puzzle Games"
+      ]
+   },
+   "hotcorn":{
+      "game":"hotcorn",
+      "gameTitle":"Hotcorn",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/hotcorn.swf",
+      "thumbURL":"/img/thumbs/hotcorn.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Puzzle Games"
+      ]
+   },
+   "hotcornbox":{
+      "game":"hotcornbox",
+      "gameTitle":"Another Box of Hotcorn",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/anotherhotcorn.swf",
+      "thumbURL":"/img/thumbs/hotcornbox.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Puzzle Games"
+      ]
+   },
+   "straightdice":{
+      "game":"straightdice",
+      "gameTitle":"Straight Dice",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/straightDice.swf",
+      "thumbURL":"/img/thumbs/straightdice.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Puzzle Games"
+      ]
+   },
+   "guesstimation":{
+      "game":"guesstimation",
+      "gameTitle":"Guesstimation",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/Guesstimation.swf",
+      "thumbURL":"/img/thumbs/guesstimation.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Puzzle Games"
+      ]
+   },
+   "zeba":{
+      "game":"zeba",
+      "gameTitle":"Zeba",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/zeba.swf",
+      "thumbURL":"/img/thumbs/zeba.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Puzzle Games"
+      ]
+   },
+   "hungrysumo":{
+      "game":"hungrysumo",
+      "gameTitle":"Hungry Sumo",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/hungrysumo.swf",
+      "thumbURL":"https://cdn.nkstatic.com/thumbs/large/hungry-sumo-update-lg.jpg",
+      "playable":false,
+      "categories":[
+         "Arcade Games"
+      ]
+   },
+   "rings":{
+      "game":"rings",
+      "gameTitle":"Rings",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/rings_.swf",
+      "thumbURL":"/img/thumbs/rings.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Puzzle Games"
+      ]
+   },
+   "boombot":{
+      "game":"boombot",
+      "gameTitle":"Boombot",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/BoomBot.swf",
+      "thumbURL":"/img/thumbs/boombot.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Arcade Games"
+      ]
+   },
+   "boombot2":{
+      "game":"boombot2",
+      "gameTitle":"Boombot 2",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/BoomBot2.swf",
+      "thumbURL":"/img/thumbs/boombot2.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Arcade Games"
+      ]
+   },
+   "huntordie":{
+      "game":"huntordie",
+      "gameTitle":"Hunt or Die",
+      "swfSize":{
+         "width":800,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/HuntOrDie.swf?v=2014-05-19",
+      "thumbURL":"/img/thumbs/huntordie.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":false,
+      "resizable":false,
+      "categories":[
+         "Action Games"
+      ]
+   },
+   "battleblocks":{
+      "game":"battleblocks",
+      "gameTitle":"Battle Blocks",
+      "swfSize":{
+         "width":800,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/battle-blocks.swf?v=20150310",
+      "thumbURL":"/img/thumbs/battleblocks.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Tower Defense Games",
+         "Arcade Games"
+      ]
+   },
+   "meganthefox":{
+      "game":"meganthefox",
+      "gameTitle":"Megan The Fox",
+      "swfSize":{
+         "width":800,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/MeganTheFox.swf",
+      "thumbURL":"/img/thumbs/meganthefox.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Action Games"
+      ]
+   },
+   "powerpinball":{
+      "game":"powerpinball",
+      "gameTitle":"Power Pinball",
+      "swfSize":{
+         "width":640,
+         "height":640
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/PowerPinball.swf",
+      "thumbURL":"/img/thumbs/powerpinball.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Arcade Games"
+      ]
+   },
+   "magneticdefense":{
+      "game":"magneticdefense",
+      "gameTitle":"Magnetic Defense",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/MagDef.swf",
+      "thumbURL":"/img/thumbs/magneticdefense.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Action Games"
+      ]
+   },
+   "gunsnangel":{
+      "game":"gunsnangel",
+      "gameTitle":"Guns n Angel",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/gunsnangel.swf",
+      "thumbURL":"/img/thumbs/gunsnangel.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Action Games"
+      ]
+   },
+   "sinta":{
+      "game":"sinta",
+      "gameTitle":"Sinta",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/Sinta.swf",
+      "thumbURL":"/img/thumbs/sinta.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Action Games"
+      ]
+   },
+   "potionpanic":{
+      "game":"potionpanic",
+      "gameTitle":"Potion Panic",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/potion_panic.swf",
+      "thumbURL":"/img/thumbs/potionpanic.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Action Games"
+      ]
+   },
+   "hotairbloon":{
+      "game":"hotairbloon",
+      "gameTitle":"Hot Air Bloon",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/HotAirBloon.swf",
+      "thumbURL":"/img/thumbs/hotairbloon.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Bloons Games"
+      ]
+   },
+   "flur":{
+      "game":"flur",
+      "gameTitle":"Flur",
+      "swfSize":{
+         "width":800,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/flur.swf?v=1",
+      "thumbURL":"/img/thumbs/flur.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Arcade Games"
+      ]
+   },
+   "keypadkaos":{
+      "game":"keypadkaos",
+      "gameTitle":"Keypad Kaos",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/keypad_kaos_fixedsplash.swf",
+      "thumbURL":"/img/thumbs/keypadkaos.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Arcade Games"
+      ]
+   },
+   "powergolf":{
+      "game":"powergolf",
+      "gameTitle":"Powergolf",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/Powergolf.swf",
+      "thumbURL":"/img/thumbs/powergolf.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Arcade Games"
+      ]
+   },
+   "robomaro":{
+      "game":"robomaro",
+      "gameTitle":"Robomaro",
+      "swfSize":{
+         "width":640,
+         "height":480
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/mochi_migration/RoboMaro.swf",
+      "thumbURL":"/img/thumbs/robomaro.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Arcade Games"
+      ]
+   },
+   "ghostsvszombies":{
+      "game":"ghostsvszombies",
+      "gameTitle":"Awesome Ghosts vs Stupid Zombies",
+      "swfSize":{
+         "width":800,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/agvsz.swf",
+      "thumbURL":"/img/thumbs/ghostsvszombies.jpg",
+      "playable":true,
+      "maintainAspectRatio":true,
+      "fullscreenable":true,
+      "resizable":true,
+      "categories":[
+         "Strategy Games"
+      ]
+   },
+   "beatstreak3000":{
+      "game":"beatstreak3000",
+      "gameTitle":"BeatStreak3000",
+      "swfSize":{
+         "width":800,
+         "height":600
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/BeatStreak3000.swf",
+      "thumbURL":"/img/thumbs/beatstreak3000.jpg",
+      "playable":false,
+      "categories":[
+         "Action Games"
+      ]
+   },
+   "crushthecastle":{
+      "game":"crushthecastle",
+      "gameTitle":"Crush The Castle",
+      "swfSize":{
+         "width":760,
+         "height":550
+      },
+      "swfURL":"https://ninjakiwifiles.com/Games/gameswfs/crushthecastle.swf",
+      "thumbURL":"/img/thumbs/crushthecastle.jpg",
+      "playable":false,
+      "categories":[
+         "Action Games"
+      ]
+   },
+   "towerKeepers":{
+      "game":"towerKeepers",
+      "gameTitle":"Tower Keepers",
+      "swfSize":{
+         "width":820,
+         "height":615
+      },
+      "swfURL":"https://ninjakiwi.com/fake-tk.html",
+      "thumbURL":"https://cdn.nkstatic.com/thumbs/large/TK_Mobile_Icon.jpg?j=3",
+      "playable":true,
+      "categories":[
+         "Strategy Games",
+         "Multiplayer Games"
+      ]
+   },
+   "fortress":{
+      "game":"fortress",
+      "gameTitle":"Fortress: Destroyer (kinda)",
+      "swfSize":{
+         "width":820,
+         "height":615
+      },
+      "swfURL":"https://ninjakiwi.com/fake-fd.html",
+      "thumbURL":"https://cdn.nkstatic.com/thumbs/large/Fortress-Update2-228x174.jpg",
+      "playable":true,
+      "categories":[
+         "Action Games"
+      ]
+   }
+}
