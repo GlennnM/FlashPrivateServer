@@ -622,11 +622,12 @@ public static class CTUtil {
 
 	public static int ctMinRound(int level) {
 		int tier = ctTier(level);
-		/**TODO: SET TO 1 FOR TESTING*/
-		return 0 == 0 ? 1 : switch (tier) {
-		case 1, 2, 3, 4 -> 2 + tier * 4;
-		case 5 -> 22;
-		default -> 24 + (tier - 6); //6-9
+		return 
+		//		0 == 0 ? 1 : 
+		switch (tier) {
+			case 1, 2, 3, 4 -> 2 + tier * 4;
+			case 5 -> 22;
+			default -> 24 + (tier - 6); //6-9
 		};
 	}
 
