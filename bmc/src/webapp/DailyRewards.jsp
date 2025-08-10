@@ -14,6 +14,7 @@
 <%@page import="java.nio.charset.StandardCharsets"%>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
     pageEncoding="ISO-8859-1"%> 
+<%@ page session='false' %>
 <%@ page import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
 <%@ include file="BMC_Data.jsp" %>
 <%-- Has nothing to do with bmc(todo: move). Requires client modification - the original request is AMF.--%>
