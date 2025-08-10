@@ -68,36 +68,28 @@ if(request.getMethod().equals("POST")){
 	case "handshake":  
 		sessionID = session.getId();
 		sid = System.currentTimeMillis();
-		
+		//TODO: new idea - just store a hash of the token, give each token hash a different save
 		if(!("false".equals(request.getServletContext().getInitParameter("DO_NK_AUTH")))){
 			HttpClient client = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
 			AMFMessage nkAuth = new AMFMessage();
 			var serializer = ByteAMF.serializer();
-			AMFBody body;
-			if(!DATA.store.has("monkeyCity",""+userID,"achievements")){
-				body = new AMFBody("game.get_my_achievements", "/1", List.of(userID, token, "MonkeyCity"), AMFBody.DATA_TYPE_ARRAY);
-			}else{
-				body = new AMFBody("user.get_koins", "/1", List.of(userID, token), AMFBody.DATA_TYPE_ARRAY);
+			boolean hadAch = !DATA.store.has("monkeyCity",""+userID,"achievements");
+			if(hadAch){
+				nkAuth.addBody(new AMFBody("game.get_my_achievements", "/1", List.of(userID, token, "MonkeyCity"), AMFBody.DATA_TYPE_ARRAY));
 			}
+			nkAuth.addBody(new AMFBody("user.get_koins", "/2", List.of(userID, token), AMFBody.DATA_TYPE_ARRAY));
+			
 					
-			nkAuth.addBody(body);
 			serializer.serialize(nkAuth);
 			byte[] amfPayload = serializer.get();
 			HttpRequest req = HttpRequest.newBuilder()
 					.header("Content-Type", "x-amf")
-					.header("Accept-Encoding","gzip, deflate, br")
-					.header("Accept-Language","en-US")
-					.header("Referer","https://assets.nkstatic.com/nklogin/Banana.swf?gamename=BTD5")
-					.header("Origin","https://assets.nkstatic.com")
-					.header("Sec-Fetch-Dest","embed")
-					.header("Sec-Fetch-Mode","no-cors")
-					.header("Sec-Fetch-Site","cross-site")
-					.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) NinjaKiwiArchive/1.1.0 Chrome/80.0.3987.86 Electron/8.0.1 Safari/537.36")
-					.header("X-Requested-With","ShockwaveFlash/11.2.999.999")
 					.POST(BodyPublishers.ofByteArray(amfPayload))
 					.uri(URI.create("https://mynk.ninjakiwi.com/gateway"))
 					.build();
 			HttpResponse<byte[]> amfResponse = client.send(req, BodyHandlers.ofByteArray());
+			
+			
 			if(amfResponse.statusCode() != 200)
 				throw new RuntimeException("Auth failure "+amfResponse.statusCode());
 			AMFBodies bodies = AMFBodies.from(amfResponse.body());
@@ -105,8 +97,14 @@ if(request.getMethod().equals("POST")){
 			AMFBody b = bodies.iterator().next(); 
 			if(b.getTarget().contains("onStatus") )
 				throw new RuntimeException("Auth failure 500");
-			if(b.getValue() instanceof List<?> ach)//koins would give an object(Map)
-				DATA.saveAchIfNew(userID, new JSONArray(ach));
+			if(hadAch)//koins would give an object(Map)
+				DATA.saveAchIfNew(userID, new JSONArray((List<?>)(b.getValue())));
+			b = bodies.iterator().next(); 
+			if(b.getTarget().contains("onStatus") 
+			|| !(b.getValue() instanceof Map<?,?> koin) 
+			|| !koin.containsKey("koins"))
+				throw new RuntimeException("Auth failure 500");
+			
 			
 		} else {
 			System.err.println("WARNING: AUTH SKIPPED!!!");

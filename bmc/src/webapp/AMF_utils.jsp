@@ -1,4 +1,6 @@
 
+<%@page import="java.util.Comparator"%>
+<%@page import="java.util.stream.IntStream"%>
 <%@page import="java.util.Arrays"%>
 <%@page import="java.util.function.Function"%>
 <%@page import="java.util.HashMap"%>
@@ -25,11 +27,12 @@
 	import="java.util.HexFormat,java.util.List,org.openamf.io.*,org.openamf.*"%>
 <%-- From https://github.com/GlennnM/AMFGateway repo. i need to organize this stuff or something --%>
 <%!/**statics*/
-	public static class AMFBodies implements Iterable<AMFBody> {
-		AMFMessage msg;
-
+	public static class AMFBodies extends ArrayList<AMFBody> {
 		private AMFBodies(AMFMessage msg) {
-			this.msg = msg;
+			super(IntStream.range(0,msg.getBodyCount())
+					.mapToObj(msg::getBodyAt)
+					.sorted(Comparator.comparing(AMFBody::getTarget))
+					.toList());
 		}
 
 		public static AMFBodies from(AMFMessage msg) {
@@ -74,24 +77,7 @@
 		private static DataInputStream dis(byte[] b) {
 			return new DataInputStream(new ByteArrayInputStream(b));
 		}
-
-		@Override
-		public Iterator<AMFBody> iterator() {
-			return new Iterator<AMFBody>() {
-				private int index = 0;
-
-				@Override
-				public boolean hasNext() {
-					return index < msg.getBodyCount();
-				}
-
-				@Override
-				public AMFBody next() {
-					return msg.getBodyAt(index++);
-				}
-			};
-		}
-
+		
 		public static String getObjectTypeDescription(byte type) {
 			switch (type) {
 			case AMFBody.DATA_TYPE_UNKNOWN:
