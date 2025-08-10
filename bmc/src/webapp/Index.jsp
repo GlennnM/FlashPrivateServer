@@ -18,15 +18,16 @@ if(store==null)
 	}catch(IOException ioe){
 		throw new RuntimeException(ioe);
 	}
+
+if(!("true".equals(request.getServletContext().getInitParameter("LOAD_INDEX")))){
+	response.sendRedirect("https://github.com/GlennnM/FlashPrivateServer");
+	return;
+}
 switch(request.getRemoteAddr()){
 	case "127.0.0.1", "::1", "0:0:0:0:0:0:0:1":
 		break;
 	default: 
 		throw new IllegalArgumentException("not loopback addr");
-}
-if(!("true".equals(request.getServletContext().getInitParameter("LOAD_INDEX")))){
-	response.sendError(403);
-	return;
 }
 String op = request.getParameter("op");
 String key = request.getParameter("key");
