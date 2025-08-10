@@ -1,3 +1,14 @@
+-mp stuff:
+-multiple game server ip's, other stuff in TODOs
+-
+-other NK flash stuff: 
+-1. downloading save as file with archive app.asar mod
+-->bmc too
+-2. sql setup for accounts
+-3. AMF gateway
+-4. actually working ui(login/register) with app.asar mod
+-5. optional: battles stats/fd/tk
+-
 notes on nk AMF services=========================
 "OBJ"=object(usually turned to map/jsonobject by most amf frameworks
 [X]=list

@@ -9,15 +9,7 @@
 <%@page import="java.util.Map"%>
 <%@page import="java.util.concurrent.atomic.AtomicLong"%>
 <%@page import="java.util.concurrent.ConcurrentHashMap"%>
-<%@page import="java.util.concurrent.atomic.AtomicReference"%>
 <%@page import="java.util.Objects"%>
-<%@page import="java.net.URI"%>
-<%@page import="java.net.http.HttpClient.Redirect"%>
-<%@page import="java.net.http.HttpResponse"%>
-<%@page import="java.net.http.HttpResponse.BodyHandlers"%>
-<%@page import="java.net.http.HttpRequest.BodyPublishers"%>
-<%@page import="java.net.http.HttpRequest"%>
-<%@page import="java.net.http.HttpClient"%>
 <%@page import="org.json.JSONObject"%>
 <%@page import="java.nio.charset.StandardCharsets"%>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"

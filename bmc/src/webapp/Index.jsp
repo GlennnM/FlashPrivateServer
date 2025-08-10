@@ -4,20 +4,20 @@
 <html>
 <head>
 <%!
-static final FileObjectStore store;
+static volatile FileObjectStore store;
 static volatile List<String> keys;
-static{
+%>
+
+<%
+if(store==null)
 	try{
+	
+		String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
 		store = new FileObjectStore(Path.of("./objects"));//TODO: obviously not .
 		keys = store.list();
 	}catch(IOException ioe){
 		throw new RuntimeException(ioe);
 	}
-}
-
-%>
-
-<%
 switch(request.getRemoteAddr()){
 	case "127.0.0.1", "::1", "0:0:0:0:0:0:0:1":
 		break;

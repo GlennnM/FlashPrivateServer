@@ -1,10 +1,8 @@
 <%@page import="java.util.Comparator"%>
 <%@page import="java.util.concurrent.ThreadLocalRandom"%>
-<%@page import="java.util.UUID"%>
 <%@page import="java.util.concurrent.atomic.LongAdder"%>
 <%@page import="javax.xml.crypto.Data"%>
 <%@page import="java.util.concurrent.atomic.AtomicBoolean"%>
-<%@page import="java.util.Scanner"%>
 <%@page import="java.util.Spliterators"%>
 <%@page import="static java.util.stream.Collectors.*"%>
 <%@page import="java.util.stream.Stream"%>
@@ -23,13 +21,6 @@
 <%@page import="java.util.concurrent.ConcurrentHashMap"%>
 <%@page import="java.util.concurrent.atomic.AtomicReference"%>
 <%@page import="java.util.Objects"%>
-<%@page import="java.net.URI"%>
-<%@page import="java.net.http.HttpClient.Redirect"%>
-<%@page import="java.net.http.HttpResponse"%>
-<%@page import="java.net.http.HttpResponse.BodyHandlers"%>
-<%@page import="java.net.http.HttpRequest.BodyPublishers"%>
-<%@page import="java.net.http.HttpRequest"%>
-<%@page import="java.net.http.HttpClient"%>
 <%@page import="org.json.JSONObject"%>
 <%@page import="static java.nio.charset.StandardCharsets.UTF_8"%>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
@@ -37,9 +28,10 @@
 <%@ page
 	import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
 <%-- BMC DATA --%>
-<%!
+<%--!
 static{
 	//VERY DUMB THING TO DO AN UPDATE THAT SHOULD HAPPEN ANYWAYS BUT isnt implemented FIXME:remove
+	
 	var hydar = xyz.hydar.ee.Hydar.hydars.get(0);
 	if(hydar.ee.ctx.getAttribute("done")==null){
 		new Thread(()->{
@@ -54,6 +46,7 @@ static{
 		}).start();
 	}
 }
+--%><%!
 	static final long CT_QUEUE_TIME = 24L * 3600 * 1000 * 3;//time a new CT is joinable for
 	/**does stuff like putCity(0,{},..)*/
 	public static class BMCData{

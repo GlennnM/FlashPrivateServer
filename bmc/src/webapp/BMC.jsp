@@ -1,6 +1,5 @@
 <%@page import="java.util.concurrent.atomic.AtomicLong"%>
 <%@page import="java.util.concurrent.ConcurrentHashMap"%>
-<%@page import="java.util.concurrent.atomic.AtomicReference"%>
 <%@page import="java.util.Objects"%>
 <%@page import="java.net.URI"%>
 <%@page import="java.net.http.HttpClient.Redirect"%>
@@ -19,20 +18,18 @@
 <%@ include file="BMC_Data.jsp" %>
 <%! 
 static final Map<Integer,String> SESSIONS = new ConcurrentHashMap<>();
-static final BMCData DATA;
+static volatile BMCData DATA = null;//lateinit
 static final AtomicLong LAST_SKU_UPDATE = new AtomicLong();
-static{
-	try{
-		DATA = new BMCData(new FileObjectStore(Path.of("./objects")));//TODO: obviously not .
-		var prevSessions = DATA.store.get("monkeyCity/sessions");
-		if(prevSessions != null)
-			prevSessions.toMap().forEach((k,v) -> SESSIONS.put(Integer.parseInt(k), v.toString()));
-	}catch(IOException ioe){
-		throw new RuntimeException(ioe);
-	}
-}
 %>
 <%
+if(DATA==null){
+	String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
+	DATA=new BMCData(new FileObjectStore(Path.of(storeLocation)));
+	var prevSessions = DATA.store.get("monkeyCity/sessions");
+	if(prevSessions != null)
+		prevSessions.toMap().forEach((k,v) -> SESSIONS.put(Integer.parseInt(k), v.toString()));
+}
+
 LAST_SKU_UPDATE.accumulateAndGet(System.currentTimeMillis(), (current, given)->{
 	try{
 		if(given - current > 24*3600*1000){
