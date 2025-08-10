@@ -13,7 +13,7 @@ if(store==null)
 	try{
 	
 		String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
-		store = new FileObjectStore(Path.of("./objects"));//TODO: obviously not .
+		store = new FileObjectStore(Path.of(storeLocation));//TODO: obviously not .
 		keys = store.list();
 	}catch(IOException ioe){
 		throw new RuntimeException(ioe);
