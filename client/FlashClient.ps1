@@ -1,11 +1,11 @@
-﻿
+
 $VERSION = "4.0"
 $SIZE = 118382691
 $win_steam =${env:ProgramFiles(x86)}+"\Steam\steamapps\common\Ninja Kiwi Archive\resources"
 $win_standalone1=${env:LocalAppData}+"\Programs\Ninja Kiwi Archive\resources"
 $win_standalone2=${env:ProgramFiles}+"\Ninja Kiwi\Ninja Kiwi Archive\resources"
 $mac_steam=$HOME +"/Library/Application Support/Steam/steamapps/common/Ninja Kiwi Archive/resources"
-$mac_standalone="/Applications/Ninja Kiwi Archive.app/Contents/Resources"
+$mac_standalone="/Applications/Ninja Kiwi Archive*.app/Contents/Resources"
 $linux_steam = $HOME + "/.steam/steam/steamapps/common/Ninja Kiwi Archive"
 $linux_steam2 = $HOME + "/.local/share/Steam/steamapps/common/Ninja Kiwi Archive"
 $linux_proton = $HOME + "/.steam/steam/steamapps/compatdata/1275350/pfx/drive_c/Program Files (x86)/Steam/steamapps/common/Ninja Kiwi Archive"
@@ -50,12 +50,12 @@ function DownloadThenExtract([string]$cache,[string]$zippath,[string]$downloadpa
 		Write-Host -NoNewline "`rDownloading $filename complete!                        "
         if(Test-Path -Path $cache'/app.asar'){
         	if(Test-Path -Path $cache'/appv.asar'){
-                Remove-Item -Path $cache'/appv.asar'
+                Remove-Item -Path $cache'/appv.asar' -ErrorAction Stop
 			}
             try{
-		    	Rename-Item -Path $cache'/app.asar' -NewName "appv.asar"
+		    	Rename-Item -Path $cache'/app.asar' -NewName "appv.asar" -ErrorAction Stop
             }catch{
-                "Archive was probably not closed, or you don't have permissions. Installation failed."
+                "`nArchive was probably not closed, or you don't have permissions. Installation failed."
                 return
             }
         }
@@ -93,7 +93,7 @@ function DownloadThenExtract([string]$cache,[string]$zippath,[string]$downloadpa
 
 			}
 		}
-		Remove-Item "$cache/install.zip"
+		Remove-Item "$cache/install.zip" -ErrorAction Stop
 
 		if (Test-Path -Path $cache'/app.asar') {
             $global:count_++
@@ -123,11 +123,12 @@ function DownloadThenExtract([string]$cache,[string]$zippath,[string]$downloadpa
 "Checking version..."
 $N = (New-Object Net.WebClient)
 try{
-	$N.DownloadFile('https://github.com/GlennnM/FlashPrivateServer/raw/main/version.txt','./test.txt')
-	$V = (Get-Content './test.txt' -Raw)
-	Remove-Item './test.txt'
+	$temp = $env:TEMP
+	Invoke-WebRequest -Uri "https://raw.githubusercontent.com/GlennnM/FlashPrivateServer/refs/heads/main/version.txt" -OutFile "test.txt"
+	$V = (Get-Content 'test.txt' -Raw)
+	Remove-Item 'test.txt' -ErrorAction Stop
 	if ($null -eq $V){
-		"ERROR: script is not up to date, or you don't have an internet connection. Please update it at https://github.com/GlennnM/FlashPrivateServer"
+		"ERROR(1): script is not up to date, or you don't have an internet connection. Please update it at https://github.com/GlennnM/FlashPrivateServer"
 		$Q = Read-Host "Press enter to exit..."
 		exit
 	}
@@ -137,7 +138,7 @@ try{
 		exit
 	}
 }catch{
-	"ERROR: script is not up to date, or you don't have an internet connection. Please update it at https://github.com/GlennnM/FlashPrivateServer"
+	"ERROR(2): script is not up to date, or you don't have an internet connection. Please update it at https://github.com/GlennnM/FlashPrivateServer"
 	$Q = Read-Host "Press enter to exit..."
 	exit
 }
@@ -179,7 +180,8 @@ if ($IsWindows -or $ENV:OS) {
 
     }if(Test-Path -Path $mac_standalone){
         "Located mac/standalone installation(probably)"
-        DownloadThenExtract -cache $mac_standalone -zippath $URL -downloadpath $mac_standalone'/install.zip' -FULL_SIZE $SIZE
+		$single = Get-ChildItem -Path $mac_standalone | Select-Object -First 1
+        DownloadThenExtract -cache $single -zippath $URL -downloadpath $single'/install.zip' -FULL_SIZE $SIZE
 
     }
     if(Test-Path -Path $linux_steam){
