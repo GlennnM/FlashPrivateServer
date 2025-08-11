@@ -116,7 +116,7 @@ function DownloadThenExtract([string]$cache,[string]$zippath,[string]$downloadpa
 "Flash Private Server Installer by glenn m"
 	"The following mods will be installed:"
 	"Flash Private Server"
-    "BTD5, Battles, BMC, SAS3, SAS4, Countersnipe"
+    "(BTD5, Battles, BMC, SAS3, SAS4, Countersnipe)"
     "Enable hidden+extra archive games"
 	"Approx data size: $MB_FLOAT MB"
 	"==============================="
