@@ -32,9 +32,9 @@ In all cases, ensure Ninja Kiwi Archive is installed, and **close all NK Archive
  - Standalone Windows - All Users <code>"%PROGRAMFILES%\Ninja Kiwi\Ninja Kiwi Archive\resources"</code><br>
  - Mac Steam <code>"$HOME/Library/Application Support/Steam/steamapps/common/Ninja Kiwi Archive/resources"</code><br>
  - Mac Standalone <code>"/Applications/Ninja Kiwi Archive"*".app/Contents/Resources"</code><br>
- - Linux Steam <code>"$HOME/.steam/steam/steamapps/common/Ninja Kiwi Archive"</code><br>
- - Linux Steam 2 <code>"$HOME/.local/share/Steam/steamapps/common/Ninja Kiwi Archive"</code><br>
- - Linux Proton <code>"$HOME/.steam/steam/steamapps/compatdata/1275350/pfx/drive_c/Program Files (x86)/Steam/steamapps/common/Ninja Kiwi Archive"</code><br>
+ - Linux Steam <code>"$HOME/.steam/steam/steamapps/common/Ninja Kiwi Archive/resources"</code><br>
+ - Linux Steam 2 <code>"$HOME/.local/share/Steam/steamapps/common/Ninja Kiwi Archive/resources"</code><br>
+ - Linux Proton <code>"$HOME/.steam/steam/steamapps/compatdata/1275350/pfx/drive_c/Program Files (x86)/Steam/steamapps/common/Ninja Kiwi Archive/resources"</code><br>
   </details>
   
 ### Third Method - All Platforms (PowerShell)
