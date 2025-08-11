@@ -27,7 +27,7 @@ In all cases, ensure Ninja Kiwi Archive is installed, and **close all NK Archive
 2) Open the "resources" folder, and delete or rename <code>app.asar</code>.
 3) Download <code>app.zip</code> from [the releases page](https://github.com/GlennnM/FlashPrivateServer/releases/latest) and extract it in the current folder(ending in "resources") to get a new <code>app.asar</code>.
 <details> 
-  <summary><a href='#'>Mac/Linux/Standalone Paths:</a></summary>
+  <summary><ins>Mac/Linux/Standalone Paths:</ins></summary>
  - Standalone Windows - Current User <code>"%LOCALAPPDATA%\Programs\Ninja Kiwi Archive\resources"</code><br>
  - Standalone Windows - All Users <code>"%PROGRAMFILES%\Ninja Kiwi\Ninja Kiwi Archive\resources"</code><br>
  - Mac Steam <code>"$HOME/Library/Application Support/Steam/steamapps/common/Ninja Kiwi Archive/resources"</code><br>
@@ -53,15 +53,15 @@ In all cases, ensure Ninja Kiwi Archive is installed, and **close all NK Archive
 <br>Since the games are fairly inactive, you can play "solo" multiplayer with the following methods:<br>
 - open multiple NK Archives(less lag), or multiple of the same game from the same Archive<br>
 - join code 400 in SAS4 to play a boosted game with bots(works in any mode)<br>
-<a href = https://github.com/Kinnay/Bloons-Terminator>bots</a> for battles flash(will require some code changes to work)<br><br>
+- <a href = https://github.com/Kinnay/Bloons-Terminator>bots</a> for battles flash(will require some code changes to work)<br><br>
 
 ### Stuck installing flash player?
 If the links provided to you during archive installation don't work for you(make sure to read 'How to Play' first!) try one of the following methods:
-&nbsp;&nbsp;&nbsp;&nbsp;<details><summary><a href='#'>Archive.org installer - requires admin</a></summary> <a href=https://archive.org/download/flashplayerarchivedversions2/333/fp_29.0.0.171_archive.zip>https://archive.org/download/flashplayerarchivedversions2/333/fp_29.0.0.171_archive.zip</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<details><summary><ins>Archive.org installer - requires admin</ins></summary> <a href=https://archive.org/download/flashplayerarchivedversions2/333/fp_29.0.0.171_archive.zip>https://archive.org/download/flashplayerarchivedversions2/333/fp_29.0.0.171_archive.zip</a><br>
 &nbsp;&nbsp;&nbsp;&nbsp;1. extract the zip file from the link above<br>
 &nbsp;&nbsp;&nbsp;&nbsp;2. run the correct installer(most likely winpep something)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;3. Restart the archive and it should load!<br></details>
-&nbsp;&nbsp;&nbsp;&nbsp;<details><summary><a href='#'>Manual 'install' - no admin required</a><br></summary>
+&nbsp;&nbsp;&nbsp;&nbsp;<details><summary><ins>Manual 'install' - no admin required</ins><br></summary>
 &nbsp;&nbsp;&nbsp;&nbsp;1. download "pepflashplayer.dll" for your system(just search for it on google)<br>
 <details>
     &nbsp;&nbsp;&nbsp;&nbsp;<summary>How to verify a .dll from the internet is legit<br></summary>
