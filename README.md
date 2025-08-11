@@ -6,7 +6,7 @@ On April 29, 2022, Ninja Kiwi shut down their multiplayer servers for the follow
 - BTD5 Flash
 - BTD Battles Flash
 
-**2025 update** - Bloons Monkey City has been added as well. It is currently not launchable from the Archive normally, but will be if you install this mod.
+**2025 update** - Bloons Monkey City has been added as well. It will become launchable from the Archive if you install this mod.
 This project fully recreates these servers, built from scratch with Java TCP sockets.<br>
 Currently I am hosting all of these - BMC, BTD Battles, BTD5 challenges, BTD5 co-op, SAS3, Countersnipe, and SAS4. The guide to play on these servers is also available as a video: <br>https://www.youtube.com/watch?v=J3q-Vb5A4jI<br>
 When playing on these servers, some quality of life/easter egg features are added to the client, but mostly they will play exactly as you would expect the game to play on Ninja Kiwi's servers, and any data or achievements from these games will register in your actual NK profile, excluding BMC where you will get a new online save.<br>
