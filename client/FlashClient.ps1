@@ -1,5 +1,6 @@
-﻿$VERSION = "4.0"
-$SIZE = 49746465
+﻿
+$VERSION = "4.0"
+$SIZE = 118382691
 $win_steam =${env:ProgramFiles(x86)}+"\Steam\steamapps\common\Ninja Kiwi Archive\resources"
 $win_standalone1=${env:LocalAppData}+"\Programs\Ninja Kiwi Archive\resources"
 $win_standalone2=${env:ProgramFiles}+"\Ninja Kiwi\Ninja Kiwi Archive\resources"
@@ -18,7 +19,6 @@ function DownloadThenExtract([string]$cache,[string]$zippath,[string]$downloadpa
 	$FULL_MB_FLOAT = $FULL_MB / 10
 	$N = (New-Object Net.WebClient)
 	try {
-		Set-Location $cache
 		Write-Host -NoNewline "Downloading $filename ... "
 		$E = $N.DownloadFileTaskAsync($zippath,$downloadpath)
 		while (!($E.IsCompleted)) {
@@ -38,17 +38,26 @@ function DownloadThenExtract([string]$cache,[string]$zippath,[string]$downloadpa
                 }
 			
 		}
-		if ($size -lt $FULL_SIZE) {
+		if ($size -ne $FULL_SIZE) {
 			"`n"
 			throw
+		}
+		if(Test-Path -Path $cache'/install.zip'){
+		}else{
+			"`nDownload failed. You might need to run as an admin, or check your internet connection."
+			return
 		}
 		Write-Host -NoNewline "`rDownloading $filename complete!                        "
         if(Test-Path -Path $cache'/app.asar'){
         	if(Test-Path -Path $cache'/appv.asar'){
+                Remove-Item -Path $cache'/appv.asar'
 			}
-			else{
+            try{
 		    	Rename-Item -Path $cache'/app.asar' -NewName "appv.asar"
-		    }
+            }catch{
+                "Archive was probably not closed, or you don't have permissions. Installation failed."
+                return
+            }
         }
 		"`nExtracting..."
 		try {
@@ -107,6 +116,8 @@ function DownloadThenExtract([string]$cache,[string]$zippath,[string]$downloadpa
 "Flash Private Server Installer by glenn m"
 	"The following mods will be installed:"
 	"Flash Private Server"
+    "BTD5, Battles, BMC, SAS3, SAS4, Countersnipe"
+    "Enable hidden+extra archive games"
 	"Approx data size: $MB_FLOAT MB"
 	"==============================="
 "Checking version..."
@@ -138,7 +149,7 @@ finally{
 	}
 	$N.Dispose();
 }
-
+    "If you have a non-Steam installation, make sure to run this as an admin!!"
 	$X = Read-Host "Please ensure all Ninja Kiwi Archive windows(INCLUDING THE LAUNCHER!!!) are closed, then press ENTER to begin installation..."
 
 if ($IsWindows -or $ENV:OS) {
@@ -187,4 +198,7 @@ if ($IsWindows -or $ENV:OS) {
     }
 }
 "Successful installations: "+$global:count_
+if($global:count_ -gt 0){
+    "You can now play multiplayer on the NK Archive! If some installations failed, scroll up to see which ones succeeded."
+}
 $X = Read-Host "Press enter to exit..."
