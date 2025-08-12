@@ -267,6 +267,7 @@ static{
 		<%! 
 		
 		public JSONObject updateCTScore(int userID, int cityID, String roomID, JSONObject payload){
+			long now = System.currentTimeMillis();
 			var ret = store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
 				//we need to return the entire new queue object, while extracting the new/found room
 				int score = payload.optInt("score");
@@ -302,12 +303,12 @@ static{
 					if(leader != userID){
 						if(CTUtil.becomesLeader(scores, payload, minRounds)){
 							System.out.println("NL -> L");
-							ct.put("lastLootTime", time);
+							ct.put("lastLootTime", now);
 							ct.put("lootTimeOffset", lootTimeOffset);
 							if(leader >= 0){
 								System.out.println("Updating old leader "+leader);
 								var oldLeader = scores.getJSONObject(""+leader);
-								long durationWithoutCurrent = (time - oldLeader.getLong("time"))
+								long durationWithoutCurrent = (now - oldLeader.getLong("time"))
 										+ oldLeader.optLong("durationWithoutCurrent");
 								oldLeader
 									.put("durationWithoutCurrent", durationWithoutCurrent)
@@ -316,8 +317,8 @@ static{
 									.put("time", 0);
 							}
 							myScore
-								.put("durationTime", time)
-								.put("time", time);
+								.put("durationTime", now)
+								.put("time", now);
 						}else{
 							System.out.println("NL -> NL");
 							//already handled below...
@@ -331,7 +332,7 @@ static{
 							long durationWithoutCurrent = previousDuration + myScore.optLong("durationWithoutCurrent");
 							ct.put("lootTimeOffset", lootTimeOffset);
 							myScore
-								.put("time", time)
+								.put("time", now)
 								.put("durationTime", myScore.optLong("durationTime"))
 								.put("durationWithoutCurrent", durationWithoutCurrent);//???????
 							//current set below
@@ -558,7 +559,7 @@ public static class CTUtil {
 			return time > 0;
 		}).filter(x -> !x.equals("" + leader)).forEach(id -> {
 			JSONObject score = scores.getJSONObject("" + id);
-			long durationWithoutCurrent = Math.max(24 * 3600 * 1000,
+			long durationWithoutCurrent = Math.min(24 * 3600 * 1000,
 					Math.min(endOfWeek, now) - score.getLong("time")) + score.optLong("durationWithoutCurrent");
 			score.put("durationWithoutCurrent", durationWithoutCurrent).put("current", 0).put("time", 0);
 		});
