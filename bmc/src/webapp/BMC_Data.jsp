@@ -578,7 +578,7 @@ public static class CTUtil {
 			var score = scores.getJSONObject(id);
 			if(score.optLong("time") > 0)
 				//why is this a thing
-				score.put("duration", (score.optLong("time") - score.optLong("durationTime")));
+				score.put("duration", score.optLong("durationWithoutCurrent"));//(score.optLong("time") - score.optLong("durationTime")));
 		}
 		return room;
 	}
