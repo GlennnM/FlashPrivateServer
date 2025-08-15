@@ -353,7 +353,8 @@ static{
 				}
 				return room;
 			});
-			return CTUtil.hideLeaderDuration(ret);
+			updateCTLevels(ret, cityID);
+			return CTUtil.hideBest(CTUtil.hideLeaderDuration(ret));
 		}
 		
 		public JSONObject getCTScores(int userID, int cityID, String roomID){
@@ -385,6 +386,24 @@ static{
 				return room;
 			});
 			return CTUtil.hideLeaderDuration(ret);
+		}
+
+		public void updateCTLevels(JSONObject room, int cityID){
+			var ct = room.getJSONObject("contestedTerritory");
+			var levels = Util.jStream(ct.getJSONArray("cities"))
+				.collect(toMap(
+					city -> city.getInt("userID"),
+					city -> getCityThing(city.getInt("userID"), cityID, "info")
+						.getInt("level")
+					));
+			//update instead of direct put in case a new city was added we don't know about
+			store.update(List.of("monkeyCity","contest",""+cityID,"rooms", ct.getString("roomID")),newRoom->{
+				var newCT = newRoom.getJSONObject("contestedTerritory");
+				Util.jStream(newCT.getJSONArray("cities")).forEach(city->{
+					city.putOpt("cityLevel", levels.get(city.getInt("userID")));
+				});
+				return newRoom;
+			});
 		}
 		%>
 		<%-- CT - HISTORY --%>
@@ -567,7 +586,18 @@ public static class CTUtil {
 			score.put("durationWithoutCurrent", durationWithoutCurrent).put("current", 0).put("time", 0);
 		});
 	}
-
+	/**
+	* For some reason when someone overtakes you in CT it requires you to beat their best score and not current score
+	* Therefore we hide the best score but only on score put request
+	*/
+	public static JSONObject hideBest(JSONObject room) {
+		var scores = room.getJSONObject("contestedTerritory").getJSONObject("score");
+		for(String key:scores.keySet()){
+			var score = scores.getJSONObject(key);
+			score.put("best",score.optInt("current"));
+		}
+		return room;
+	}
 	public static void updateDurations(JSONObject room) {
 		var ct = room.getJSONObject("contestedTerritory");
 		updateDurations(ct.getJSONObject("score"), ct.optLong("startTime"), ct.getInt("minRounds"));
@@ -598,7 +628,6 @@ public static class CTUtil {
 			score.put("time", time).put("durationTime", durationTime).put("duration", duration);
 		}
 	}
-
 	//assumes time was already updated
 	//now need a fn to determine if a new score would become the leader
 	public static int findLeader(JSONObject scores, int minRounds) {
