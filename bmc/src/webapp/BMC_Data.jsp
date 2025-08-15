@@ -548,11 +548,14 @@ public static class CTUtil {
 		return (int) ((millis / (1000 * 60 * 60 * 24) - 4) / 7);
 	}
 
+	private static long endOfWeek(long roomStartTime) {
+		return ((week(roomStartTime) + 1L) * 7 + 4) * 24 * 3600 * 1000;
+	}
 	//for cases where bloons retook while someone was leader
 	//problem - what if they submitted bad scores during that time???
 	public static void rollExtraTime(JSONObject scores, long roomStartTime, int minRounds) {
 		long now = System.currentTimeMillis();
-		long endOfWeek = (week(roomStartTime) + 1L) * 24 * 3600 * 1000 * 7;
+		long endOfWeek = endOfWeek(roomStartTime);
 		int leader = findLeader(scores, minRounds);
 		scores.keySet().stream().filter(x -> {
 			long time = scores.getJSONObject(x).optLong("time");
@@ -584,7 +587,7 @@ public static class CTUtil {
 	}
 	public static void updateDurations(JSONObject scores, long roomStartTime, int minRounds) {
 		long now = System.currentTimeMillis();
-		long endOfWeek = (week(roomStartTime) + 1L) * 24 * 3600 * 1000 * 7;
+		long endOfWeek = endOfWeek(roomStartTime);
 		for (String id : scores.keySet()) {
 			JSONObject score = scores.getJSONObject("" + id);
 			long time = score.getLong("time");
