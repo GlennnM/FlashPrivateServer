@@ -1,3 +1,4 @@
+<%@page import="java.io.FileNotFoundException"%>
 <%@page import="java.util.Comparator"%>
 <%@page import="java.util.concurrent.ThreadLocalRandom"%>
 <%@page import="java.util.concurrent.atomic.LongAdder"%>
@@ -799,7 +800,7 @@ public static class FileObjectStore implements ObjectStore {
 			try {
 				holder.setPlain(new JSONObject(Files.readString(path)));
 			} catch (IOException e) {
-				holder.setPlain(null);
+				throw new RuntimeException(e);
 			}
 			return null;
 		});
@@ -827,7 +828,7 @@ public static class FileObjectStore implements ObjectStore {
 				Files.writeString(path, payload.toString());
 				holder.setPlain(true);
 			} catch (IOException e) {
-				holder.setPlain(false);
+				throw new RuntimeException(e);
 			}
 			return null;
 		});
@@ -851,7 +852,7 @@ public static class FileObjectStore implements ObjectStore {
 				}
 				holder.setPlain(output);
 			} catch (IOException e) {
-				holder.setPlain(null);
+				throw new RuntimeException(e);
 			}
 			return null;
 		});
@@ -866,8 +867,10 @@ public static class FileObjectStore implements ObjectStore {
 			try {
 				Files.delete(path);
 				holder.setPlain(true);
-			} catch (IOException e) {
+			} catch (FileNotFoundException e) {
 				holder.setPlain(false);
+			} catch (IOException e){
+				throw new RuntimeException(e);
 			}
 			return null;
 		});
