@@ -56,8 +56,8 @@ if(request.getMethod().equals("POST")){
 	response.setContentType("application/json");
 	if(!operation.equals("handshake"))
 		if(sessionID==null || !Objects.equals(sessionID,SESSIONS.get(userID))){
-			reply.put("sessionID",-1).put("success",false).put("status", "ok")
-			.put("error", "bmc_tech")
+			reply.put("sessionID",-1).put("success",false).put("status", "unauthorised")
+			.put("error", "bmc_unauthorised")
 			.put("bmc_code", "try_again")
 			.put("reason", "No handshake");
 			out.print(reply);
