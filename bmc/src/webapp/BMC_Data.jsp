@@ -1,3 +1,4 @@
+<%@page import="java.nio.file.FileSystemNotFoundException"%>
 <%@page import="java.io.FileNotFoundException"%>
 <%@page import="java.util.Comparator"%>
 <%@page import="java.util.concurrent.ThreadLocalRandom"%>
@@ -799,7 +800,9 @@ public static class FileObjectStore implements ObjectStore {
 		urlLock.compute(path.toString(), (k, v) -> {
 			try {
 				holder.setPlain(new JSONObject(Files.readString(path)));
-			} catch (IOException e) {
+			} catch(FileNotFoundException e){
+				holder.setPlain(null);
+			}catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 			return null;
