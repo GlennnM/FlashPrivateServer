@@ -1,3 +1,7 @@
+<%@page import="java.util.Queue"%>
+<%@page import="java.util.concurrent.ConcurrentLinkedQueue"%>
+<%@page import="java.util.NavigableSet"%>
+<%@page import="java.util.concurrent.ConcurrentSkipListSet"%>
 <%@page import="java.nio.file.NoSuchFileException"%>
 <%@page import="java.io.FileNotFoundException"%>
 <%@page import="java.util.Comparator"%>
@@ -30,7 +34,7 @@
 <%@ page
 	import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
 <%-- BMC DATA --%>
-<%--!
+<%!
 static{
 	//VERY DUMB THING TO DO AN UPDATE THAT SHOULD HAPPEN ANYWAYS BUT isnt implemented FIXME:remove
 	
@@ -48,7 +52,7 @@ static{
 		}).start();
 	}
 }
---%><%!
+%><%!
 	static final long CT_QUEUE_TIME = 24L * 3600 * 1000 * 3;//time a new CT is joinable for
 	/**does stuff like putCity(0,{},..)*/
 	public static class BMCData{
@@ -747,9 +751,13 @@ public static class FileObjectStore implements ObjectStore {
 		update() will still return your input value with any mutations
 	*/
 	public static final JSONObject UNCHANGED = new JSONObject();
-	//we lock using this, without ever adding to it
-	private final ConcurrentMap<String, Void> urlLock = new ConcurrentHashMap<>(1024 * 1024);
-
+	//stored in cache if something is deleted or not found
+	public static final JSONObject NOT_PRESENT = new JSONObject();
+	private final ConcurrentMap<String, JSONObject> cache = new ConcurrentHashMap<>(1024 * 1024);
+	private final Queue<String> order = new ConcurrentLinkedQueue<>();
+	private final NavigableSet<String> modif = new ConcurrentSkipListSet<>();
+	
+	
 	public FileObjectStore(Path root) throws IOException {
 		if (!Files.exists(root))
 			Files.createDirectories(root);
@@ -757,7 +765,63 @@ public static class FileObjectStore implements ObjectStore {
 			throw new IllegalArgumentException("Not a dir: " + root);
 		this.root = root;
 	}
-	//TODO: web formatting to make this explorable since everything is json
+	private JSONObject compute(String key, UnaryOperator<JSONObject> update){
+		//automatically do the cache updates here
+		//only thing not implemented - eviction
+		var CHANGED = new AtomicBoolean(true);
+		var result = cache.compute(key,(k,v)->{
+			Path p = Path.of(key);
+			if(v == null){
+				System.err.println("Cache MISS "+key);
+				try{
+					v = Files.exists(p) ? new JSONObject(Files.readString(p)) : NOT_PRESENT;
+				}catch(IOException ioe){
+					throw new RuntimeException(ioe);
+				}
+			}
+			if(v == NOT_PRESENT){
+				System.err.println("Cache HIT NULL "+key);
+				v=null;
+			}
+			System.err.println("Cache HIT "+key);
+			var ret =  update.apply(v == NOT_PRESENT ? null : v);
+			CHANGED.setPlain(ret != UNCHANGED);
+			return ret == null ? NOT_PRESENT : 
+				ret == UNCHANGED ? v : ret;
+		});
+		order.remove(key);
+		order.add(key);
+		if(CHANGED.getPlain())
+			modif.add(key);
+		flush();
+		return result;
+	}
+	public void evict(){
+		
+	}
+	public void flush(){
+		var failures = new ArrayList<String>();
+		modif.forEach(key->{
+			try{
+				var val = cache.get(key);
+				var path = Path.of(key);
+				if(val == NOT_PRESENT){
+					Files.deleteIfExists(path);
+				}else{
+					Files.createDirectories(path.getParent());
+					Files.writeString(path, val.toString());
+				}
+			}catch(IOException e){
+				failures.add(key);
+			}
+		});
+		modif.clear();
+		if(!failures.isEmpty()){
+			System.err.println("WARNING: Write failures "+failures);
+			modif.addAll(failures);
+		}
+	}
+	
 	public List<String> dump() {
 		try {
 			return Files.walk(root, 2).filter(Files::isRegularFile)//.peek(System.out::println)
@@ -795,89 +859,35 @@ public static class FileObjectStore implements ObjectStore {
 
 	@Override
 	public JSONObject get(String url) {
-		Path path = map(url);
-		AtomicReference<JSONObject> holder = new AtomicReference<>();//for stupid lambda thing
-		urlLock.compute(path.toString(), (k, v) -> {
-			try {
-				holder.setPlain(new JSONObject(Files.readString(path)));
-			} catch(FileNotFoundException | NoSuchFileException e){
-				holder.setPlain(null);
-			}catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-			return null;
-		});
-		return holder.getPlain();
+		var res =  compute(url, x -> UNCHANGED);
+		return res == NOT_PRESENT ? null : res;
 	}
 
 	@Override
 	public boolean has(String url) {
-		Path path = map(url);
-		AtomicReference<Boolean> holder = new AtomicReference<>();//for stupid lambda thing
-		urlLock.compute(path.toString(), (k, v) -> {
-			holder.setPlain(Files.exists(path));
-			return null;
-		});
-		return holder.getPlain();
+		return compute(url, x -> UNCHANGED) != NOT_PRESENT;
 	}
 
 	@Override
 	public boolean put(String url, JSONObject payload) {
-		Path path = map(url);
-		AtomicReference<Boolean> holder = new AtomicReference<>();//for stupid lambda thing
-		urlLock.compute(path.toString(), (k, v) -> {
-			try {
-				Files.createDirectories(path.getParent());
-				Files.writeString(path, payload.toString());
-				holder.setPlain(true);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-			return null;
-		});
-		return holder.getPlain();
+		compute(url, x->payload);
+		return true;
 	}
 
 	@Override
 	public JSONObject update(String url, UnaryOperator<JSONObject> update) {
-		Path path = map(url);
-		AtomicReference<JSONObject> holder = new AtomicReference<>();//for stupid lambda thing
-		System.out.println("-->" + path);
-		urlLock.compute(path.toString(), (k, v) -> {
-			try {
-				JSONObject input = Files.exists(path) ? new JSONObject(Files.readString(path)) : null;
-				Files.createDirectories(path.getParent());
-				JSONObject output = update.apply(input);
-				if(output != UNCHANGED){
-					Files.writeString(path, output.toString());
-				}else {
-					output = input;
-				}
-				holder.setPlain(output);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-			return null;
-		});
-		return holder.getPlain();
+		var res =  compute(url, update);
+		return res == NOT_PRESENT ? null : res;
 	}
 
 	@Override
 	public boolean delete(String url) {
-		Path path = map(url);
-		AtomicReference<Boolean> holder = new AtomicReference<>();//for stupid lambda thing
-		urlLock.compute(path.toString(), (k, v) -> {
-			try {
-				Files.delete(path);
-				holder.setPlain(true);
-			} catch (FileNotFoundException | NoSuchFileException e) {
-				holder.setPlain(false);
-			} catch (IOException e){
-				throw new RuntimeException(e);
-			}
+		AtomicBoolean PRESENT = new AtomicBoolean();
+		var res =  compute(url, x ->{
+			PRESENT.setPlain(x != null);
 			return null;
 		});
-		return holder.getPlain();
+		return PRESENT.getPlain();
 	}
 }
 //public static class DBObjectStore ?!?!!
