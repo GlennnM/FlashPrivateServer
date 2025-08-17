@@ -32,8 +32,7 @@ effect on achievements and stuff isn't entirely known(most likely your tiles one
 - MvM
 - crates
 - starting city based on tiles achievements?
-- performance(some things like tile format are very bad)
 
-eventually: support for different storage backend, save transfer of some kind, pvp bots
+eventually: support for different storage backend, save transfer of some kind, pvp bots, new tile format?
 
 

@@ -1,3 +1,7 @@
+<%@page import="xyz.hydar.ee.HydarEE.HttpServletRequest"%>
+<%@page import="java.util.concurrent.TimeUnit"%>
+<%@page import="java.util.concurrent.Executors"%>
+<%@page import="java.util.concurrent.ScheduledExecutorService"%>
 <%@page import="java.util.Queue"%>
 <%@page import="java.util.concurrent.ConcurrentLinkedQueue"%>
 <%@page import="java.util.NavigableSet"%>
@@ -7,7 +11,6 @@
 <%@page import="java.util.Comparator"%>
 <%@page import="java.util.concurrent.ThreadLocalRandom"%>
 <%@page import="java.util.concurrent.atomic.LongAdder"%>
-<%@page import="javax.xml.crypto.Data"%>
 <%@page import="java.util.concurrent.atomic.AtomicBoolean"%>
 <%@page import="java.util.Spliterators"%>
 <%@page import="static java.util.stream.Collectors.*"%>
@@ -34,7 +37,7 @@
 <%@ page
 	import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
 <%-- BMC DATA --%>
-<%!
+<%--!
 static{
 	//VERY DUMB THING TO DO AN UPDATE THAT SHOULD HAPPEN ANYWAYS BUT isnt implemented FIXME:remove
 	
@@ -52,7 +55,7 @@ static{
 		}).start();
 	}
 }
-%><%!
+--%><%!
 	static final long CT_QUEUE_TIME = 24L * 3600 * 1000 * 3;//time a new CT is joinable for
 	/**does stuff like putCity(0,{},..)*/
 	public static class BMCData{
@@ -751,77 +754,162 @@ public static class FileObjectStore implements ObjectStore {
 		update() will still return your input value with any mutations
 	*/
 	public static final JSONObject UNCHANGED = new JSONObject();
-	//stored in cache if something is deleted or not found
+	//stored in cache if something is deleted or not found(in constrast, null = 'not cached')
 	public static final JSONObject NOT_PRESENT = new JSONObject();
-	private final ConcurrentMap<String, JSONObject> cache = new ConcurrentHashMap<>(1024 * 1024);
+	
+
+	public final int maxCacheSize;
+	private final ConcurrentMap<String, JSONObject> cache;
 	private final Queue<String> order = new ConcurrentLinkedQueue<>();
 	private final NavigableSet<String> modif = new ConcurrentSkipListSet<>();
-	
+	private final LongAdder cacheSize = new LongAdder();
+	private volatile boolean delayedFlush = false;
 	
 	public FileObjectStore(Path root) throws IOException {
+		this(root, 100_000);
+	}
+	public FileObjectStore(Path root, int maxCacheSize) throws IOException {
+		this.maxCacheSize = maxCacheSize;
+		this.cache = new ConcurrentHashMap<>(maxCacheSize);
 		if (!Files.exists(root))
 			Files.createDirectories(root);
 		if (!Files.isDirectory(root))
 			throw new IllegalArgumentException("Not a dir: " + root);
 		this.root = root;
 	}
-	private JSONObject compute(String key, UnaryOperator<JSONObject> update){
+	/**
+	* Activates delayed flush. Only ever call once and before ever calling compute().
+	* In order to prevent recompiling leakage, runs then removes previous shutdown hooks.
+	* Then kills flusher services.
+	*/
+	public FileObjectStore bind(HttpServletRequest request, long flushInterval){
+		if(delayedFlush)
+			return this;
+		var flusher = Executors.newSingleThreadScheduledExecutor(Thread.ofVirtual().factory());
+		var flusherHook = new Thread(this::flush);
+		
+		@SuppressWarnings("unchecked")
+		var hooks =  (List<Thread>)(request.getServletContext().getAttribute("OBJECT_HOOKS_"+root.toString()));
+		if(hooks == null)
+			hooks = new ArrayList<Thread>();
+		hooks.forEach(x->x.start());
+		hooks.forEach(x->{
+			try{
+				x.join();
+			}catch(InterruptedException ie){
+				Thread.currentThread().interrupt();
+			}
+		});
+		hooks.forEach(Runtime.getRuntime()::removeShutdownHook);
+		hooks.clear();
+		hooks.add(flusherHook);
+		Runtime.getRuntime().addShutdownHook(flusherHook);
+		request.getServletContext().setAttribute("OBJECT_HOOKS_"+root.toString(), hooks);
+		
+
+		@SuppressWarnings("unchecked")
+		var flushers =  (List<ScheduledExecutorService>)(request.getServletContext().getAttribute("OBJECT_FLUSHERS_"+root.toString()));
+		if(flushers == null)
+			flushers = new ArrayList<ScheduledExecutorService>();
+		flushers.forEach(ScheduledExecutorService::shutdown);
+		flushers.clear();
+		flushers.add(flusher);
+		request.getServletContext().setAttribute("OBJECT_FLUSHERS_"+root.toString(), flushers);
+		
+		this.delayedFlush = true;
+		flusher.scheduleAtFixedRate(this::flush, flushInterval, flushInterval, TimeUnit.MILLISECONDS);
+		return this;
+	}
+	/**
+	*	Perform an update, while hiding the cache.
+	*	update can accept null and return UNCHANGED,
+	*	but should not return or expect NOT_PRESENT.
+	*		
+	*	This method itself can return NOT_PRESENT but not UNCHANGED.
+	*/
+	private JSONObject compute(String unmappedKey, UnaryOperator<JSONObject> update){
 		//automatically do the cache updates here
-		//only thing not implemented - eviction
 		var CHANGED = new AtomicBoolean(true);
-		var result = cache.compute(key,(k,v)->{
-			Path p = Path.of(key);
+		Path p = map(unmappedKey);
+		String key = p.toString();
+		//outside the update(non-reentrant), but before it so it must succeed before continuing
+		tryEvict();
+		var result = cache.compute(p.toString(),(k,v)->{
 			if(v == null){
-				System.err.println("Cache MISS "+key);
+				//System.err.println("Cache MISS "+key);
+				cacheSize.increment();
 				try{
 					v = Files.exists(p) ? new JSONObject(Files.readString(p)) : NOT_PRESENT;
 				}catch(IOException ioe){
 					throw new RuntimeException(ioe);
 				}
 			}
-			if(v == NOT_PRESENT){
-				System.err.println("Cache HIT NULL "+key);
-				v=null;
-			}
-			System.err.println("Cache HIT "+key);
 			var ret =  update.apply(v == NOT_PRESENT ? null : v);
 			CHANGED.setPlain(ret != UNCHANGED);
 			return ret == null ? NOT_PRESENT : 
 				ret == UNCHANGED ? v : ret;
 		});
+		//update LRU order
 		order.remove(key);
 		order.add(key);
 		if(CHANGED.getPlain())
 			modif.add(key);
-		flush();
+		if(!delayedFlush)
+			flush();
 		return result;
 	}
-	public void evict(){
-		
+	//Evict if cache size is greater than MAX_CACHE_SIZE. Fails if write-through fails.
+	public void tryEvict(){
+		//System.err.println("Cache size " + cacheSize.sum());
+		if(cacheSize.sum() > maxCacheSize){
+			String oldest = order.poll();
+			if(oldest!=null){
+				//System.err.println("Evicting "+oldest);
+				if(modif.contains(oldest)){
+					flushOne(oldest);
+				}
+				cache.remove(oldest);
+				cacheSize.decrement();
+			}
+		}
 	}
+	//Write all modified entries to disk.
 	public void flush(){
+		//System.err.println("Flushing entries. "+modif);
 		var failures = new ArrayList<String>();
 		modif.forEach(key->{
 			try{
-				var val = cache.get(key);
-				var path = Path.of(key);
-				if(val == NOT_PRESENT){
-					Files.deleteIfExists(path);
-				}else{
-					Files.createDirectories(path.getParent());
-					Files.writeString(path, val.toString());
-				}
+				writeThrough(key);
 			}catch(IOException e){
 				failures.add(key);
 			}
 		});
 		modif.clear();
 		if(!failures.isEmpty()){
-			System.err.println("WARNING: Write failures "+failures);
+			//System.err.println("WARNING: Write failures "+failures);
 			modif.addAll(failures);
 		}
 	}
-	
+	//Used on evict. Must succeed or evict will not happen.
+	public void flushOne(String key){
+		//System.err.println("Flushing entry. "+key);
+		try{
+			writeThrough(key);
+			modif.remove(key);
+		}catch(IOException e){
+			throw new RuntimeException(e);//not a warning, since data could be lost
+		}
+	}
+	private void writeThrough(String key) throws IOException{
+		var val = cache.get(key);
+		var path = Path.of(key);
+		if(val == NOT_PRESENT){
+			Files.deleteIfExists(path);
+		}else{
+			Files.createDirectories(path.getParent());
+			Files.writeString(path, val.toString());
+		}
+	}
 	public List<String> dump() {
 		try {
 			return Files.walk(root, 2).filter(Files::isRegularFile)//.peek(System.out::println)
@@ -873,7 +961,7 @@ public static class FileObjectStore implements ObjectStore {
 		compute(url, x->payload);
 		return true;
 	}
-
+	
 	@Override
 	public JSONObject update(String url, UnaryOperator<JSONObject> update) {
 		var res =  compute(url, update);
