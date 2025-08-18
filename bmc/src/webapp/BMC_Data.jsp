@@ -299,7 +299,9 @@ static{
 				var cities = ct.getJSONArray("cities");
 				if(Util.jStream(cities).anyMatch(x->x.getInt("userID") == userID)){// verify if in ct room
 					var scores = ct.getJSONObject("score");
-					var myScore = scores.optJSONObject(""+userID, new JSONObject());
+					var myScore = scores.optJSONObject(""+userID);
+					if(myScore==null)
+						myScore = new JSONObject();
 					int leader = CTUtil.findLeader(scores, minRounds);
 					
 					/**
@@ -574,7 +576,6 @@ public static class CTUtil {
 		return newRoom;
 	}
 
-
 	public static void addCTPlayer(JSONObject room, int userID, JSONObject player){
 		var cities = room.getJSONObject("contestedTerritory").getJSONArray("cities");
 		if(Util.jStream(cities).noneMatch(x->x.getInt("userID") == userID))
@@ -644,8 +645,8 @@ public static class CTUtil {
 		long endOfWeek = endOfWeek(roomStartTime);
 		for (String id : scores.keySet()) {
 			JSONObject score = scores.getJSONObject("" + id);
-			long time = score.getLong("time");
-			long durationTime = score.getLong("durationTime");
+			long time = score.optLong("time");
+			long durationTime = score.optLong("durationTime");
 			long duration = score.optLong("durationWithoutCurrent") +
 			//if time > 0, you were the last leader(even though you would no longer be)
 					(time > 0 ? (Math.min(endOfWeek, now) - Math.max(time, durationTime)) : 0);
