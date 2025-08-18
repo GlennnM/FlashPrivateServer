@@ -23,11 +23,14 @@ static final AtomicLong LAST_SKU_UPDATE = new AtomicLong();
 %>
 <%
 if(DATA==null){
-	String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
-	DATA=new BMCData(new FileObjectStore(Path.of(storeLocation)).bind(request, 30000L));
-	var prevSessions = DATA.store.get("monkeyCity/sessions");
-	if(prevSessions != null)
-		prevSessions.toMap().forEach((k,v) -> SESSIONS.put(Integer.parseInt(k), v.toString()));
+	synchronized(this){
+		String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
+		String skipScoreUpdate = request.getServletContext().getInitParameter("NO_UPDATE");
+		DATA=new BMCData(FileObjectStore.of(Path.of(storeLocation)).bind(request, 30000L)).skipScoreUpdate(skipScoreUpdate);
+		var prevSessions = DATA.store.get("monkeyCity/sessions");
+		if(prevSessions != null)
+			prevSessions.toMap().forEach((k,v) -> SESSIONS.put(Integer.parseInt(k), v.toString()));
+	}
 }
 
 LAST_SKU_UPDATE.accumulateAndGet(System.currentTimeMillis(), (current, given)->{

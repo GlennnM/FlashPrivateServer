@@ -1,4 +1,6 @@
 
+<%@page import="java.time.Instant"%>
+<%@page import="java.nio.file.attribute.FileTime"%>
 <%@ include file="BMC_Data.jsp" %>
 <!DOCTYPE html>
 <html>
@@ -13,7 +15,7 @@ if(store==null)
 	try{
 	
 		String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
-		store = new FileObjectStore(Path.of(storeLocation));//TODO: obviously not .
+		store = FileObjectStore.of(Path.of(storeLocation));
 		keys = store.list();
 	}catch(IOException ioe){
 		throw new RuntimeException(ioe);
@@ -36,6 +38,8 @@ if(op!=null){
 	switch(op){
 	case "delete":
 		store.delete(key);
+		//Force reload cache
+		Files.setLastModifiedTime(Path.of(request.getServletContext().getRealPath("/BMC.jsp")), FileTime.from(Instant.now()));
 		return;
 	case "get":
 		response.resetBuffer();
@@ -44,6 +48,8 @@ if(op!=null){
 		return;
 	case "put":
 		store.put(key, new JSONObject(request.getParameter("data")));
+		//Force reload cache
+		Files.setLastModifiedTime(Path.of(request.getServletContext().getRealPath("/BMC.jsp")), FileTime.from(Instant.now()));
 		return;
 	}
 }

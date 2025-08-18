@@ -1,3 +1,5 @@
+<%@page import="java.util.Arrays"%>
+<%@page import="java.util.Set"%>
 <%@page import="xyz.hydar.ee.HydarEE.HttpServletRequest"%>
 <%@page import="java.util.concurrent.TimeUnit"%>
 <%@page import="java.util.concurrent.Executors"%>
@@ -60,6 +62,7 @@ static{
 	/**does stuff like putCity(0,{},..)*/
 	public static class BMCData{
 		private final ObjectStore store;
+		private volatile Set<Integer> noScoreUpdate;
 		public BMCData(ObjectStore store){
 			this.store = store;
 		}
@@ -277,8 +280,12 @@ static{
 		
 		public JSONObject updateCTScore(int userID, int cityID, String roomID, JSONObject payload){
 			long now = System.currentTimeMillis();
+			AtomicReference<JSONObject> clonedRoom = new AtomicReference<>();
 			var ret = store.update(List.of("monkeyCity","contest",""+cityID,"rooms", roomID), room->{
 				//we need to return the entire new queue object, while extracting the new/found room
+				boolean clone = (noScoreUpdate!=null && noScoreUpdate.contains(userID));
+				if(clone)
+					room = new JSONObject(room.toString());
 				int score = payload.optInt("score");
 				long time = payload.optLong("time");
 				boolean pb = payload.optBoolean("isPersonalBest");
@@ -360,10 +367,13 @@ static{
 						.put("duration", myScore.optLong("duration"))
 						.put("time", myScore.optLong("time"));	
 				}
-				return room;
+				if(clone)
+					clonedRoom.setPlain(room);
+				return clone ? FileObjectStore.UNCHANGED : room;
 			});
+			ret = clonedRoom.getPlain() == null ? ret : clonedRoom.getPlain();
 			updateCTLevels(ret, cityID);
-			return CTUtil.hideBest(CTUtil.hideLeaderDuration(ret));
+			return CTUtil.hideLeaderDuration(ret);
 		}
 		
 		public JSONObject getCTScores(int userID, int cityID, String roomID){
@@ -379,6 +389,11 @@ static{
 				return CTUtil.hideLeaderDuration(room);
 			}
 			return new JSONObject();
+		}
+		public BMCData skipScoreUpdate(String skip){
+			if(skip != null && !skip.trim().isEmpty())
+				noScoreUpdate = Arrays.stream(skip.split(",",0)).map(Integer::parseInt).collect(toSet());
+			return this;
 		}
 		//lootTimeOffset is a 'claim reward', we set it and reset it after 1 claim, claiming from self included
 		public JSONObject lootCT(int userID, int cityID, String roomID, JSONObject payload){
@@ -757,6 +772,7 @@ public static class FileObjectStore implements ObjectStore {
 	//stored in cache if something is deleted or not found(in constrast, null = 'not cached')
 	public static final JSONObject NOT_PRESENT = new JSONObject();
 	
+	public static final ConcurrentMap<Path, FileObjectStore> INSTANCES = new ConcurrentHashMap<>();
 
 	public final int maxCacheSize;
 	private final ConcurrentMap<String, JSONObject> cache;
@@ -765,10 +781,7 @@ public static class FileObjectStore implements ObjectStore {
 	private final LongAdder cacheSize = new LongAdder();
 	private volatile boolean delayedFlush = false;
 	
-	public FileObjectStore(Path root) throws IOException {
-		this(root, 100_000);
-	}
-	public FileObjectStore(Path root, int maxCacheSize) throws IOException {
+	private FileObjectStore(Path root, int maxCacheSize) throws IOException {
 		this.maxCacheSize = maxCacheSize;
 		this.cache = new ConcurrentHashMap<>(maxCacheSize);
 		if (!Files.exists(root))
@@ -776,6 +789,18 @@ public static class FileObjectStore implements ObjectStore {
 		if (!Files.isDirectory(root))
 			throw new IllegalArgumentException("Not a dir: " + root);
 		this.root = root;
+	}
+	public static FileObjectStore of(Path root) throws IOException {
+		return of(root, 100000);
+	}
+	public static FileObjectStore of(Path root, int maxCacheSize) throws IOException {
+		return INSTANCES.computeIfAbsent(root, x->{
+			try{
+				return new FileObjectStore(root, maxCacheSize);
+			}catch(IOException ioe){
+				throw new RuntimeException(ioe);
+			}
+		});
 	}
 	/**
 	* Activates delayed flush. Only ever call once and before ever calling compute().
