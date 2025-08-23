@@ -39,7 +39,7 @@
 <%@ page
 	import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
 <%-- BMC DATA --%>
-<%--!
+<%!
 static{
 	//VERY DUMB THING TO DO AN UPDATE THAT SHOULD HAPPEN ANYWAYS BUT isnt implemented FIXME:remove
 	
@@ -57,7 +57,7 @@ static{
 		}).start();
 	}
 }
---%><%!
+%><%!
 	static final long CT_QUEUE_TIME = 24L * 3600 * 1000 * 3;//time a new CT is joinable for
 	/**does stuff like putCity(0,{},..)*/
 	public static class BMCData{
@@ -477,6 +477,38 @@ static{
 		}
 		
 		%>
+		<%-- PVP --%>
+		<%!
+		public JSONObject getFriends(JSONArray friendIDs){
+			var friends =  new JSONArray();
+			var friendData = new JSONObject()
+				.put("friends", friends)
+				.put("friendIDs", friendIDs);
+			for(int id: Util.jIterI(friendIDs)){
+				var cities = new JSONArray();
+				friends.put(
+					new JSONObject()
+						.put("userID", id)
+						.put("cities", cities)
+					);
+				for(int index: List.of(0,1)){
+					var info = getCityThing(id, index, "info");
+					if(info == null)
+						continue;
+					cities.put(new JSONObject()
+							.put("cityIndex", index)
+							.put("level", info.getInt("level"))
+							.put("honour", info.getInt("honour"))
+							.put("name", info.getString("userName"))
+							.put("clan", info.getString("userClan"))
+							.put("youHaveAlreadyAttacked", false)
+							.put("quickMatchID", id)
+						);
+				}
+			}
+			return friendData;
+		}
+		%>
 <%!
 	
 	}
@@ -491,6 +523,12 @@ public static class Util{
 	}
 
 	public static JSONObject BLANK_CORE = new JSONObject().put("core",new JSONObject());
+	public static Iterable<Integer> jIterI(JSONArray array) {
+		return (Iterable<Integer>) (() -> Spliterators.iterator(jStreamI(array).boxed().spliterator()));
+	}
+	public static Iterable<String> jIterS(JSONArray array) {
+		return (Iterable<String>) (() -> Spliterators.iterator(jStreamS(array).spliterator()));
+	}
 	public static Iterable<JSONObject> jIter(JSONArray array) {
 		return (Iterable<JSONObject>) (() -> Spliterators.iterator(jStream(array).spliterator()));
 	}
@@ -498,8 +536,12 @@ public static class Util{
 	public static Stream<JSONObject> jStream(JSONArray array) {
 		return IntStream.range(0, array.length()).mapToObj(array::getJSONObject);
 	}
-
-
+	public static IntStream jStreamI(JSONArray array) {
+		return IntStream.range(0, array.length()).map(array::getInt);
+	}
+	public static Stream<String> jStreamS(JSONArray array) {
+		return IntStream.range(0, array.length()).mapToObj(array::getString);
+	}
 	public static JSONObject mergeContent(JSONObject content, JSONObject update) {
 		if (content == null)
 			content = new JSONObject();

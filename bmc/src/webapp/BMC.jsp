@@ -200,7 +200,11 @@ if(request.getMethod().equals("POST")){
 			break;
 		case "pvp":
 			cityID = request.getParameter("cityID");
-
+			target = request.getParameter("target");
+			reply = switch(target){
+				case "friends" ->  DATA.getFriends(json.getJSONObject("payload").optJSONArray("friends"));
+				default -> reply;
+			};
 			reply
 				.put("success", true);
 
