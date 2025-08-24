@@ -23,8 +23,8 @@ paths=(
     "$HOME/.steam/steam/steamapps/compatdata/1275350/pfx/drive_c/Program Files (x86)/Steam/steamapps/common/Ninja Kiwi Archive/resources"
     "$HOME/.var/app/com.valvesoftware.Steam/.steam/steam/steamapps/common/Ninja Kiwi Archive/resources"
 )
-
-curl -fsSLO "https://github.com/GlennnM/FlashPrivateServer/releases/download/v4.0/app.zip"
+echo "Downloading app.zip..."
+curl -fLO "https://github.com/GlennnM/FlashPrivateServer/releases/download/v4.0/app.zip"
 count_extracted=0
 found_install=0
 
