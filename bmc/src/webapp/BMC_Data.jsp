@@ -87,7 +87,7 @@ static{
 					newThing
 						.put("name", info.get("cityName"))
 						.put("level", info.get("level"))
-						.put("attacks", new JSONArray())
+						.put("attacks", getPVPCore(userID, i).get("attacks"))
 						.put("index", i);
 					ret.put(newThing);
 				}
@@ -501,13 +501,33 @@ static{
 							.put("honour", info.getInt("honour"))
 							.put("name", info.getString("userName"))
 							.put("clan", info.getString("userClan"))
-							.put("youHaveAlreadyAttacked", false)
-							.put("quickMatchID", id)
+							.put("youHaveAlreadyAttacked", false)//attacks.contains thing...
+							//.put("quickMatchID", id)
 						);
 				}
 			}
 			return friendData;
 		}
+		
+		public JSONObject getPVPCore(int userID, int cityID){
+			//attack status updates might have to happen here?
+			//-->find which state the expire countdown would start in
+			var core = store.get("monkeyCity", ""+userID, "pvp", ""+cityID, "core");
+			if(core==null)
+				core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
+			return core;
+		}
+		
+		public JSONObject sendAttack(int userID, int cityID, JSONObject payload){
+			var sender = payload.getJSONObject("sender");
+			sender.put("userID", userID);
+			//verify if attack should happen? ie attacked recently, city level, ...
+			//then add attack to pvp core for both sender and target
+			//add fields: attackID, status, timeLaunched, ...
+			//update sender timeUntilPacifist?
+			return null;
+		}
+		
 		%>
 <%!
 	
@@ -524,13 +544,13 @@ public static class Util{
 
 	public static JSONObject BLANK_CORE = new JSONObject().put("core",new JSONObject());
 	public static Iterable<Integer> jIterI(JSONArray array) {
-		return (Iterable<Integer>) (() -> Spliterators.iterator(jStreamI(array).boxed().spliterator()));
+		return (() -> Spliterators.iterator(jStreamI(array).spliterator()));
 	}
 	public static Iterable<String> jIterS(JSONArray array) {
-		return (Iterable<String>) (() -> Spliterators.iterator(jStreamS(array).spliterator()));
+		return (() -> Spliterators.iterator(jStreamS(array).spliterator()));
 	}
 	public static Iterable<JSONObject> jIter(JSONArray array) {
-		return (Iterable<JSONObject>) (() -> Spliterators.iterator(jStream(array).spliterator()));
+		return (() -> Spliterators.iterator(jStream(array).spliterator()));
 	}
 
 	public static Stream<JSONObject> jStream(JSONArray array) {

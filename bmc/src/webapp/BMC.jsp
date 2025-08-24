@@ -201,10 +201,24 @@ if(request.getMethod().equals("POST")){
 		case "pvp":
 			cityID = request.getParameter("cityID");
 			target = request.getParameter("target");
-			reply = switch(target){
-				case "friends" ->  DATA.getFriends(json.getJSONObject("payload").optJSONArray("friends"));
-				default -> reply;
-			};
+			int cityIndex = Integer.parseInt(cityID);
+			if(action.equals("GET")){
+				reply = switch(target){
+					case "core" ->  DATA.getPVPCore(userID, cityIndex);
+					case "friends" ->  DATA.getFriends(json.getJSONObject("payload").optJSONArray("friends"));
+					default -> reply;
+				};
+			}else if(action.equals("PUT")){
+				reply = switch(target){
+					case "attacks" ->  {
+						if("send".equals(request.getParameter("action"))){
+							yield DATA.sendAttack(userID, cityIndex, json.getJSONObject("payload"));
+						}
+						yield reply;
+					}
+					default -> reply;
+				};
+			}
 			reply
 				.put("success", true);
 
