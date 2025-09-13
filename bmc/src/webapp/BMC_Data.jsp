@@ -479,6 +479,11 @@ static{
 		%>
 		<%-- PVP --%>
 		<%!
+
+		public static class AttackStatus{
+			public static final int INVALID = 0, NEW_SENT = 1, DELIVERED = 2, LINKED = 3, STARTED = 4, RESOLVED = 5,
+					CLOSED = 6;
+		}
 		public JSONObject getFriends(JSONArray friendIDs){
 			var friends =  new JSONArray();
 			var friendData = new JSONObject()
@@ -512,23 +517,58 @@ static{
 		public JSONObject getPVPCore(int userID, int cityID){
 			//attack status updates might have to happen here?
 			//-->find which state the expire countdown would start in
-			var core = store.get("monkeyCity", ""+userID, "pvp", ""+cityID, "core");
-			if(core==null)
-				core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
-			return core;
+			return store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
+				if(core==null)
+					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
+				for(var attack: Util.jIter(core.getJSONArray("attacks"))){
+					if(attack.getJSONObject("target").getInt("userID") == userID){
+						int status = attack.getInt("status");
+						//TODO: what is LINKED????
+						if(status == AttackStatus.DELIVERED)
+							attack.put("status", AttackStatus.STARTED)
+								.put("expireAt", System.currentTimeMillis() + 24l*3600*1000);
+						;
+					}
+					if(attack.getJSONObject("sender").getInt("userID") == userID){
+						int status = attack.getInt("status");
+						if(status < AttackStatus.RESOLVED && 
+								attack.getLong("expireAt") < System.currentTimeMillis()){
+							attack.put("status",AttackStatus.RESOLVED);
+							//EXPIRE
+						}
+					}
+				}
+				return core;
+			});
 		}
-		
-		public JSONObject sendAttack(int userID, int cityID, JSONObject payload){
+		public JSONObject addAttack(int userID, int cityID, JSONObject attack){
+			return store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
+				if(core==null)
+					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
+				core.getJSONArray("attacks").put(attack);
+				return core;
+			});
+		}
+
+		public JSONObject sendAttack(int userID, int cityID, JSONObject payload) {
 			var sender = payload.getJSONObject("sender");
-			sender.put("userID", userID);
+			var target = payload.getJSONObject("target");
+			long now = System.currentTimeMillis();
+			payload.put("attackID", ThreadLocalRandom.current().nextLong())
+				.put("timeLaunched", now)
+				.put("status", AttackStatus.DELIVERED)
+				.put("expireAt", now + 7l*24*3600*1000)
+				;
+			sender.put("userID", userID)
+				.put("cityIndex", cityID);
+			addAttack(target.getInt("userID"), target.getInt("cityIndex"), payload);
+			addAttack(userID, cityID, payload);
 			//verify if attack should happen? ie attacked recently, city level, ...
-			//then add attack to pvp core for both sender and target
+			//then add attack to pvp core for both sender and target(target first)
 			//add fields: attackID, status, timeLaunched, ...
 			//update sender timeUntilPacifist?
-			return null;
-		}
-		
-		%>
+			return new JSONObject().put("success", true);
+		}%>
 <%!
 	
 	}
