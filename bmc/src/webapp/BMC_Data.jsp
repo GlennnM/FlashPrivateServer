@@ -522,14 +522,9 @@ static{
 					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
 				for(var attack: Util.jIter(core.getJSONArray("attacks"))){
 					if(attack.getJSONObject("target").getInt("userID") == userID){
-						int status = attack.getInt("status");
-						//TODO: what is LINKED????
-						if(status == AttackStatus.DELIVERED)
-							attack.put("status", AttackStatus.STARTED)
-								.put("expireAt", System.currentTimeMillis() + 24l*3600*1000);
-						;
+						//...
 					}
-					if(attack.getJSONObject("sender").getInt("userID") == userID){
+					if(attack.getJSONObject("sender").optInt("userID") == userID){
 						int status = attack.getInt("status");
 						if(status < AttackStatus.RESOLVED && 
 								attack.getLong("expireAt") < System.currentTimeMillis()){
@@ -541,6 +536,7 @@ static{
 				return core;
 			});
 		}
+
 		public JSONObject addAttack(int userID, int cityID, JSONObject attack){
 			return store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
 				if(core==null)
@@ -550,14 +546,48 @@ static{
 			});
 		}
 
+		//TODO: loads forever after having sent attack????
+		//also IO error but no stacktrace when clicking the attack 
+		public JSONObject linkAttack(int userID, int cityID, String attackID, JSONObject payload) {
+			updateAttack(userID, cityID, attackID, attack->{
+				if(attack.getJSONObject("target").getInt("userID") == userID
+						&& attack.getInt("status") == AttackStatus.DELIVERED
+						){	
+					if(payload.getString("action").equals("linkToTile")){
+						attack.put("linkedTile",new JSONObject()
+							.put("x", payload.getInt("tileX"))
+							.put("y", payload.getInt("tileY"))
+						).put("status",AttackStatus.LINKED)
+						.put("expireAt", System.currentTimeMillis() + 24l*3600*1000)
+						;
+					}//other actions if those exist...
+				}
+				return attack;
+			});
+			return new JSONObject().put("success", true);
+		}
+		public JSONObject updateAttack(int userID, int cityID, String attackID, UnaryOperator<JSONObject> update){
+			return store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
+				if(core==null)
+					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
+				var attacks = core.getJSONArray("attacks");
+				int index = IntStream.range(0, core.getJSONArray("attacks").length())
+					.filter(x->attacks.getJSONObject(x).getString("attackID").equals(attackID))
+					.findFirst().orElseThrow();
+				attacks.put(index, update.apply(attacks.getJSONObject(index)));
+				return core;
+			});
+		}
 		public JSONObject sendAttack(int userID, int cityID, JSONObject payload) {
 			var sender = payload.getJSONObject("sender");
 			var target = payload.getJSONObject("target");
 			long now = System.currentTimeMillis();
-			payload.put("attackID", ThreadLocalRandom.current().nextLong())
+			payload.put("attackID", "" + ThreadLocalRandom.current().nextLong())
 				.put("timeLaunched", now)
 				.put("status", AttackStatus.DELIVERED)
+				.put("attack", payload.get("attackDefinition"))
 				.put("expireAt", now + 7l*24*3600*1000)
+				.remove("attackDefinition");
 				;
 			sender.put("userID", userID)
 				.put("cityIndex", cityID);

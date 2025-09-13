@@ -210,12 +210,15 @@ if(request.getMethod().equals("POST")){
 				};
 			}else if(action.equals("PUT")){
 				reply = switch(target){
-					case "attacks" ->  {
-						if("send".equals(request.getParameter("action"))){
-							yield DATA.sendAttack(userID, cityIndex, json.getJSONObject("payload"));
-						}
-						yield reply;
-					}
+					case "attacks" ->  
+						switch(request.getParameter("action")){
+							case "send" -> DATA.sendAttack(userID, cityIndex, json.getJSONObject("payload"));
+							case "link" -> DATA.linkAttack(userID, cityIndex, 
+									request.getParameter("attackID"),
+									json.getJSONObject("payload"));
+							default -> reply;
+						};
+					case "pacifist" ->  reply;//TODO: pacifist(payload NULL, put)
 					default -> reply;
 				};
 			}
