@@ -549,7 +549,7 @@ static{
 		//TODO: loads forever after having sent attack????
 		//also IO error but no stacktrace when clicking the attack 
 		public JSONObject startAttack(int userID, int cityID, String attackID) {
-			updateAttack(userID, cityID, attackID, attack->{
+			return updateAttack(userID, cityID, attackID, attack->{
 			if(attack.getJSONObject("target").getInt("userID") == userID
 					&& attack.getInt("status") == AttackStatus.LINKED
 				){	
