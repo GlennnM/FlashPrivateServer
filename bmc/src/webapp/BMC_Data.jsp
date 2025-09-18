@@ -558,6 +558,51 @@ static{
 				return attack;
 			});
 		}
+		/**
+		sender.honourChange & target.honourChange
+		winner's winning is only based on the difference
+		i.e. 
+		6 = 1
+		26 = 2
+		65 = 3
+		122 = 4
+		197 = 5  --> 14
+		290 = 6  --> 17
+		401 = 7  --> 20
+		530 = 8  --> 23
+		
+		so attacker win honor with more honor is 30+floor((sqrt(L-W)+1)/3)
+		defender win is 30+floor((sqrt(L-W)+1)/3) - 1
+		the loss is not only based on the difference
+		attacker win with more honor eventually becomes only based on the difference
+			seemingly depending only on defender honor?
+			for 100+x vs x, this happens at x=49
+			for 200+x vs x, this happens at x=233
+		*/
+		public JSONObject resolveAttack(int userID, int cityID, String attackID, JSONObject resolution) {
+			return updateAttack(userID, cityID, attackID, attack->{
+			if(attack.getJSONObject("target").getInt("userID") == userID
+					&& attack.getInt("status") < AttackStatus.RESOLVED
+				){	
+					var attSucc = resolution.getBoolean("attackSucceeded");
+					var wasHc = resolution.getBoolean("wasHardcore");
+					var isFriend = attack.getBoolean("isFriend");//will be used for honor calc
+					attack.put("status", AttackStatus.RESOLVED)
+						.put("resolution", resolution.getString("resolution"))
+						.put("wasHardcore", wasHc)
+						.put("attackSucceeded", attSucc)
+						.put("timeResolved", System.currentTimeMillis())
+						;
+					var sender = attack.getJSONObject("sender");
+					var target = attack.getJSONObject("target");
+					//TODO: honor calc
+					
+					sender.put("honourChange", attSucc ? 30 : -1 * Math.min(target.getInt("honour"), 30));
+					target.put("honourChange", attSucc ? -1 * Math.min(sender.getInt("honour"), 30) : (wasHc ? 60 : 30));
+				}
+				return attack;
+			});
+		}
 		public JSONObject linkAttack(int userID, int cityID, String attackID, JSONObject payload) {
 			updateAttack(userID, cityID, attackID, attack->{
 				if(attack.getJSONObject("target").getInt("userID") == userID
