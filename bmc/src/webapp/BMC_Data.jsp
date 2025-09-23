@@ -595,7 +595,7 @@ static{
 						;
 					var sender = attack.getJSONObject("sender");
 					var target = attack.getJSONObject("target");
-					//TODO: honor calc
+					//TODO: honor calc5
 					
 					sender.put("honourChange", attSucc ? 30 : -1 * Math.min(target.getInt("honour"), 30));
 					target.put("honourChange", attSucc ? -1 * Math.min(sender.getInt("honour"), 30) : (wasHc ? 60 : 30));
@@ -666,7 +666,17 @@ public static class Util{
 	private static long key(JSONObject tile) {
 		return ((long) tile.getInt("x") << 32) | (tile.getInt("y") & -1L);
 	}
-
+	public static int winHonor(int w, int l, boolean attackSuccess){
+		int base = attackSuccess ? 30 : 29;
+		if(w==l)
+			return base;
+		else if(w<l)
+			return base + (int)((Math.sqrt(l-w)+1)/3);
+		else{//w>l
+			double d = w-l;
+			return base - ((int)((Math.sqrt(d) + d/(l+1.0))/3)+1);
+		}
+	}
 	public static JSONObject BLANK_CORE = new JSONObject().put("core",new JSONObject());
 	public static Iterable<Integer> jIterI(JSONArray array) {
 		return (() -> Spliterators.iterator(jStreamI(array).spliterator()));
