@@ -666,6 +666,38 @@ public static class Util{
 	private static long key(JSONObject tile) {
 		return ((long) tile.getInt("x") << 32) | (tile.getInt("y") & -1L);
 	}
+	/**
+1-8 = 8
+101 = 14 10
+301 = 17 17
+601 = 18 24
+1001 = 20 
+1501 = 21
+2101 = 23 
+2801 = 24
+3601 = 26
+4501 = 27
+5501 = 28
+7501 = 28
+10001 = 29
+vs 10001, there is no additional tiered effect
+diff 9 = 1 3+27
+diff 36 = 2 6+45
+diff 81 = 3 9+ 63
+diff 144 = 4 12+
+--> so we add sqrt(diff)/3 to the tiered effect
+but the tiered effect also depends on the diff???
+below 100 has different behavior
+	*/
+	//achievement tier - used in loss honor
+	public static int tier(int honor){
+		int[] tiers = {10000,7500,5500,4500,3600,2800,2100,1500,1000,600,300,100};
+		for(int i=0;i<tiers.length;i++){
+			if(honor>tiers[i])
+				return tiers.length-i;
+		}
+		return 0;
+	}
 	public static int winHonor(int w, int l, boolean attackSuccess){
 		int base = attackSuccess ? 30 : 29;
 		if(w==l)
