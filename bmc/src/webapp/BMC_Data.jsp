@@ -87,7 +87,11 @@ static{
 					newThing
 						.put("name", info.get("cityName"))
 						.put("level", info.get("level"))
-						.put("attacks", getPVPCore(userID, i).get("attacks"))
+						.put("attacks", Util.jStream(getPVPCore(userID, i).getJSONArray("attacks"))
+								.filter(a->a.getJSONObject("target").getInt("userID") == userID)
+								.filter(a->a.getInt("status") < AttackStatus.RESOLVED)
+								.toList()
+							)
 						.put("index", i);
 					ret.put(newThing);
 				}
@@ -583,34 +587,62 @@ static{
 		*/
 		public JSONObject resolveAttack(int userID, int cityID, String attackID, JSONObject resolution) {
 			int[] changes = new int[2];
-			var ret = updateAttack(userID, cityID, attackID, attack->{
-			if(attack.getJSONObject("target").getInt("userID") == userID
+			var a = updateAttack(userID, cityID, attackID, attack->{
+			var sender = attack.getJSONObject("sender");
+			var target = attack.getJSONObject("target");
+			boolean isSender = sender.getInt("userID") == userID;
+			boolean isTarget = target.getInt("userID") == userID;
+			if((isSender || isTarget)
 					&& attack.getInt("status") < AttackStatus.RESOLVED
-				){	
+				){//problem: not only the target can resolve the attack	
 					var attSucc = resolution.getBoolean("attackSucceeded");
-					var wasHc = resolution.getBoolean("wasHardcore");
+					var wasHc = resolution.optBoolean("wasHardcore");
 					var isFriend = attack.getBoolean("isFriend");//will be used for honor calc
 					attack.put("status", AttackStatus.RESOLVED)
 						.put("resolution", resolution.getString("resolution"))
 						.put("wasHardcore", wasHc)
 						.put("attackSucceeded", attSucc)
+						.put("info", resolution.getString("info"))
 						.put("timeResolved", System.currentTimeMillis())
 						;
-					var sender = attack.getJSONObject("sender");
-					var target = attack.getJSONObject("target");
 					int att = sender.getInt("honour");
 					int def = target.getInt("honour");
 					changes[0] = attSucc ? Util.winHonor(att, def, attSucc, false, isFriend) : 
 							Util.lossHonor(def, att, attSucc, isFriend);
 					changes[1] = attSucc ? Util.lossHonor(att, def, attSucc, isFriend) : 
 						Util.winHonor(def, att, attSucc, wasHc, isFriend);
+					
 					sender.put("honourChange", changes[0]);
 					target.put("honourChange", changes[1]);
+					(isSender ? sender : target).put("resolutionSeen", System.currentTimeMillis());
 				}
 				return attack;
 			});
+			a = Util.jStream(a.getJSONArray("attacks"))
+					.filter(x->x.getString("attackID")
+					.equals(attackID)).
+					findFirst().orElseThrow();
+			// response structure: sender IF we are the target, otherwise no sender
+			// .honour, .senderCity, 
 			//TODO: will the client update city info themselves??
-			return ret;
+					System.out.println(a);
+			var sender = a.getJSONObject("sender");
+			var target = a.getJSONObject("target");
+			boolean isSender = sender.getInt("userID") == userID;
+			var senderCity = Util.jStream(getFriends(new JSONArray().put(sender.getInt("userID")))
+						.getJSONArray("friends").getJSONObject(0)
+						.getJSONArray("cities")
+						)
+					.filter(x -> x.getInt("cityIndex") == sender.getInt("cityIndex"))
+					.findFirst()
+					.orElseThrow()
+					;
+			
+			return new JSONObject()
+					.put("honour", (isSender ? target : sender).getInt("honour"))
+					.putOpt("sender", isSender ? null : sender)
+					.put("target", target)
+					.put("senderCity", senderCity);
 		}
 		public JSONObject linkAttack(int userID, int cityID, String attackID, JSONObject payload) {
 			updateAttack(userID, cityID, attackID, attack->{
@@ -743,7 +775,7 @@ below 100 has different behavior
 		return Math.max(1, (base + (w < l ? 1 : -1) * (Math.sqrt(d)+ d/(l+1.0))/3+1));
 	}
 	public static int lossHonor(int w, int l, boolean attackSuccess, boolean friend){
-		return Math.min(0, 1 - (int)(lossFactor(l) * baseHonor(w, l, attackSuccess, friend)));
+		return Math.min(l, 1 - (int)(lossFactor(l) * baseHonor(w, l, attackSuccess, friend)));
 	}
 	public static int winHonor(int w, int l, boolean attackSuccess, boolean hc, boolean friend){
 		return (int)((hc? 2:1) * baseHonor(w,l,attackSuccess, friend));
