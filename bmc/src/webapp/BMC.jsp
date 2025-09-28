@@ -217,7 +217,7 @@ if(request.getMethod().equals("POST")){
 									request.getParameter("attackID"),
 									json.getJSONObject("payload"));
 							case "start" -> DATA.startAttack(userID, cityIndex, request.getParameter("attackID"));
-							case "resolve" -> DATA.resolveAttack(userID, cityID, request.getParameter("attackID"),
+							case "resolve" -> DATA.resolveAttack(userID, cityIndex, request.getParameter("attackID"),
 									json.getJSONObject("payload"));
 							case "close" -> reply;
 							default -> reply;

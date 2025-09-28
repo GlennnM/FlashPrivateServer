@@ -549,10 +549,12 @@ static{
 		//TODO: loads forever after having sent attack????
 		//also IO error but no stacktrace when clicking the attack 
 		public JSONObject startAttack(int userID, int cityID, String attackID) {
+			int defHonor = getCityThing(userID, cityID, "info").getInt("honour");
 			return updateAttack(userID, cityID, attackID, attack->{
 			if(attack.getJSONObject("target").getInt("userID") == userID
 					&& attack.getInt("status") == AttackStatus.LINKED
 				){	
+					attack.getJSONObject("target").put("honour", defHonor);
 					attack.put("status", AttackStatus.STARTED);
 				}
 				return attack;
@@ -580,7 +582,8 @@ static{
 			for 200+x vs x, this happens at x=233
 		*/
 		public JSONObject resolveAttack(int userID, int cityID, String attackID, JSONObject resolution) {
-			return updateAttack(userID, cityID, attackID, attack->{
+			int[] changes = new int[2];
+			var ret = updateAttack(userID, cityID, attackID, attack->{
 			if(attack.getJSONObject("target").getInt("userID") == userID
 					&& attack.getInt("status") < AttackStatus.RESOLVED
 				){	
@@ -595,13 +598,19 @@ static{
 						;
 					var sender = attack.getJSONObject("sender");
 					var target = attack.getJSONObject("target");
-					//TODO: honor calc5
-					
-					sender.put("honourChange", attSucc ? 30 : -1 * Math.min(target.getInt("honour"), 30));
-					target.put("honourChange", attSucc ? -1 * Math.min(sender.getInt("honour"), 30) : (wasHc ? 60 : 30));
+					int att = sender.getInt("honour");
+					int def = target.getInt("honour");
+					changes[0] = attSucc ? Util.winHonor(att, def, attSucc, false, isFriend) : 
+							Util.lossHonor(def, att, attSucc, isFriend);
+					changes[1] = attSucc ? Util.lossHonor(att, def, attSucc, isFriend) : 
+						Util.winHonor(def, att, attSucc, wasHc, isFriend);
+					sender.put("honourChange", changes[0]);
+					target.put("honourChange", changes[1]);
 				}
 				return attack;
 			});
+			//TODO: will the client update city info themselves??
+			return ret;
 		}
 		public JSONObject linkAttack(int userID, int cityID, String attackID, JSONObject payload) {
 			updateAttack(userID, cityID, attackID, attack->{
@@ -734,7 +743,7 @@ below 100 has different behavior
 		return Math.max(1, (base + (w < l ? 1 : -1) * (Math.sqrt(d)+ d/(l+1.0))/3+1));
 	}
 	public static int lossHonor(int w, int l, boolean attackSuccess, boolean friend){
-		return Math.min(0, 1 + (int) -(lossFactor(l) * baseHonor(w, l, attackSuccess, friend)));
+		return Math.min(0, 1 - (int)(lossFactor(l) * baseHonor(w, l, attackSuccess, friend)));
 	}
 	public static int winHonor(int w, int l, boolean attackSuccess, boolean hc, boolean friend){
 		return (int)((hc? 2:1) * baseHonor(w,l,attackSuccess, friend));
