@@ -587,48 +587,52 @@ static{
 		*/
 		public JSONObject resolveAttack(int userID, int cityID, String attackID, JSONObject resolution) {
 			int[] changes = new int[2];
-			var a = updateAttack(userID, cityID, attackID, attack->{
-			var sender = attack.getJSONObject("sender");
-			var target = attack.getJSONObject("target");
-			boolean isSender = sender.getInt("userID") == userID;
-			boolean isTarget = target.getInt("userID") == userID;
-			if((isSender || isTarget)
-					&& attack.getInt("status") < AttackStatus.RESOLVED
-				){//problem: not only the target can resolve the attack	
-					var attSucc = resolution.getBoolean("attackSucceeded");
-					var wasHc = resolution.optBoolean("wasHardcore");
-					var isFriend = attack.getBoolean("isFriend");//will be used for honor calc
-					attack.put("status", AttackStatus.RESOLVED)
-						.put("resolution", resolution.getString("resolution"))
-						.put("wasHardcore", wasHc)
-						.put("attackSucceeded", attSucc)
-						.put("info", resolution.getString("info"))
-						.put("timeResolved", System.currentTimeMillis())
-						;
-					int att = sender.getInt("honour");
-					int def = target.getInt("honour");
-					changes[0] = attSucc ? Util.winHonor(att, def, attSucc, false, isFriend) : 
-							Util.lossHonor(def, att, attSucc, isFriend);
-					changes[1] = attSucc ? Util.lossHonor(att, def, attSucc, isFriend) : 
-						Util.winHonor(def, att, attSucc, wasHc, isFriend);
-					
-					sender.put("honourChange", changes[0]);
-					target.put("honourChange", changes[1]);
-					(isSender ? sender : target).put("resolutionSeen", System.currentTimeMillis());
+			var a =  Util.jStream(updateAttack(userID, cityID, attackID, attack->{
+				var sender = attack.getJSONObject("sender");
+				var target = attack.getJSONObject("target");
+				boolean isSender = sender.getInt("userID") == userID;
+				boolean isTarget = target.getInt("userID") == userID;
+				if((isSender || isTarget)
+						&& attack.getInt("status") < AttackStatus.RESOLVED
+					){//problem: not only the target can resolve the attack	
+						var attSucc = resolution.getBoolean("attackSucceeded");
+						var wasHc = resolution.optBoolean("wasHardcore");
+						var isFriend = attack.getBoolean("isFriend");//will be used for honor calc
+						attack.put("status", AttackStatus.RESOLVED)
+							.put("resolution", resolution.getString("resolution"))
+							.put("wasHardcore", wasHc)
+							.put("attackSucceeded", attSucc)
+							.put("info", resolution.getString("info"))
+							.put("timeResolved", System.currentTimeMillis())
+							;
+						int att = sender.getInt("honour");
+						int def = target.getInt("honour");
+						changes[0] = attSucc ? Util.winHonor(att, def, attSucc, false, isFriend) : 
+								Util.lossHonor(def, att, attSucc, isFriend);
+						changes[1] = attSucc ? Util.lossHonor(att, def, attSucc, isFriend) : 
+							Util.winHonor(def, att, attSucc, wasHc, isFriend);
+						
+						sender.put("honourChange", changes[0]);
+						target.put("honourChange", changes[1]);
+						(isSender ? sender : target).put("resolutionSeen", System.currentTimeMillis());
+					}
+					return attack;
 				}
-				return attack;
-			});
-			a = Util.jStream(a.getJSONArray("attacks"))
-					.filter(x->x.getString("attackID")
-					.equals(attackID)).
-					findFirst().orElseThrow();
+			).getJSONArray("attacks"))
+				.filter(x->x.getString("attackID")
+				.equals(attackID))
+				.findFirst().orElseThrow();
 			// response structure: sender IF we are the target, otherwise no sender
 			// .honour, .senderCity, 
-			//TODO: will the client update city info themselves??
 					System.out.println(a);
 			var sender = a.getJSONObject("sender");
 			var target = a.getJSONObject("target");
 			boolean isSender = sender.getInt("userID") == userID;
+			//TODO: attacker doesn't see as themself
+			//if(!isSender)
+			//	updateAttack(sender.getInt("userID"), sender.getInt("cityIndex"), attackID, discard->a);
+			if(!isSender && (sender.getInt("userID") != target.getInt("userID")))
+				resolveAttack(sender.getInt("userID"), sender.getInt("cityIndex"), attackID, resolution);
 			var senderCity = Util.jStream(getFriends(new JSONArray().put(sender.getInt("userID")))
 						.getJSONArray("friends").getJSONObject(0)
 						.getJSONArray("cities")
