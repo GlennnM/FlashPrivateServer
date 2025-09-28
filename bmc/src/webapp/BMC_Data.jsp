@@ -659,8 +659,7 @@ static{
 	}
 %>
 <%-- Util --%>
-<%!
-public static class Util{
+<%!public static class Util{
 
 
 	private static long key(JSONObject tile) {
@@ -685,37 +684,77 @@ diff 9 = 1 3+27
 diff 36 = 2 6+45
 diff 81 = 3 9+ 63
 diff 144 = 4 12+
+
+but then something else emerges??? imprecision, differs even when difference not different???
+9125 = 32 
+10301 = 34 
+tier 1
+
+w=0 - 16 until 0,197
+w=1 - 16 until 1,198
+w=2 - 16 until 1,199
+w=6 - 16 until 6,203
+w=7 - 16 until 7,205 -->increased by 1, why??????
+w=8 - 16 until 8,206 
+w=9 - 16 until 9,207 
+w=10 - 16 until 10,208, d=198
+w=15 - 16 until 15,214, d=199 -->increased by 1, why??????
+w=23 - 16 until 23,223, d=200 -->increased by 1, why??????
+w=32 - 15 until 102, 16 until 32,232 
+w=33 - 15 until 103, 16 until 33,234, d=201 -->increased by 1, why??????
+w=43 - 15 until ??, 16 until 43,245, d=202 -->increased by 1, why??????
+w=54 - 15 until ??, 16 until 54,257, d=203 -->increased by 1, why??????
+w=66 - 15 until ??, 16 until 66,270, d=204 -->increased by 1, why??????
+w=80 - 15 until ??, 16 until 80,285, d=205 -->increased by 1, why??????
+w=95 - 15 until ??, 16 until 95,301, d=206 -->increased by 1, why??????
+		
+		
+w=100 - 14 until 100,109 then 15 until 100,174
+off by a small but increasing amount, inconsistent direction, dependent on w
+each tier seems to have a different calculation based on the sqrt
 --> so we add sqrt(diff)/3 to the tiered effect
 but the tiered effect also depends on the diff???
 below 100 has different behavior
 	*/
 	//achievement tier - used in loss honor
-	public static int tier(int honor){
+	public static double lossFactor(int honor){
 		int[] tiers = {10000,7500,5500,4500,3600,2800,2100,1500,1000,600,300,100};
+		double[] facs = {0.3, 0.5, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99, 1};
 		for(int i=0;i<tiers.length;i++){
 			if(honor>tiers[i])
-				return tiers.length-i;
+				return facs[tiers.length-i];
 		}
-		return 0;
+		return facs[0];
 	}
-	public static int winHonor(int w, int l, boolean attackSuccess){
-		int base = attackSuccess ? 30 : 29;
-		if(w==l)
-			return base;
-		else if(w<l)
-			return base + (int)((Math.sqrt(l-w)+1)/3);
-		else{//w>l
-			double d = w-l;
-			return base - ((int)((Math.sqrt(d) + d/(l+1.0))/3)+1);
-		}
+	public static double baseHonor(int w, int l, boolean attackSuccess, boolean friend){
+		if(friend && w>1500 && l>1500)
+			return 0;
+		double d = Math.abs(w-l);
+		double base = (attackSuccess ? 29 : 28);
+		return Math.max(1, (base + (w < l ? 1 : -1) * (Math.sqrt(d)+ d/(l+1.0))/3+1));
 	}
-	public static JSONObject BLANK_CORE = new JSONObject().put("core",new JSONObject());
+	public static int lossHonor(int w, int l, boolean attackSuccess, boolean friend){
+		return Math.min(0, 1 + (int) -(lossFactor(l) * baseHonor(w, l, attackSuccess, friend)));
+	}
+	public static int winHonor(int w, int l, boolean attackSuccess, boolean hc, boolean friend){
+		return (int)((hc? 2:1) * baseHonor(w,l,attackSuccess, friend));
+	}
+	
+	static String honor(int w, int l, boolean a) {
+		return a ? "" + winHonor(w, l, a, false, false) + ", " + lossHonor(w, l, a, false)
+				: "" + lossHonor(w, l, a, false) + ", " + winHonor(w, l, a, false, false);
+	}
+
+	public static JSONObject BLANK_CORE = new JSONObject().put("core", new JSONObject());
+
 	public static Iterable<Integer> jIterI(JSONArray array) {
 		return (() -> Spliterators.iterator(jStreamI(array).spliterator()));
 	}
+
 	public static Iterable<String> jIterS(JSONArray array) {
 		return (() -> Spliterators.iterator(jStreamS(array).spliterator()));
 	}
+
 	public static Iterable<JSONObject> jIter(JSONArray array) {
 		return (() -> Spliterators.iterator(jStream(array).spliterator()));
 	}
@@ -723,12 +762,15 @@ below 100 has different behavior
 	public static Stream<JSONObject> jStream(JSONArray array) {
 		return IntStream.range(0, array.length()).mapToObj(array::getJSONObject);
 	}
+
 	public static IntStream jStreamI(JSONArray array) {
 		return IntStream.range(0, array.length()).map(array::getInt);
 	}
+
 	public static Stream<String> jStreamS(JSONArray array) {
 		return IntStream.range(0, array.length()).mapToObj(array::getString);
 	}
+
 	public static JSONObject mergeContent(JSONObject content, JSONObject update) {
 		if (content == null)
 			content = new JSONObject();
@@ -781,16 +823,11 @@ below 100 has different behavior
 		return core;
 	}
 
-	private static JSONObject DEFAULT_CRATES(){
-		return new JSONObject()
-				.put("own",0)
-				.put("requested", new JSONArray())
-				.put("sent", new JSONArray())
-				.put("pending", new JSONArray())
-				.put("received", new JSONArray());
+	private static JSONObject DEFAULT_CRATES() {
+		return new JSONObject().put("own", 0).put("requested", new JSONArray()).put("sent", new JSONArray())
+				.put("pending", new JSONArray()).put("received", new JSONArray());
 	}
-}
-%>
+}%>
 <%-- CTUtil --%>
 <%!
 public static class CTUtil {
