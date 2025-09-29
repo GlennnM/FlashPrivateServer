@@ -87,6 +87,7 @@ static{
 					newThing
 						.put("name", info.get("cityName"))
 						.put("level", info.get("level"))
+						//TODO: fix this not displaying
 						.put("attacks", Util.jStream(getPVPCore(userID, i).getJSONArray("attacks"))
 								.filter(a->a.getJSONObject("target").getInt("userID") == userID)
 								.filter(a->a.getInt("status") < AttackStatus.RESOLVED)
@@ -656,6 +657,36 @@ static{
 					.put("target", target)
 					.put("senderCity", senderCity);
 		}
+		public JSONObject closeAttack(int userID, int cityID, String attackID){
+			int[] opp = new int[1];
+			var now = System.currentTimeMillis();
+			updateAttack(userID, cityID, attackID, attack->{
+				var sender = attack.getJSONObject("sender");
+				var target = attack.getJSONObject("target");
+				var targetID = target.getInt("userID");
+				var senderID = sender.getInt("userID");
+				if((targetID == userID || senderID == userID)
+						&& attack.getInt("status") == AttackStatus.RESOLVED
+						){	
+						attack.put("status",AttackStatus.CLOSED);
+						target.put("resolutionSeen",target.optLong("resolutionSeen", now));
+						sender.put("resolutionSeen",sender.optLong("resolutionSeen", now));
+					}
+				opp[0] = userID==targetID ? senderID : targetID;
+				return attack;
+			});
+			updateAttack(opp[0], cityID, attackID, attack->{//TODO: assumes same city id(this is fine)
+				if(attack.getInt("status") == AttackStatus.RESOLVED){	
+					var target = attack.getJSONObject("target");
+					var sender = attack.getJSONObject("sender");
+					attack.put("status",AttackStatus.CLOSED);
+					target.put("resolutionSeen",target.optLong("resolutionSeen", now));
+					sender.put("resolutionSeen",sender.optLong("resolutionSeen", now));
+				}
+				return attack;
+			});
+			return new JSONObject().put("success", true);
+		}
 		public JSONObject linkAttack(int userID, int cityID, String attackID, JSONObject payload) {
 			updateAttack(userID, cityID, attackID, attack->{
 				if(attack.getJSONObject("target").getInt("userID") == userID
@@ -666,7 +697,7 @@ static{
 							.put("x", payload.getInt("tileX"))
 							.put("y", payload.getInt("tileY"))
 						).put("status",AttackStatus.LINKED)
-						.put("expireAt", System.currentTimeMillis() + 24l*3600*1000)
+						.put("expireAt", System.currentTimeMillis() + 24l*3600*1000)//TODO: fix expireAt vs timeLeft
 						;
 					}//other actions if those exist...
 				}
@@ -703,7 +734,7 @@ static{
 				.put("expireAt", now + 7l*24*3600*1000)
 				.remove("attackDefinition");
 				;
-			sender.put("userID", ""+userID)
+			sender.put("userID", ""+userID)//MUST BE STRING!!!
 				.put("cityIndex", cityID);
 			addAttack(target.getInt("userID"), target.getInt("cityIndex"), new JSONObject(payload.toString()));
 			addAttack(userID, cityID, payload);

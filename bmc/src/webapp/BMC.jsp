@@ -219,7 +219,7 @@ if(request.getMethod().equals("POST")){
 							case "start" -> DATA.startAttack(userID, cityIndex, request.getParameter("attackID"));
 							case "resolve" -> DATA.resolveAttack(userID, cityIndex, request.getParameter("attackID"),
 									json.getJSONObject("payload"));
-							case "close" -> reply;
+							case "close" -> DATA.closeAttack(userID, cityIndex, request.getParameter("attackID"));
 							default -> reply;
 						};
 					case "pacifist" ->  reply;//TODO: pacifist(payload NULL, put)
