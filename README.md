@@ -35,6 +35,7 @@ In all cases, ensure Ninja Kiwi Archive is installed, and **close all NK Archive
  - Linux Steam <code>"$HOME/.steam/steam/steamapps/common/Ninja Kiwi Archive/resources"</code><br>
  - Linux Steam 2 <code>"$HOME/.local/share/Steam/steamapps/common/Ninja Kiwi Archive/resources"</code><br>
  - Linux Proton <code>"$HOME/.steam/steam/steamapps/compatdata/1275350/pfx/drive_c/Program Files (x86)/Steam/steamapps/common/Ninja Kiwi Archive/resources"</code><br>
+ - Linux Flatpak <code>"$HOME/.var/app/com.valvesoftware.Steam/.steam/steam/steamapps/common/Ninja Kiwi Archive/resources"</code><br>
   </details>
   
 ### Third Method - All Platforms (PowerShell)
