@@ -91,6 +91,7 @@ static{
 						.put("attacks", Util.jStream(getPVPCore(userID, i).getJSONArray("attacks"))
 								.filter(a->a.getJSONObject("target").getInt("userID") == userID)
 								.filter(a->a.getInt("status") < AttackStatus.RESOLVED)
+								//.peek(a->a.put("timeLeft", a.getLong("expireAt") - System.currentTimeMillis()))
 								.toList()
 							)
 						.put("index", i);
@@ -731,7 +732,7 @@ static{
 				.put("timeLaunched", now)
 				.put("status", AttackStatus.DELIVERED)
 				.put("attack", payload.get("attackDefinition"))
-				.put("expireAt", now + 7l*24*3600*1000)
+				.put("expireAt", now + 24l*3600*1000)
 				.remove("attackDefinition");
 				;
 			sender.put("userID", ""+userID)//MUST BE STRING!!!
