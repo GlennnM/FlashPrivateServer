@@ -1,3 +1,4 @@
+<%@page import="java.time.Month"%>
 <%@page import="java.util.Set"%>
 <%@page import="java.util.stream.Collectors"%>
 <%@page import="java.util.Comparator"%>
@@ -181,8 +182,25 @@
 		newEvents.addAll(IntStream.range(0, events.length()).mapToObj(events::getJSONObject)
 				.filter(x -> x.getLong("end") > System.currentTimeMillis()).toList());
 		sku_real.getJSONObject("settings").put("events", new JSONArray(newEvents));
-		tmp.put("data", sku_real.toString());
 
+		if(id == 14){//sas4
+			var h = (JSONObject) (sku_real.query("/settings/Settings/FestivalHoliday/Halloween"));
+			var c = (JSONObject) (sku_real.query("/settings/Settings/FestivalHoliday/Christmas"));
+			var e = (JSONObject) (sku_real.query("/settings/Settings/FestivalHoliday/Easter"));
+			var ldt = LocalDateTime.now(ZoneId.of("America/New_York"));
+			if(ldt.getMonth() == Month.OCTOBER){
+				h.put("Active",true);
+			}else if((ldt.getMonth() == Month.NOVEMBER && ldt.getDayOfMonth() > 28) ||
+					ldt.getMonth() == Month.DECEMBER || 
+					(ldt.getMonth() == Month.JANUARY && ldt.getDayOfMonth() < 3)){
+				c.put("Active",true);
+			}else if(ldt.getMonth() == Month.APRIL || 
+					(ldt.getMonth() == Month.MARCH && ldt.getDayOfMonth() > 14)){
+				e.put("Active",true);
+			}
+		}
+
+		tmp.put("data", sku_real.toString());
 		var MD = MessageDigest.getInstance("MD5");
 		MD.update(sig.getBytes());
 		MD.update(tmp.getString("data").getBytes(StandardCharsets.UTF_8));
