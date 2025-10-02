@@ -658,6 +658,66 @@ static{
 					.put("target", target)
 					.put("senderCity", senderCity);
 		}
+		public JSONObject takeFromQueue(int userID, int cityID, int level, int honor){
+			List<JSONObject> candidates = new ArrayList<>();
+			store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
+				if(queue==null)
+					queue=new JSONObject();
+				JSONArray q = queue.getJSONArray("queue");
+				//TODO: scales badly since basically everyone is in the same queue
+				for(int i=0;i<q.length();i++){
+					var e = q.getJSONObject(i);
+					int range = (int) (level*0.4);
+					//TODO: pacifist mode should remove from queue
+					if(e.getInt("userID") == userID || Math.abs(e.getInt("level") - level) > range)
+						continue;
+					candidates.add(e);
+				}
+				//attackedBy or something? or just get that while taking from queue
+					//probably the latter
+				return queue;
+			});
+			for(var e: candidates){
+				int eID = e.getInt("userID");
+				var eAttacks = getPVPCore(eID, cityID).getJSONArray("attacks");
+				var nAttacks = new LongAdder();
+				long lastAttackedBy = (int) Util.jStream(eAttacks)
+						.filter(x-> x.getJSONObject("target").getInt("userID") == eID)
+						.filter(x-> x.getInt("status")<AttackStatus.RESOLVED)
+						.peek(x->nAttacks.increment())
+						.filter(x-> x.getJSONObject("sender").getInt("userID") == userID)
+						.mapToLong(x->x.getLong("timeLaunched"))
+						.max().orElse(0);
+				if(nAttacks.sum() > 5 || System.currentTimeMillis() - lastAttackedBy < 24l*3600*1000)
+					continue;
+				//TODO: only do this if attack actually sent
+				store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
+					if(queue==null)
+						queue=new JSONObject();
+					JSONArray q = queue.getJSONArray("queue");
+					int index = IntStream.range(0,q.length())
+							.filter(x->q.getJSONObject(x).getInt("userID") == eID)
+							.findFirst().orElse(-1);
+					if(index<0)
+						return queue;
+					var e_ = q.remove(index);
+					q.put(e_);
+					return queue;
+				});
+				return e;
+			}
+			return null;
+		}
+		public void addToQueue(int userID, int cityID, int level, int honor){
+			store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
+				if(queue==null)queue=new JSONObject();
+				JSONArray q = queue.getJSONArray("queue");
+				q.put(new JSONObject().put("userID", userID).put("level", level).put("honor",honor));
+				//attackedBy or something? or just get that while taking from queue
+					//probably the latter
+				return queue;
+			});
+		}
 		public JSONObject closeAttack(int userID, int cityID, String attackID){
 			int[] opp = new int[1];
 			var now = System.currentTimeMillis();
