@@ -483,7 +483,7 @@ static{
 		}
 		
 		%>
-		<%-- PVP --%>
+		<%-- PVP - CORE --%>
 		<%!
 
 		public static class AttackStatus{
@@ -553,6 +553,48 @@ static{
 			});
 		}
 
+		public JSONObject updateAndGetAttack(int userID, int cityID, String attackID, UnaryOperator<JSONObject> update){
+			return Util.jStream(updateAttack(userID, cityID, attackID, update)
+				.getJSONArray("attacks"))
+				.filter(x->x.getString("attackID").equals(attackID))
+				.findFirst().orElseThrow();
+		}
+		
+		public JSONObject updateAttack(int userID, int cityID, String attackID, UnaryOperator<JSONObject> update){
+			return store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
+				if(core==null)
+					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
+				var attacks = core.getJSONArray("attacks");
+				int index = IntStream.range(0, core.getJSONArray("attacks").length())
+					.filter(x->attacks.getJSONObject(x).getString("attackID").equals(attackID))
+					.findFirst().orElseThrow();
+				attacks.put(index, update.apply(attacks.getJSONObject(index)));
+				return core;
+			});
+		}
+
+		%>
+		<%-- PVP - LIFECYCLE --%>
+		<%!
+
+		public JSONObject linkAttack(int userID, int cityID, String attackID, JSONObject payload) {
+			updateAttack(userID, cityID, attackID, attack->{
+				if(attack.getJSONObject("target").getInt("userID") == userID
+						&& attack.getInt("status") == AttackStatus.DELIVERED
+						){	
+					if(payload.getString("action").equals("linkToTile")){
+						attack.put("linkedTile",new JSONObject()
+							.put("x", payload.getInt("tileX"))
+							.put("y", payload.getInt("tileY"))
+						).put("status",AttackStatus.LINKED)
+						.put("expireAt", System.currentTimeMillis() + 24l*3600*1000)//TODO: fix expireAt vs timeLeft
+						;
+					}//other actions if those exist...
+				}
+				return attack;
+			});
+			return new JSONObject().put("success", true);
+		}
 		//TODO: loads forever after having sent attack????
 		//also IO error but no stacktrace when clicking the attack 
 		public JSONObject startAttack(int userID, int cityID, String attackID) {
@@ -566,27 +608,6 @@ static{
 				return attack;
 			});
 		}
-		/**
-		sender.honourChange & target.honourChange
-		winner's winning is only based on the difference
-		i.e. 
-		6 = 1
-		26 = 2
-		65 = 3
-		122 = 4
-		197 = 5  --> 14
-		290 = 6  --> 17
-		401 = 7  --> 20
-		530 = 8  --> 23
-		
-		so attacker win honor with more honor is 30+floor((sqrt(L-W)+1)/3)
-		defender win is 30+floor((sqrt(L-W)+1)/3) - 1
-		the loss is not only based on the difference
-		attacker win with more honor eventually becomes only based on the difference
-			seemingly depending only on defender honor?
-			for 100+x vs x, this happens at x=49
-			for 200+x vs x, this happens at x=233
-		*/
 		public JSONObject resolveAttack(int userID, int cityID, String attackID, JSONObject resolution){
 			return resolveAttack(userID, cityID, attackID, resolution, false);
 		}
@@ -658,6 +679,64 @@ static{
 					.put("target", target)
 					.put("senderCity", senderCity);
 		}
+		
+
+		public JSONObject closeAttack(int userID, int cityID, String attackID){
+			int[] opp = new int[1];
+			var now = System.currentTimeMillis();
+			updateAttack(userID, cityID, attackID, attack->{
+				var sender = attack.getJSONObject("sender");
+				var target = attack.getJSONObject("target");
+				var targetID = target.getInt("userID");
+				var senderID = sender.getInt("userID");
+				if((targetID == userID || senderID == userID)
+						&& attack.getInt("status") == AttackStatus.RESOLVED
+						){	
+						attack.put("status",AttackStatus.CLOSED);
+						target.put("resolutionSeen",target.optLong("resolutionSeen", now));
+						sender.put("resolutionSeen",sender.optLong("resolutionSeen", now));
+					}
+				opp[0] = userID==targetID ? senderID : targetID;
+				return attack;
+			});
+			updateAttack(opp[0], cityID, attackID, attack->{//TODO: assumes same city id(this is fine)
+				if(attack.getInt("status") == AttackStatus.RESOLVED){	
+					var target = attack.getJSONObject("target");
+					var sender = attack.getJSONObject("sender");
+					attack.put("status",AttackStatus.CLOSED);
+					target.put("resolutionSeen",target.optLong("resolutionSeen", now));
+					sender.put("resolutionSeen",sender.optLong("resolutionSeen", now));
+				}
+				return attack;
+			});
+			return new JSONObject().put("success", true);
+		}
+
+		%>
+		<%-- PVP - QUEUE/SEND --%>
+		<%!
+
+		public JSONObject sendAttack(int userID, int cityID, JSONObject payload) {
+			var sender = payload.getJSONObject("sender");
+			var target = payload.getJSONObject("target");
+			long now = System.currentTimeMillis();
+			payload.put("attackID", "" + ThreadLocalRandom.current().nextLong())
+				.put("timeLaunched", now)
+				.put("status", AttackStatus.DELIVERED)
+				.put("attack", payload.get("attackDefinition"))
+				.put("expireAt", now + 24l*3600*1000)
+				.remove("attackDefinition");
+				;
+			sender.put("userID", ""+userID)//MUST BE STRING!!!
+				.put("cityIndex", cityID);
+			addAttack(target.getInt("userID"), target.getInt("cityIndex"), new JSONObject(payload.toString()));
+			addAttack(userID, cityID, payload);
+			//verify if attack should happen? ie attacked recently, city level, ...
+			//then add attack to pvp core for both sender and target(target first)
+			//add fields: attackID, status, timeLaunched, ...
+			//update sender timeUntilPacifist?
+			return new JSONObject().put("success", true);
+		}
 		public JSONObject takeFromQueue(int userID, int cityID, int level, int honor){
 			List<JSONObject> candidates = new ArrayList<>();
 			store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
@@ -717,93 +796,6 @@ static{
 					//probably the latter
 				return queue;
 			});
-		}
-		public JSONObject closeAttack(int userID, int cityID, String attackID){
-			int[] opp = new int[1];
-			var now = System.currentTimeMillis();
-			updateAttack(userID, cityID, attackID, attack->{
-				var sender = attack.getJSONObject("sender");
-				var target = attack.getJSONObject("target");
-				var targetID = target.getInt("userID");
-				var senderID = sender.getInt("userID");
-				if((targetID == userID || senderID == userID)
-						&& attack.getInt("status") == AttackStatus.RESOLVED
-						){	
-						attack.put("status",AttackStatus.CLOSED);
-						target.put("resolutionSeen",target.optLong("resolutionSeen", now));
-						sender.put("resolutionSeen",sender.optLong("resolutionSeen", now));
-					}
-				opp[0] = userID==targetID ? senderID : targetID;
-				return attack;
-			});
-			updateAttack(opp[0], cityID, attackID, attack->{//TODO: assumes same city id(this is fine)
-				if(attack.getInt("status") == AttackStatus.RESOLVED){	
-					var target = attack.getJSONObject("target");
-					var sender = attack.getJSONObject("sender");
-					attack.put("status",AttackStatus.CLOSED);
-					target.put("resolutionSeen",target.optLong("resolutionSeen", now));
-					sender.put("resolutionSeen",sender.optLong("resolutionSeen", now));
-				}
-				return attack;
-			});
-			return new JSONObject().put("success", true);
-		}
-		public JSONObject linkAttack(int userID, int cityID, String attackID, JSONObject payload) {
-			updateAttack(userID, cityID, attackID, attack->{
-				if(attack.getJSONObject("target").getInt("userID") == userID
-						&& attack.getInt("status") == AttackStatus.DELIVERED
-						){	
-					if(payload.getString("action").equals("linkToTile")){
-						attack.put("linkedTile",new JSONObject()
-							.put("x", payload.getInt("tileX"))
-							.put("y", payload.getInt("tileY"))
-						).put("status",AttackStatus.LINKED)
-						.put("expireAt", System.currentTimeMillis() + 24l*3600*1000)//TODO: fix expireAt vs timeLeft
-						;
-					}//other actions if those exist...
-				}
-				return attack;
-			});
-			return new JSONObject().put("success", true);
-		}
-		public JSONObject updateAndGetAttack(int userID, int cityID, String attackID, UnaryOperator<JSONObject> update){
-			return Util.jStream(updateAttack(userID, cityID, attackID, update)
-				.getJSONArray("attacks"))
-				.filter(x->x.getString("attackID").equals(attackID))
-				.findFirst().orElseThrow();
-		}
-		public JSONObject updateAttack(int userID, int cityID, String attackID, UnaryOperator<JSONObject> update){
-			return store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
-				if(core==null)
-					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
-				var attacks = core.getJSONArray("attacks");
-				int index = IntStream.range(0, core.getJSONArray("attacks").length())
-					.filter(x->attacks.getJSONObject(x).getString("attackID").equals(attackID))
-					.findFirst().orElseThrow();
-				attacks.put(index, update.apply(attacks.getJSONObject(index)));
-				return core;
-			});
-		}
-		public JSONObject sendAttack(int userID, int cityID, JSONObject payload) {
-			var sender = payload.getJSONObject("sender");
-			var target = payload.getJSONObject("target");
-			long now = System.currentTimeMillis();
-			payload.put("attackID", "" + ThreadLocalRandom.current().nextLong())
-				.put("timeLaunched", now)
-				.put("status", AttackStatus.DELIVERED)
-				.put("attack", payload.get("attackDefinition"))
-				.put("expireAt", now + 24l*3600*1000)
-				.remove("attackDefinition");
-				;
-			sender.put("userID", ""+userID)//MUST BE STRING!!!
-				.put("cityIndex", cityID);
-			addAttack(target.getInt("userID"), target.getInt("cityIndex"), new JSONObject(payload.toString()));
-			addAttack(userID, cityID, payload);
-			//verify if attack should happen? ie attacked recently, city level, ...
-			//then add attack to pvp core for both sender and target(target first)
-			//add fields: attackID, status, timeLaunched, ...
-			//update sender timeUntilPacifist?
-			return new JSONObject().put("success", true);
 		}%>
 <%!
 	
