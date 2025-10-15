@@ -206,6 +206,10 @@ if(request.getMethod().equals("POST")){
 				reply = switch(target){
 					case "core" ->  DATA.getPVPCore(userID, cityIndex);
 					case "friends" ->  DATA.getFriends(json.getJSONObject("payload").optJSONArray("friends"));
+					case "quickmatch" ->  DATA.quickMatch(userID, cityIndex, 
+							Integer.parseInt(request.getParameter("level")), 
+							Integer.parseInt(request.getParameter("honor"))
+						);
 					default -> reply;
 				};
 			}else if(action.equals("PUT")){

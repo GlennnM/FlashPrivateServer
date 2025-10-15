@@ -719,6 +719,7 @@ static{
 		public JSONObject sendAttack(int userID, int cityID, JSONObject payload) {
 			var sender = payload.getJSONObject("sender");
 			var target = payload.getJSONObject("target");
+			addToQueue(userID, cityID, sender.getInt("cityLevel"), sender.getInt("honour"));
 			long now = System.currentTimeMillis();
 			payload.put("attackID", "" + ThreadLocalRandom.current().nextLong())
 				.put("timeLaunched", now)
@@ -737,7 +738,11 @@ static{
 			//update sender timeUntilPacifist?
 			return new JSONObject().put("success", true);
 		}
-		public JSONObject takeFromQueue(int userID, int cityID, int level, int honor){
+		public JSONObject quickMatch(int userID, int cityID, int level, int honor){
+			return findMatch(userID, cityID, level, honor);
+		}
+		public JSONObject findMatch(int userID, int cityID, int level, int honor){
+			addToQueue(userID, cityID, level, honor);
 			List<JSONObject> candidates = new ArrayList<>();
 			store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
 				if(queue==null)
@@ -756,9 +761,11 @@ static{
 					//probably the latter
 				return queue;
 			});
+			int matchedID = -1;
 			for(var e: candidates){
 				int eID = e.getInt("userID");
-				var eAttacks = getPVPCore(eID, cityID).getJSONArray("attacks");
+				var eCore = getPVPCore(eID, cityID);
+				var eAttacks = eCore.getJSONArray("attacks");
 				var nAttacks = new LongAdder();
 				long lastAttackedBy = (int) Util.jStream(eAttacks)
 						.filter(x-> x.getJSONObject("target").getInt("userID") == eID)
@@ -770,24 +777,33 @@ static{
 				if(nAttacks.sum() > 5 || System.currentTimeMillis() - lastAttackedBy < 24l*3600*1000)
 					continue;
 				//TODO: only do this if attack actually sent
-				store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
-					if(queue==null)
-						queue=new JSONObject();
-					JSONArray q = queue.getJSONArray("queue");
-					int index = IntStream.range(0,q.length())
-							.filter(x->q.getJSONObject(x).getInt("userID") == eID)
-							.findFirst().orElse(-1);
-					if(index<0)
-						return queue;
-					var e_ = q.remove(index);
-					q.put(e_);
-					return queue;
-				});
-				return e;
+				matchedID = dequeue(eID, cityID, true) ? eID : -1;
 			}
-			return null;
+			if(matchedID < 0)
+				return new JSONObject().put("success",false);
+			return new JSONObject().put("matchedOpponent",getFriends(new JSONArray().put(matchedID)));
+		}
+		private boolean dequeue(int userID, int cityID, boolean requeue){
+			var success = new AtomicBoolean();
+			store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
+				if(queue==null)
+					queue=new JSONObject();
+				JSONArray q = queue.getJSONArray("queue");
+				int index = IntStream.range(0,q.length())
+						.filter(x->q.getJSONObject(x).getInt("userID") == userID)
+						.findFirst().orElse(-1);
+				if(index<0)
+					return queue;
+				success.setPlain(true);
+				var e_ = q.remove(index);
+				if(requeue)
+					q.put(e_);
+				return queue;
+			});
+			return success.getPlain();
 		}
 		public void addToQueue(int userID, int cityID, int level, int honor){
+			dequeue(userID, cityID, false);
 			store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
 				if(queue==null)queue=new JSONObject();
 				JSONArray q = queue.getJSONArray("queue");
