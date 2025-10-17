@@ -1,3 +1,4 @@
+<%@page import="java.util.Collections"%>
 <%@page import="java.util.Arrays"%>
 <%@page import="java.util.Set"%>
 <%@page import="xyz.hydar.ee.HydarEE.HttpServletRequest"%>
@@ -719,9 +720,7 @@ static{
 
 		%>
 		<%-- PVP - QUEUE/SEND --%>
-		<%!
-
-		public JSONObject sendAttack(int userID, int cityID, JSONObject payload) {
+		<%!public JSONObject sendAttack(int userID, int cityID, JSONObject payload) {
 			var sender = payload.getJSONObject("sender");
 			var target = payload.getJSONObject("target");
 			addToQueue(userID, cityID, sender.getInt("cityLevel"), sender.getInt("honour"));
@@ -766,68 +765,68 @@ static{
 					//probably the latter
 				return queue;
 			});
+			Collections.sort(candidates, 
+					Comparator.comparingInt((JSONObject e) -> Math.abs(e.getInt("level") - level))
+						.thenComparing(Comparator.comparingInt(e -> Math.abs(e.getInt("honor") - honor))
+						)
+				);
 			int matchedID = -1;
-			for(var e: candidates){
+			for (var e : candidates) {
 				int eID = e.getInt("userID");
 				var eCore = getPVPCore(eID, cityID);
 				var eAttacks = eCore.getJSONArray("attacks");
 				var nAttacks = new LongAdder();
 				long lastAttackedBy = (int) Util.jStream(eAttacks)
-						.filter(x-> x.getJSONObject("target").getInt("userID") == eID)
-						.filter(x-> x.getInt("status")<AttackStatus.RESOLVED)
-						.peek(x->nAttacks.increment())
-						.filter(x-> x.getJSONObject("sender").getInt("userID") == userID)
-						.mapToLong(x->x.getLong("timeLaunched"))
-						.max().orElse(0);
-				if(nAttacks.sum() > 5 || System.currentTimeMillis() - lastAttackedBy < 24l*3600*1000)
+						.filter(x -> x.getJSONObject("target").getInt("userID") == eID)
+						.filter(x -> x.getInt("status") < AttackStatus.RESOLVED).peek(x -> nAttacks.increment())
+						.filter(x -> x.getJSONObject("sender").getInt("userID") == userID)
+						.mapToLong(x -> x.getLong("timeLaunched")).max().orElse(0);
+				if (nAttacks.sum() > 5 || System.currentTimeMillis() - lastAttackedBy < 24l * 3600 * 1000)
 					continue;
 				//TODO: only do this if attack actually sent
 				matchedID = dequeue(eID, cityID, true) ? eID : -1;
 			}
-			if(matchedID < 0)
-				return new JSONObject().put("success",false);
+			if (matchedID < 0)
+				return new JSONObject().put("success", false);
 			var match = getFriend(matchedID, cityID);
-			
+
 			return new JSONObject().put("matchedOpponent",
-						new JSONObject()
-							.put("userID", matchedID)
-							.put("quickMatchID", matchedID)//TODO: find out what these do
-							.put("name", match.get("name"))
-							.put("clan", match.get("clan"))
-							.put("honour", match.get("honour"))
-							.put("city", match)
-					)
-					.put("success",true);
-			
+					new JSONObject().put("userID", matchedID).put("quickMatchID", matchedID)//TODO: find out what these do
+							.put("name", match.get("name")).put("clan", match.get("clan"))
+							.put("honour", match.get("honour")).put("city", match))
+					.put("success", true);
+
 		}
-		private boolean dequeue(int userID, int cityID, boolean requeue){
+
+		private boolean dequeue(int userID, int cityID, boolean requeue) {
 			var success = new AtomicBoolean();
-			store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
-				if(queue==null)
-					queue=new JSONObject();
+			store.update(List.of("monkeyCity", "pvp", "" + cityID, "queue"), queue -> {
+				if (queue == null)
+					queue = new JSONObject();
 				JSONArray q = queue.optJSONArray("queue", new JSONArray());
-				int index = IntStream.range(0,q.length())
-						.filter(x->q.getJSONObject(x).getInt("userID") == userID)
+				int index = IntStream.range(0, q.length()).filter(x -> q.getJSONObject(x).getInt("userID") == userID)
 						.findFirst().orElse(-1);
-				if(index<0)
+				if (index < 0)
 					return queue;
 				success.setPlain(true);
 				var e_ = q.remove(index);
-				if(requeue)
+				if (requeue)
 					q.put(e_);
 				queue.put("queue", q);
 				return queue;
 			});
 			return success.getPlain();
 		}
-		public void addToQueue(int userID, int cityID, int level, int honor){
+
+		public void addToQueue(int userID, int cityID, int level, int honor) {
 			dequeue(userID, cityID, false);
-			store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
-				if(queue==null)queue=new JSONObject();
+			store.update(List.of("monkeyCity", "pvp", "" + cityID, "queue"), queue -> {
+				if (queue == null)
+					queue = new JSONObject();
 				JSONArray q = queue.optJSONArray("queue", new JSONArray());
-				q.put(new JSONObject().put("userID", userID).put("level", level).put("honor",honor));
+				q.put(new JSONObject().put("userID", userID).put("level", level).put("honor", honor));
 				//attackedBy or something? or just get that while taking from queue
-					//probably the latter
+				//probably the latter
 				queue.put("queue", q);
 				return queue;
 			});
