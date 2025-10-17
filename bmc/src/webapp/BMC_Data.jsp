@@ -539,12 +539,14 @@ static{
 			return store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
 				if(core==null)
 					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
+				long timeUntilPacifist = 0;
 				for(var attack: Util.jIter(core.getJSONArray("attacks"))){
 					if(attack.getJSONObject("target").getInt("userID") == userID){
 						//...
 					}
 					if(attack.getJSONObject("sender").optInt("userID") == userID){
 						int status = attack.getInt("status");
+						timeUntilPacifist = Math.max(timeUntilPacifist, 24l*3600*1000*3 + System.currentTimeMillis() - attack.getLong("timeLaunched"));
 						//if(status < AttackStatus.RESOLVED && 
 						//		attack.getLong("expireAt") < System.currentTimeMillis()){
 						//	attack.put("status",AttackStatus.RESOLVED);
@@ -553,7 +555,7 @@ static{
 						//let clients to that
 					}
 				}
-				return core;
+				return core.put("timeUntilPacifist", timeUntilPacifist);
 			});
 		}
 		public JSONObject updatePVPCore(int userID, int cityID, UnaryOperator<JSONObject> update){
@@ -725,13 +727,7 @@ static{
 		<%!public JSONObject sendAttack(int userID, int cityID, JSONObject payload) {
 			var sender = payload.getJSONObject("sender");
 			var target = payload.getJSONObject("target");
-			updatePVPCore(userID, cityID, x->
-				x.put(
-					"timeUntilPacifist", 24l*3600*3*1000 //no 1500 honor check(in client)
-				).put(
-					"pacifist", false
-				)
-			);
+			exitPacifist(userID, cityID);
 			addToQueue(userID, cityID, sender.getInt("cityLevel"), sender.getInt("honour"));
 			long now = System.currentTimeMillis();
 			payload.put("attackID", "" + ThreadLocalRandom.current().nextLong())
@@ -751,8 +747,20 @@ static{
 			//update sender timeUntilPacifist?
 			return new JSONObject().put("success", true);
 		}
+		public JSONObject exitPacifist(int userID, int cityID){
+			return updatePVPCore(userID, cityID, x->
+				x.put(
+					"timeUntilPacifist", 24l*3600*3*1000 //no 1500 honor check(in client)
+				).put(
+					"pacifist", false
+				)
+			);
+		}
 		public JSONObject enterPacifist(int userID, int cityID){
 			//literally do nothing??? this gets sent regardless of if the user clicks yes or no
+			long timeUntilPacifist = getPVPCore(userID, cityID).getLong("timeUntilPacifist");
+			if(timeUntilPacifist == 0)
+				updatePVPCore(userID, cityID, x->x.put("pacifist", true));
 			return new JSONObject();
 		}
 		public JSONObject quickMatch(int userID, int cityID, int level, int honor){
@@ -760,6 +768,7 @@ static{
 		}
 		public JSONObject findMatch(int userID, int cityID, int level, int honor){
 			addToQueue(userID, cityID, level, honor);
+			exitPacifist(userID, cityID);
 			List<JSONObject> candidates = new ArrayList<>();
 			store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
 				if(queue==null)
@@ -770,7 +779,7 @@ static{
 					var e = q.getJSONObject(i);
 					int eLevel = e.getInt("level");
 					int range = (int) (Math.max(level,eLevel)*0.25) + 1;
-					//TODO: pacifist mode should remove from queue
+					
 					if(e.getInt("userID") == userID || Math.abs(e.getInt("level") - level) > range)
 						continue;
 					candidates.add(e);
@@ -788,6 +797,8 @@ static{
 			for (var e : candidates) {
 				int eID = e.getInt("userID");
 				var eCore = getPVPCore(eID, cityID);
+				if(eCore.optBoolean("pacifist"))
+					continue;
 				var eAttacks = eCore.getJSONArray("attacks");
 				int nAttacks = (int) Util.jStream(eAttacks)
 						.filter(x -> x.getJSONObject("target").getInt("userID") == eID)
@@ -797,7 +808,6 @@ static{
 						.filter(x -> x.getJSONObject("target").getInt("userID") == eID)
 						.filter(x -> x.getJSONObject("sender").getInt("userID") == userID)
 						.mapToLong(x -> x.getLong("timeLaunched")).max().orElse(0);
-				System.out.println(lastAttackedBy);
 				if (nAttacks > 5 || System.currentTimeMillis() - lastAttackedBy < 24l * 3600 * 1000)
 					continue;
 				//TODO: only do this if attack actually sent
