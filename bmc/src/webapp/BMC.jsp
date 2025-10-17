@@ -231,7 +231,7 @@ if(request.getMethod().equals("POST")){
 				};
 			}
 			reply
-				.put("success", true);
+				.put("success", reply.optBoolean("success",true));
 
 			/**
 			.put("status", "ok")

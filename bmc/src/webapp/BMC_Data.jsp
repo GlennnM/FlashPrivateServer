@@ -490,6 +490,18 @@ static{
 			public static final int INVALID = 0, NEW_SENT = 1, DELIVERED = 2, LINKED = 3, STARTED = 4, RESOLVED = 5,
 					CLOSED = 6;
 		}
+		public JSONObject getFriend(int userID, int cityID){
+			return Util.jStream(
+					getFriends(new JSONArray().put(userID)
+							)
+						.getJSONArray("friends").getJSONObject(0)
+						.getJSONArray("cities")
+						)
+					.filter(x -> x.getInt("cityIndex") == cityID)
+					.findFirst()
+					.orElseThrow()
+				;
+		}
 		public JSONObject getFriends(JSONArray friendIDs){
 			var friends =  new JSONArray();
 			var friendData = new JSONObject()
@@ -664,14 +676,7 @@ static{
 				resolveAttack(sender.getInt("userID"), sender.getInt("cityIndex"), attackID,
 						resolution, true);
 			}
-			var senderCity = Util.jStream(getFriends(new JSONArray().put(sender.getInt("userID")))
-						.getJSONArray("friends").getJSONObject(0)
-						.getJSONArray("cities")
-						)
-					.filter(x -> x.getInt("cityIndex") == sender.getInt("cityIndex"))
-					.findFirst()
-					.orElseThrow()
-					;
+			var senderCity = getFriend(sender.getInt("userID"), sender.getInt("cityIndex"));
 			
 			return new JSONObject()
 					.put("honour", (isSender ? target : sender).getInt("honour"))
@@ -781,14 +786,26 @@ static{
 			}
 			if(matchedID < 0)
 				return new JSONObject().put("success",false);
-			return new JSONObject().put("matchedOpponent",getFriends(new JSONArray().put(matchedID)));
+			var match = getFriend(matchedID, cityID);
+			
+			return new JSONObject().put("matchedOpponent",
+						new JSONObject()
+							.put("userID", matchedID)
+							.put("quickMatchID", matchedID)//TODO: find out what these do
+							.put("name", match.get("name"))
+							.put("clan", match.get("clan"))
+							.put("honour", match.get("honour"))
+							.put("city", match)
+					)
+					.put("success",true);
+			
 		}
 		private boolean dequeue(int userID, int cityID, boolean requeue){
 			var success = new AtomicBoolean();
 			store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
 				if(queue==null)
 					queue=new JSONObject();
-				JSONArray q = queue.getJSONArray("queue");
+				JSONArray q = queue.optJSONArray("queue", new JSONArray());
 				int index = IntStream.range(0,q.length())
 						.filter(x->q.getJSONObject(x).getInt("userID") == userID)
 						.findFirst().orElse(-1);
@@ -798,6 +815,7 @@ static{
 				var e_ = q.remove(index);
 				if(requeue)
 					q.put(e_);
+				queue.put("queue", q);
 				return queue;
 			});
 			return success.getPlain();
@@ -806,10 +824,11 @@ static{
 			dequeue(userID, cityID, false);
 			store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
 				if(queue==null)queue=new JSONObject();
-				JSONArray q = queue.getJSONArray("queue");
+				JSONArray q = queue.optJSONArray("queue", new JSONArray());
 				q.put(new JSONObject().put("userID", userID).put("level", level).put("honor",honor));
 				//attackedBy or something? or just get that while taking from queue
 					//probably the latter
+				queue.put("queue", q);
 				return queue;
 			});
 		}%>
