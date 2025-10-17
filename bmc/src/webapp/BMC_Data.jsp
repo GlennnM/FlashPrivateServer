@@ -755,7 +755,8 @@ static{
 				//TODO: scales badly since basically everyone is in the same queue
 				for(int i=0;i<q.length();i++){
 					var e = q.getJSONObject(i);
-					int range = (int) (level*0.4);
+					int eLevel = e.getInt("level");
+					int range = (int) (Math.max(level,eLevel)*0.25) + 1;
 					//TODO: pacifist mode should remove from queue
 					if(e.getInt("userID") == userID || Math.abs(e.getInt("level") - level) > range)
 						continue;
