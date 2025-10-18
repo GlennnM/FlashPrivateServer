@@ -536,10 +536,14 @@ static{
 		public JSONObject getPVPCore(int userID, int cityID){
 			//attack status updates might have to happen here?
 			//-->find which state the expire countdown would start in
+			long now = System.currentTimeMillis();
 			return store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
 				if(core==null)
 					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
-				long timeUntilPacifist = 0;
+				if(core.has("pacifist") && core.getBoolean("pacifist") == false)//legacy key
+					core.put("exitedPacifistAt", now).remove("pacifist");
+				long sinceExit = now - core.optLong("exitedPacifistAt");
+				long timeUntilPacifist = Math.max(0, 24l*3600*1000*3 - sinceExit);
 				//TODO: hide or totally remove resolved attacks over some amount
 				for(var attack: Util.jIter(core.getJSONArray("attacks"))){
 					if(attack.getJSONObject("target").getInt("userID") == userID){
@@ -547,7 +551,7 @@ static{
 					}
 					if(attack.getJSONObject("sender").optInt("userID") == userID){
 						int status = attack.getInt("status");
-						timeUntilPacifist = Math.max(timeUntilPacifist, 24l*3600*1000*3 + System.currentTimeMillis() - attack.getLong("timeLaunched"));
+						timeUntilPacifist = Math.max(timeUntilPacifist, 24l*3600*1000*3 + now - attack.getLong("timeLaunched"));
 						//if(status < AttackStatus.RESOLVED && 
 						//		attack.getLong("expireAt") < System.currentTimeMillis()){
 						//	attack.put("status",AttackStatus.RESOLVED);
@@ -750,18 +754,12 @@ static{
 		public JSONObject exitPacifist(int userID, int cityID){
 			return updatePVPCore(userID, cityID, x->
 				x.put(
+						//doesn't work because it gets overwritten
 					"timeUntilPacifist", 24l*3600*3*1000 //no 1000 honor check(in client)
 				).put(
-					"pacifist", false
+					"exitedPacifistAt", System.currentTimeMillis()
 				)
 			);
-		}
-		public JSONObject enterPacifist(int userID, int cityID){
-			//literally do nothing??? this gets sent regardless of if the user clicks yes or no
-			long timeUntilPacifist = getPVPCore(userID, cityID).getLong("timeUntilPacifist");
-			if(timeUntilPacifist == 0)
-				updatePVPCore(userID, cityID, x->x.put("pacifist", true));
-			return new JSONObject();
 		}
 		public JSONObject quickMatch(int userID, int cityID, int level, int honor){
 			return findMatch(userID, cityID, level, honor);
@@ -770,6 +768,7 @@ static{
 			addToQueue(userID, cityID, level, honor);
 			exitPacifist(userID, cityID);
 			List<JSONObject> candidates = new ArrayList<>();
+			long now = System.currentTimeMillis();
 			store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
 				if(queue==null)
 					queue=new JSONObject();
@@ -798,7 +797,7 @@ static{
 			for (var e : candidates) {
 				int eID = e.getInt("userID");
 				var eCore = getPVPCore(eID, cityID);
-				if(eCore.getLong("timeUntilPacifist") <= 0 && e.getInt("honor") <= 1000)
+				if(now - eCore.optLong("exitedPacifistAt") > 24l*3600*1000*3 && e.getInt("honor") <= 1000)
 					continue;
 				var eAttacks = eCore.getJSONArray("attacks");
 				int nAttacks = (int) Util.jStream(eAttacks)
@@ -809,7 +808,7 @@ static{
 						.filter(x -> x.getJSONObject("target").getInt("userID") == eID)
 						.filter(x -> x.getJSONObject("sender").getInt("userID") == userID)
 						.mapToLong(x -> x.getLong("timeLaunched")).max().orElse(0);
-				if (nAttacks > 5 || System.currentTimeMillis() - alreadyAttackedAt < 24l * 3600 * 1000)
+				if (nAttacks > 5 || now - alreadyAttackedAt < 24l * 3600 * 1000)
 					continue;
 				//TODO: only do this if attack actually sent
 				matchedID = dequeue(eID, cityID, true) ? eID : -1;
