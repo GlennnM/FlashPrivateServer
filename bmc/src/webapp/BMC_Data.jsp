@@ -540,6 +540,7 @@ static{
 				if(core==null)
 					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
 				long timeUntilPacifist = 0;
+				//TODO: hide or totally remove resolved attacks over some amount
 				for(var attack: Util.jIter(core.getJSONArray("attacks"))){
 					if(attack.getJSONObject("target").getInt("userID") == userID){
 						//...
@@ -552,7 +553,7 @@ static{
 						//	attack.put("status",AttackStatus.RESOLVED);
 							//EXPIRE
 						//}
-						//let clients to that
+						//let clients do that
 					}
 				}
 				return core.put("timeUntilPacifist", timeUntilPacifist);
@@ -604,7 +605,7 @@ static{
 							.put("x", payload.getInt("tileX"))
 							.put("y", payload.getInt("tileY"))
 						).put("status",AttackStatus.LINKED)
-						.put("expireAt", System.currentTimeMillis() + 24l*3600*1000)//TODO: fix expireAt vs timeLeft
+						.put("expireAt", System.currentTimeMillis() + 24l*3600*1000)
 						;
 					}//other actions if those exist...
 				}
@@ -612,7 +613,6 @@ static{
 			});
 			return new JSONObject().put("success", true);
 		}
-		//TODO: loads forever after having sent attack????
 		//also IO error but no stacktrace when clicking the attack 
 		public JSONObject startAttack(int userID, int cityID, String attackID) {
 			
@@ -788,6 +788,7 @@ static{
 					//probably the latter
 				return queue;
 			});
+			//TODO: this makes the whole queue ordering thing pointless?
 			Collections.sort(candidates, 
 					Comparator.comparingInt((JSONObject e) -> Math.abs(e.getInt("level") - level))
 						.thenComparing(Comparator.comparingInt(e -> Math.abs(e.getInt("honor") - honor))
@@ -804,11 +805,11 @@ static{
 						.filter(x -> x.getJSONObject("target").getInt("userID") == eID)
 						.filter(x -> x.getInt("status") < AttackStatus.RESOLVED)
 						.count();
-				long lastAttackedBy = Util.jStream(eAttacks)
+				long alreadyAttackedAt = Util.jStream(eAttacks)
 						.filter(x -> x.getJSONObject("target").getInt("userID") == eID)
 						.filter(x -> x.getJSONObject("sender").getInt("userID") == userID)
 						.mapToLong(x -> x.getLong("timeLaunched")).max().orElse(0);
-				if (nAttacks > 5 || System.currentTimeMillis() - lastAttackedBy < 24l * 3600 * 1000)
+				if (nAttacks > 5 || System.currentTimeMillis() - alreadyAttackedAt < 24l * 3600 * 1000)
 					continue;
 				//TODO: only do this if attack actually sent
 				matchedID = dequeue(eID, cityID, true) ? eID : -1;
@@ -827,6 +828,7 @@ static{
 
 		private boolean dequeue(int userID, int cityID, boolean requeue) {
 			var success = new AtomicBoolean();
+			var newData = getFriend(userID, cityID);
 			store.update(List.of("monkeyCity", "pvp", "" + cityID, "queue"), queue -> {
 				if (queue == null)
 					queue = new JSONObject();
@@ -837,8 +839,12 @@ static{
 					return queue;
 				success.setPlain(true);
 				var e_ = q.remove(index);
-				if (requeue)
-					q.put(e_);
+				if (requeue){//update level
+					q.put(new JSONObject().put("userID", userID)
+							.put("level", newData.getInt("level"))
+							.put("honor", newData.getInt("honour"))
+						);
+				}
 				queue.put("queue", q);
 				return queue;
 			});
@@ -851,7 +857,10 @@ static{
 				if (queue == null)
 					queue = new JSONObject();
 				JSONArray q = queue.optJSONArray("queue", new JSONArray());
-				q.put(new JSONObject().put("userID", userID).put("level", level).put("honor", honor));
+				q.put(new JSONObject().put("userID", userID)
+						.put("level", level)
+						.put("honor", honor)
+					);
 				//attackedBy or something? or just get that while taking from queue
 				//probably the latter
 				queue.put("queue", q);
