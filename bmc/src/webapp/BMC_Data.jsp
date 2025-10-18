@@ -812,6 +812,7 @@ static{
 					continue;
 				//TODO: only do this if attack actually sent
 				matchedID = dequeue(eID, cityID, true) ? eID : -1;
+				if (matchedID>=0) break;
 			}
 			if (matchedID < 0)
 				return new JSONObject().put("success", false);
