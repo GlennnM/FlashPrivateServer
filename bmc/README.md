@@ -24,12 +24,11 @@ effect on achievements and stuff isn't entirely known(most likely your tiles one
 - handshake (login) - can use NK auth if enabled
 - core data (bloonstones, MK, etc)
 - city data (tiles, xp/level, etc)
-- CT (might need more testing)
+- CT
+- MvM
 - client(archive mod) + server switcher in game settings
 
 **not implemented:** 
-
-- MvM
 - crates
 - starting city based on tiles achievements?
 

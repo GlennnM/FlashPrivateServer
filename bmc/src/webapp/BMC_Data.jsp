@@ -88,7 +88,6 @@ static{
 					newThing
 						.put("name", info.get("cityName"))
 						.put("level", info.get("level"))
-						//TODO: fix this not displaying
 						.put("attacks", Util.jStream(getPVPCore(userID, i).getJSONArray("attacks"))
 								.filter(a->a.getJSONObject("target").getInt("userID") == userID)
 								.filter(a->a.getInt("status") < AttackStatus.RESOLVED)
@@ -609,6 +608,7 @@ static{
 							.put("x", payload.getInt("tileX"))
 							.put("y", payload.getInt("tileY"))
 						).put("status",AttackStatus.LINKED)
+						//TODO: somehow get the attacks to show up on menu correctly, but also give extra time until game opened?
 						.put("expireAt", System.currentTimeMillis() + 24l*3600*1000)
 						;
 					}//other actions if those exist...
@@ -777,7 +777,7 @@ static{
 				for(int i=0;i<q.length();i++){
 					var e = q.getJSONObject(i);
 					int eLevel = e.getInt("level");
-					int range = (int) (Math.max(level,eLevel)*0.25) + 1;
+					int range = (int) (Math.max(level,eLevel)*0.2);
 					
 					if(e.getInt("userID") == userID || Math.abs(e.getInt("level") - level) > range)
 						continue;
@@ -787,12 +787,12 @@ static{
 					//probably the latter
 				return queue;
 			});
-			//TODO: this makes the whole queue ordering thing pointless?
-			Collections.sort(candidates, 
+			//this makes the whole queue ordering thing pointless and makes it same opp every time
+			/*Collections.sort(candidates, 
 					Comparator.comparingInt((JSONObject e) -> Math.abs(e.getInt("level") - level))
 						.thenComparing(Comparator.comparingInt(e -> Math.abs(e.getInt("honor") - honor))
 						)
-				);
+				);*/
 			int matchedID = -1;
 			for (var e : candidates) {
 				int eID = e.getInt("userID");
