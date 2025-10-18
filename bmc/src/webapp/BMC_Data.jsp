@@ -750,7 +750,7 @@ static{
 		public JSONObject exitPacifist(int userID, int cityID){
 			return updatePVPCore(userID, cityID, x->
 				x.put(
-					"timeUntilPacifist", 24l*3600*3*1000 //no 1500 honor check(in client)
+					"timeUntilPacifist", 24l*3600*3*1000 //no 1000 honor check(in client)
 				).put(
 					"pacifist", false
 				)
@@ -798,7 +798,7 @@ static{
 			for (var e : candidates) {
 				int eID = e.getInt("userID");
 				var eCore = getPVPCore(eID, cityID);
-				if(eCore.optBoolean("pacifist"))
+				if(eCore.getLong("timeUntilPacifist") <= 0 && e.getInt("honor") <= 1000)
 					continue;
 				var eAttacks = eCore.getJSONArray("attacks");
 				int nAttacks = (int) Util.jStream(eAttacks)

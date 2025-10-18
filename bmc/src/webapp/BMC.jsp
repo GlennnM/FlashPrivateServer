@@ -226,7 +226,7 @@ if(request.getMethod().equals("POST")){
 							case "close" -> DATA.closeAttack(userID, cityIndex, request.getParameter("attackID"));
 							default -> reply;
 						};
-					case "pacifist" ->  reply;//TODO: pacifist(payload NULL, put)
+					case "pacifist" ->  DATA.exitPacifist(userID, cityIndex);
 					default -> reply;
 				};
 			}
