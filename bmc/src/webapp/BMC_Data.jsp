@@ -88,7 +88,7 @@ static{
 					newThing
 						.put("name", info.get("cityName"))
 						.put("level", info.get("level"))
-						.put("attacks", Util.jStream(getPVPCore(userID, i).getJSONArray("attacks"))
+						.put("attacks", Util.jStream(getPVPCore(userID, i, true).getJSONArray("attacks"))
 								.filter(a->a.getJSONObject("target").getInt("userID") == userID)
 								.filter(a->a.getInt("status") < AttackStatus.RESOLVED)
 								//.peek(a->a.put("timeLeft", a.getLong("expireAt") - System.currentTimeMillis()))
@@ -524,19 +524,22 @@ static{
 							.put("honour", info.getInt("honour"))
 							.put("name", info.getString("userName"))
 							.put("clan", info.getString("userClan"))
-							.put("youHaveAlreadyAttacked", false)//attacks.contains thing...
+							.put("youHaveAlreadyAttacked", false)//TODO: attacks.contains thing...
 							//.put("quickMatchID", id)
 						);
 				}
 			}
 			return friendData;
 		}
-		
 		public JSONObject getPVPCore(int userID, int cityID){
+			return getPVPCore(userID, cityID, false);
+		}
+		public JSONObject getPVPCore(int userID, int cityID, boolean fromDirectOrCityList){
 			//attack status updates might have to happen here?
 			//-->find which state the expire countdown would start in
 			long now = System.currentTimeMillis();
-			return store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
+			List<JSONObject> toResolveAsSender = new ArrayList<>();
+			var ret = store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
 				if(core==null)
 					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
 				if(core.has("pacifist") && core.getBoolean("pacifist") == false)//legacy key
@@ -545,30 +548,46 @@ static{
 				long timeUntilPacifist = Math.max(0, 24l*3600*1000*3 - sinceExit);
 				//TODO: hide or totally remove resolved attacks over some amount
 				for(var attack: Util.jIter(core.getJSONArray("attacks"))){
-					if(attack.getJSONObject("target").getInt("userID") == userID){
-						//...
+					int status = attack.getInt("status");
+					boolean expired = attack.getLong("expireAt") < now;
+					if(status == AttackStatus.NEW_SENT && fromDirectOrCityList && 
+							attack.getJSONObject("target").getInt("userID") == userID){
+						attack.put("status",AttackStatus.DELIVERED);
+						if(!expired)
+							attack.put("expireAt", now + 24l*3600*1000);
 					}
 					if(attack.getJSONObject("sender").optInt("userID") == userID){
-						int status = attack.getInt("status");
 						timeUntilPacifist = Math.max(timeUntilPacifist, 24l*3600*1000*3 + now - attack.getLong("timeLaunched"));
-						//if(status < AttackStatus.RESOLVED && 
-						//		attack.getLong("expireAt") < System.currentTimeMillis()){
-						//	attack.put("status",AttackStatus.RESOLVED);
-							//EXPIRE
-						//}
-						//let clients do that
+						if(status == AttackStatus.NEW_SENT && expired){
+							attack.put("status",AttackStatus.DELIVERED);//TODO: allow attacker to resolve?
+							toResolveAsSender.add(attack);
+						}
 					}
+					
 				}
 				return core.put("timeUntilPacifist", timeUntilPacifist);
 			});
+			for(JSONObject att: toResolveAsSender){
+				//nothing you put here works
+				/**
+				var res = new JSONObject()
+						.put("resolution","win")
+						.put("attackSucceeded", true)
+						.put("wasHardcore", false)
+						.put("info","");
+				resolveAttack(userID, cityID, att.getString("attackID"), res);*/
+			}
+			return ret;
 		}
 		public JSONObject updatePVPCore(int userID, int cityID, UnaryOperator<JSONObject> update){
-			return store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"), update);
+			return store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
+				if(core==null)
+					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
+				return update.apply(core);
+			});
 		}
 		public JSONObject addAttack(int userID, int cityID, JSONObject attack){
 			return updatePVPCore(userID, cityID, core->{
-				if(core==null)
-					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
 				core.getJSONArray("attacks").put(attack);
 				return core;
 			});
@@ -583,8 +602,6 @@ static{
 		
 		public JSONObject updateAttack(int userID, int cityID, String attackID, UnaryOperator<JSONObject> update){
 			return updatePVPCore(userID, cityID, core->{
-				if(core==null)
-					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
 				var attacks = core.getJSONArray("attacks");
 				int index = IntStream.range(0, core.getJSONArray("attacks").length())
 					.filter(x->attacks.getJSONObject(x).getString("attackID").equals(attackID))
@@ -608,8 +625,8 @@ static{
 							.put("x", payload.getInt("tileX"))
 							.put("y", payload.getInt("tileY"))
 						).put("status",AttackStatus.LINKED)
-						//TODO: somehow get the attacks to show up on menu correctly, but also give extra time until game opened?
-						.put("expireAt", System.currentTimeMillis() + 24l*3600*1000)
+						//done when DELIVERED state added now
+						//.put("expireAt", System.currentTimeMillis() + 24l*3600*1000)
 						;
 					}//other actions if those exist...
 				}
@@ -665,10 +682,8 @@ static{
 						
 						sender.put("honourChange", changes[0]);
 						target.put("honourChange", changes[1]);
-						if(!recall)
-							(isSender ? sender : target).put("resolutionSeen", System.currentTimeMillis());
-						else
-							(isSender ? target : sender).put("resolutionSeen", System.currentTimeMillis());
+						if(!isSender)
+							(recall ? sender : target).put("resolutionSeen", System.currentTimeMillis());
 					}
 					return attack;
 				}
@@ -736,9 +751,9 @@ static{
 			long now = System.currentTimeMillis();
 			payload.put("attackID", "" + ThreadLocalRandom.current().nextLong())
 				.put("timeLaunched", now)
-				.put("status", AttackStatus.DELIVERED)
+				.put("status", AttackStatus.NEW_SENT)
 				.put("attack", payload.get("attackDefinition"))
-				.put("expireAt", now + 24l*3600*1000)
+				.put("expireAt", now + 24l*3600*1000*30)
 				.remove("attackDefinition");
 				;
 			sender.put("userID", ""+userID)//MUST BE STRING!!!

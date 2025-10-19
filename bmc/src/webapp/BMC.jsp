@@ -204,7 +204,7 @@ if(request.getMethod().equals("POST")){
 			int cityIndex = Integer.parseInt(cityID);
 			if(action.equals("GET")){
 				reply = switch(target){
-					case "core" ->  DATA.getPVPCore(userID, cityIndex);//also covers core/updates, apparently
+					case "core" ->  DATA.getPVPCore(userID, cityIndex, true);//also covers core/updates, apparently
 					case "friends" ->  DATA.getFriends(json.getJSONObject("payload").optJSONArray("friends"));
 					case "quickmatch" ->  DATA.quickMatch(userID, cityIndex, 
 							Integer.parseInt(request.getParameter("level")), 
