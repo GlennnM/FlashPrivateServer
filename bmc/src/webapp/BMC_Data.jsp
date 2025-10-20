@@ -682,8 +682,8 @@ static{
 						
 						sender.put("honourChange", changes[0]);
 						target.put("honourChange", changes[1]);
-						if(!isSender)
-							(recall ? sender : target).put("resolutionSeen", System.currentTimeMillis());
+						//started with target: FF->TT, started with sender TF->FT
+						((isSender ^ recall) ? sender : target).put("resolutionSeen", System.currentTimeMillis());
 					}
 					return attack;
 				}
@@ -1500,4 +1500,5 @@ public static class FileObjectStore implements ObjectStore {
 }
 //public static class DBObjectStore ?!?!!
 //public static class S3ObjectStore ?!???!?!?!?!?!
+
 %>
