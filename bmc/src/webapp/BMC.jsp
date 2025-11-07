@@ -130,12 +130,7 @@ if(request.getMethod().equals("POST")){
 				reply = DATA.getCore(userID);
 			}else if(action.equals("PUT")){
 				boolean success = DATA.updateCore(userID, json.getJSONObject("payload"));
-				reply
-					.put("nkApiID",userID)
-					.put("sessionID",session.getId())
-					.put("success",success)
-					.put("sid",System.currentTimeMillis())
-					.put("tid",json.get("tid"));
+				reply.put("success",success);
 			}
 			break;
 		case "cities":
@@ -150,12 +145,7 @@ if(request.getMethod().equals("POST")){
 
 					boolean success = DATA.putCities(userID, json.getJSONObject("payload"));
 					//System.out.println(new FileObjectStore(Path.of("./objects")).dump());
-					reply
-						.put("nkApiID",userID)
-						.put("sessionID",session.getId())
-						.put("success",success)
-						.put("sid",System.currentTimeMillis())
-						.put("tid",json.get("tid"));
+					reply.put("success",success);
 				}
 			}else{
 				int city = Integer.parseInt(cityID);
@@ -168,12 +158,7 @@ if(request.getMethod().equals("POST")){
 					boolean success = target == null ? 
 							DATA.putCity(userID, city, json.getJSONObject("payload")):
 							DATA.putCityThing(userID, Integer.parseInt(cityID), target, json.getJSONObject("payload"));
-					reply
-						.put("nkApiID",userID)
-						.put("sessionID",session.getId())
-						.put("success", success)
-						.put("sid",System.currentTimeMillis())
-						.put("tid",json.get("tid"));
+					reply.put("success", success);
 				}
 			}
 			break;
@@ -195,11 +180,7 @@ if(request.getMethod().equals("POST")){
 						};
 			}
 			reply
-				.put("nkApiID",userID)
-				.put("sessionID",session.getId())
-				.put("success", success)
-				.put("sid",System.currentTimeMillis())
-				.put("tid",json.opt("tid"));
+				.put("success", success);
 			//none, request, send, get/put for crate, buy/sends(exists???), bonus(??????)
 			//put with no payload = use 1 crate?
 			break;
@@ -281,11 +262,7 @@ if(request.getMethod().equals("POST")){
 							default -> null;
 						};
 				reply
-					.put("nkApiID",userID)
-					.put("sessionID",session.getId())
-					.put("success", reply.optBoolean("success", true))
-					.put("sid",System.currentTimeMillis())
-					.put("tid",json.get("tid"));
+					.put("success", reply.optBoolean("success", true));
 			}
 			//none(info about current ct prob), join, score/room, loot/room, history(TODO: generate based on ach?), history/room/claim, history/room/close
 			break;

@@ -188,8 +188,13 @@ static{
 			return store.update(List.of("monkeyCity", ""+userID, "core"),
 				core->{
 					var crates = core.optJSONObject("crates");
-					if(crates==null || !crates.has("sent"))
-						crates = Util.DEFAULT_CRATES();
+					if(crates==null || !crates.has("sent")){
+						var theCrates = Util.DEFAULT_CRATES();
+						if(crates!=null)
+							theCrates.putOpt("own",crates.opt("own"));
+						crates = theCrates;
+					}
+					
 					tryResetCrates(crates);
 					core.put("crates", crates.put("own",crates.optInt("own") + n));
 					return core;
@@ -244,8 +249,14 @@ static{
 			return updateCrates(userID, myCrates) && success && updateCrates(friendID, friendCrates);
 		}
 		public JSONObject getCrates(int userID){
-			var crates =  getCore(userID).optJSONObject("crates");
-			return (crates==null || !crates.has("sent")) ? Util.DEFAULT_CRATES() : crates;
+			var crates = getCore(userID).optJSONObject("crates");
+			if(crates==null || !crates.has("sent")){
+				var theCrates = Util.DEFAULT_CRATES();
+				if(crates!=null)
+					theCrates.putOpt("own",crates.opt("own"));
+				crates = theCrates;
+			}
+			return crates;
 		}
 		public boolean updateCrates(int userID, JSONObject payload){
 			return updateCore(userID, new JSONObject(1).put("crates",payload));
