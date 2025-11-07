@@ -27,11 +27,8 @@ effect on achievements and stuff isn't entirely known(most likely your tiles one
 - CT
 - MvM
 - client(archive mod) + server switcher in game settings
-
-**not implemented:** 
 - crates
-- starting city based on tiles achievements?
 
-eventually: support for different storage backend, save transfer of some kind, pvp bots, new tile format?
+eventually: starting city based on tiles achievements, support for different storage backend, save transfer of some kind, pvp bots, new tile format?
 
 

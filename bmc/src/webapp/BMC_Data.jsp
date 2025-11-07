@@ -1,3 +1,6 @@
+<%@page import="java.time.ZoneId"%>
+<%@page import="java.time.Instant"%>
+<%@page import="java.time.LocalDateTime"%>
 <%@page import="java.util.Collections"%>
 <%@page import="java.util.Arrays"%>
 <%@page import="java.util.Set"%>
@@ -185,15 +188,67 @@ static{
 			return store.update(List.of("monkeyCity", ""+userID, "core"),
 				core->{
 					var crates = core.optJSONObject("crates");
-					if(crates==null)
+					if(crates==null || !crates.has("sent"))
 						crates = Util.DEFAULT_CRATES();
+					tryResetCrates(crates);
 					core.put("crates", crates.put("own",crates.optInt("own") + n));
 					return core;
 				}) != null;
 		}
+		public boolean sendCrates(int userID, JSONArray friendIDs){
+			return Util.jStreamI(friendIDs).mapToObj(x->sendCrate(userID, x)).reduce((x,y)->x&&y).orElse(true);
+		}
+		private JSONObject tryResetCrates(JSONObject myCrates){
+			long lastReset = myCrates.optLong("lastReset");
+			if(Util.isBeforeStartOfTodayUTC(lastReset)){
+				lastReset = System.currentTimeMillis();
+				myCrates.getJSONArray("sent").clear();
+				myCrates.getJSONArray("requested").clear();
+				myCrates.getJSONArray("pending").clear();
+				myCrates.getJSONArray("received").clear();
+			}
+			return myCrates.put("lastReset", lastReset);
+		}
+		public boolean requestCrates(int userID, JSONArray friendIDs){
+			return Util.jStreamI(friendIDs).mapToObj(x->requestCrate(userID, x)).reduce((x,y)->x&&y).orElse(true);
+		}
+		public boolean sendCrate(int userID, int friendID){
+			return sendOrRequestCrate(userID, friendID, true);
+		}
+		public boolean requestCrate(int userID, int friendID){
+			return sendOrRequestCrate(userID, friendID, false);
+		}
+		private boolean sendOrRequestCrate(int userID, int friendID, boolean isSend){
+			var myCrates = getCrates(userID);
+			var friendCrates = getCrates(friendID);
+			var rng = ThreadLocalRandom.current();
+			//clear out sent and requested every 24h???
+			tryResetCrates(myCrates);
+			
+			var sent = myCrates.getJSONArray(isSend ? "sent" : "requested");
+			var success = Util.jStream(sent).noneMatch(x->x.getString("receiver").equals(""+friendID))
+					&& Util.jStream(sent).filter(x->x.getString("sender").equals(""+userID)).count() < 3;
+			if(success){
+				var newCrate = new JSONObject(4).put("id", ""+rng.nextLong())
+						.put("sender",""+userID)
+						.put("receiver",""+friendID)
+						.put("senderName",getCityThing(userID,0,"info").optString("userName","hydar"))
+						;
+				friendCrates.getJSONArray(isSend ? "received": "pending").put(newCrate);
+				if(isSend)
+					modifyCrates(friendID, 1);
+				sent.put(newCrate);
+			}
+			updateCrates(userID, myCrates);
+			updateCrates(friendID, friendCrates);
+			return updateCrates(userID, myCrates) && success && updateCrates(friendID, friendCrates);
+		}
 		public JSONObject getCrates(int userID){
 			var crates =  getCore(userID).optJSONObject("crates");
-			return crates==null ? Util.DEFAULT_CRATES() : crates;
+			return (crates==null || !crates.has("sent")) ? Util.DEFAULT_CRATES() : crates;
+		}
+		public boolean updateCrates(int userID, JSONObject payload){
+			return updateCore(userID, new JSONObject(1).put("crates",payload));
 		}
 		%>
 		<%-- CT - ROOMS --%>
@@ -568,7 +623,7 @@ static{
 				return core.put("timeUntilPacifist", timeUntilPacifist);
 			});
 			for(JSONObject att: toResolveAsSender){
-				//nothing you put here works
+				//nothing you put here works - maybe try setting resolutionSeen for defender, but only in attacker data
 				/**
 				var res = new JSONObject()
 						.put("resolution","win")
@@ -889,7 +944,10 @@ static{
 <%-- Util --%>
 <%!public static class Util{
 
-
+	public static boolean isBeforeStartOfTodayUTC(long time){
+		var startOfToday = LocalDateTime.ofInstant(Instant.now(), ZoneId.of("UTC")).toLocalDate().atStartOfDay();
+		return startOfToday.isAfter(LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneId.of("UTC")));
+	}
 	private static long key(JSONObject tile) {
 		return ((long) tile.getInt("x") << 32) | (tile.getInt("y") & -1L);
 	}

@@ -179,22 +179,27 @@ if(request.getMethod().equals("POST")){
 			break;
 		case "crate":
 			String target = request.getParameter("target");
+			boolean success = false;
 			if(action.equals("GET")){
+				DATA.modifyCrates(userID, 0);//reset timer if needed
 				reply = DATA.getCrates(userID);
+				success = true;
 			}else if(action.equals("PUT")){
-				boolean success = target == null ? 
+				success = target == null ? 
 						DATA.useCrate(userID): 
 						switch(target){
 							case "bonus" -> DATA.modifyCrates(userID, json.getJSONObject("payload").optInt("amount"));
+							case "request" -> DATA.requestCrates(userID, json.getJSONObject("payload").getJSONArray("userIDs"));
+							case "send" ->  DATA.sendCrates(userID, json.getJSONObject("payload").getJSONArray("userIDs"));
 							default -> true;
 						};
-				reply
-					.put("nkApiID",userID)
-					.put("sessionID",session.getId())
-					.put("success", success)
-					.put("sid",System.currentTimeMillis())
-					.put("tid",json.get("tid"));
 			}
+			reply
+				.put("nkApiID",userID)
+				.put("sessionID",session.getId())
+				.put("success", success)
+				.put("sid",System.currentTimeMillis())
+				.put("tid",json.opt("tid"));
 			//none, request, send, get/put for crate, buy/sends(exists???), bonus(??????)
 			//put with no payload = use 1 crate?
 			break;
