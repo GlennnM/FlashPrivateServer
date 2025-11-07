@@ -1031,7 +1031,7 @@ below 100 has different behavior
 				: "" + lossHonor(w, l, a, false) + ", " + winHonor(w, l, a, false, false);
 	}
 
-	public static JSONObject BLANK_CORE = new JSONObject(1).put("core", new JSONObject());
+	public static JSONObject BLANK_CORE = new JSONObject(2).put("core", new JSONObject()).put("crates", DEFAULT_CRATES());
 
 	public static Iterable<Integer> jIterI(JSONArray array) {
 		return (() -> Spliterators.iterator(jStreamI(array).spliterator()));
@@ -1097,7 +1097,11 @@ below 100 has different behavior
 		if (core == null)
 			core = new JSONObject(3);
 		for (String topKey : List.of("core", "monkeyKnowledge", "crates")) {
-			JSONObject oldCore = core.optJSONObject(topKey, new JSONObject());
+			JSONObject oldCore;
+			if(core.has(topKey))
+				oldCore = core.getJSONObject(topKey);
+			else
+				oldCore = topKey.equals("crates") ? Util.DEFAULT_CRATES() : new JSONObject();
 			JSONObject newCore = update.optJSONObject(topKey);
 			if (newCore != null) {
 				for (String key : newCore.keySet()) {
