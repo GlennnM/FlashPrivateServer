@@ -87,7 +87,7 @@ static{
 			for(int i=0;i<=1;i++){
 				var info = getCityThing(userID, i, "info");
 				if(info!=null){
-					JSONObject newThing = new JSONObject();
+					JSONObject newThing = new JSONObject(4);
 					newThing
 						.put("name", info.get("cityName"))
 						.put("level", info.get("level"))
@@ -101,7 +101,7 @@ static{
 					ret.put(newThing);
 				}
 			}
-			return new JSONObject()
+			return new JSONObject(6)
 					.put("success", true)
 					.put("cityList", ret);
 		}
@@ -118,7 +118,7 @@ static{
 			var content = getCityThing(userID,cityID,"content");
 			var ct = getCT(userID,cityID);
 			return info==null? null: 
-				new JSONObject()
+				new JSONObject(8)
 					.put("cityInfo",info)
 					.put("content",content)
 					.put("contestedTerritory", ct)
@@ -128,7 +128,7 @@ static{
 		public boolean putCity(int userID, int cityID, JSONObject payload){
 			
 			var info = payload.getJSONObject("cityInfo");
-			var newInfo = new JSONObject()
+			var newInfo = new JSONObject(8)
 					.put("index",cityID)
 					.put("level",info.opt("cityLevel"))
 					.put("cityName",info.get("name"))
@@ -138,7 +138,7 @@ static{
 					.put("userClan",payload.get("userClan"))
 					.putOpt("pacifistExpiresAt",payload.opt("pacifistExpiresAt"))
 					;
-			var newContent = new JSONObject()
+			var newContent = new JSONObject(10)
 					.put("tiles",payload.get("tiles"))
 					.put("cityResources",payload.get("cityResources"))
 					.put("worldSeed",payload.get("worldSeed"))
@@ -293,7 +293,7 @@ static{
 						//create the room
 						ret.setPlain(CTUtil.newCTRoom(level, cityID, payload));
 						String newRoomID = ret.getPlain().getJSONObject("contestedTerritory").getString("roomID");
-						qRoom = new JSONObject().put("id", newRoomID).put("players", new JSONArray()).put("at",
+						qRoom = new JSONObject(3).put("id", newRoomID).put("players", new JSONArray()).put("at",
 								System.currentTimeMillis());
 						queue.put("" + tier, qRoom);
 					}
@@ -321,7 +321,7 @@ static{
 	
 			// user -> room id
 			store.put(List.of("monkeyCity", "" + userID, "contest", "" + cityID),
-					new JSONObject().put("roomID", roomID).put("at", now));
+					new JSONObject(2).put("roomID", roomID).put("at", now));
 			return CTUtil.hideLeaderDuration(newRoom);
 	
 		}
@@ -362,7 +362,7 @@ static{
 					var scores = ct.getJSONObject("score");
 					var myScore = scores.optJSONObject(""+userID);
 					if(myScore==null)
-						myScore = new JSONObject();
+						myScore = new JSONObject(6);
 					int leader = CTUtil.findLeader(scores, minRounds);
 					
 					/**
@@ -451,7 +451,7 @@ static{
 				CTUtil.updateDurations(room);
 				return CTUtil.hideLeaderDuration(room);
 			}
-			return new JSONObject();
+			return new JSONObject(8);
 		}
 		public BMCData skipScoreUpdate(String skip){
 			if(skip != null && !skip.trim().isEmpty())
@@ -506,7 +506,7 @@ static{
 					JSONObject roomData = store.get("monkeyCity", "contest", "" + cityID, "rooms", room.getString("roomID"));
 					CTUtil.updateDurations(roomData);
 					var ct = roomData.get("contestedTerritory");
-					room.put("history", new JSONObject().put("room",ct));
+					room.put("history", new JSONObject(1).put("room",ct));
 					room.remove("roomID");
 					room.remove("at");
 					store.put(List.of("monkeyCity",""+userID,"contest",""+cityID), room);
@@ -522,7 +522,7 @@ static{
 			//contains room for previous thing
 			//remove on /claim or /close?
 			if(room==null || (history=room.optJSONObject("history")) == null){
-				return new JSONObject();
+				return new JSONObject(8);
 			}
 			return history;
 		}
@@ -534,7 +534,7 @@ static{
 				info.remove("history");
 				return info;
 			});
-			return new JSONObject();
+			return new JSONObject(8);
 		}
 		
 		%>
@@ -559,13 +559,13 @@ static{
 		}
 		public JSONObject getFriends(JSONArray friendIDs){
 			var friends =  new JSONArray();
-			var friendData = new JSONObject()
+			var friendData = new JSONObject(2)
 				.put("friends", friends)
 				.put("friendIDs", friendIDs);
 			for(int id: Util.jIterI(friendIDs)){
 				var cities = new JSONArray();
 				friends.put(
-					new JSONObject()
+					new JSONObject(2)
 						.put("userID", id)
 						.put("cities", cities)
 					);
@@ -573,7 +573,7 @@ static{
 					var info = getCityThing(id, index, "info");
 					if(info == null)
 						continue;
-					cities.put(new JSONObject()
+					cities.put(new JSONObject(6)
 							.put("cityIndex", index)
 							.put("level", info.getInt("level"))
 							.put("honour", info.getInt("honour"))
@@ -596,7 +596,7 @@ static{
 			List<JSONObject> toResolveAsSender = new ArrayList<>();
 			var ret = store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
 				if(core==null)
-					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
+					core = new JSONObject(2).put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
 				if(core.has("pacifist") && core.getBoolean("pacifist") == false)//legacy key
 					core.put("exitedPacifistAt", now).remove("pacifist");
 				long sinceExit = now - core.optLong("exitedPacifistAt");
@@ -637,7 +637,7 @@ static{
 		public JSONObject updatePVPCore(int userID, int cityID, UnaryOperator<JSONObject> update){
 			return store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
 				if(core==null)
-					core = new JSONObject().put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
+					core = new JSONObject(2).put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
 				return update.apply(core);
 			});
 		}
@@ -676,7 +676,7 @@ static{
 						&& attack.getInt("status") == AttackStatus.DELIVERED
 						){	
 					if(payload.getString("action").equals("linkToTile")){
-						attack.put("linkedTile",new JSONObject()
+						attack.put("linkedTile",new JSONObject(2)
 							.put("x", payload.getInt("tileX"))
 							.put("y", payload.getInt("tileY"))
 						).put("status",AttackStatus.LINKED)
@@ -687,7 +687,7 @@ static{
 				}
 				return attack;
 			});
-			return new JSONObject().put("success", true);
+			return new JSONObject(8).put("success", true);
 		}
 		//also IO error but no stacktrace when clicking the attack 
 		public JSONObject startAttack(int userID, int cityID, String attackID) {
@@ -757,7 +757,7 @@ static{
 			}
 			var senderCity = getFriend(sender.getInt("userID"), sender.getInt("cityIndex"));
 			
-			return new JSONObject()
+			return new JSONObject(10)
 					.put("honour", (isSender ? target : sender).getInt("honour"))
 					.putOpt("sender", isSender ? null : sender)
 					.put("target", target)
@@ -793,7 +793,7 @@ static{
 				}
 				return attack;
 			});
-			return new JSONObject().put("success", true);
+			return new JSONObject(8).put("success", true);
 		}
 
 		%>
@@ -819,7 +819,7 @@ static{
 			//then add attack to pvp core for both sender and target(target first)
 			//add fields: attackID, status, timeLaunched, ...
 			//update sender timeUntilPacifist?
-			return new JSONObject().put("success", true);
+			return new JSONObject(8).put("success", true);
 		}
 		public JSONObject exitPacifist(int userID, int cityID){
 			return updatePVPCore(userID, cityID, x->
@@ -841,7 +841,7 @@ static{
 			long now = System.currentTimeMillis();
 			store.update(List.of("monkeyCity","pvp",""+cityID,"queue"),queue->{
 				if(queue==null)
-					queue=new JSONObject();
+					queue=new JSONObject(1);
 				JSONArray q = queue.getJSONArray("queue");
 				//TODO: scales badly since basically everyone is in the same queue
 				for(int i=0;i<q.length();i++){
@@ -885,11 +885,11 @@ static{
 				if (matchedID>=0) break;
 			}
 			if (matchedID < 0)
-				return new JSONObject().put("success", false);
+				return new JSONObject(8).put("success", false);
 			var match = getFriend(matchedID, cityID);
 
-			return new JSONObject().put("matchedOpponent",
-					new JSONObject().put("userID", matchedID).put("quickMatchID", matchedID)//TODO: find out what these do
+			return new JSONObject(8).put("matchedOpponent",
+					new JSONObject(6).put("userID", matchedID).put("quickMatchID", matchedID)//TODO: find out what these do
 							.put("name", match.get("name")).put("clan", match.get("clan"))
 							.put("honour", match.get("honour")).put("city", match))
 					.put("success", true);
@@ -901,7 +901,7 @@ static{
 			var newData = getFriend(userID, cityID);
 			store.update(List.of("monkeyCity", "pvp", "" + cityID, "queue"), queue -> {
 				if (queue == null)
-					queue = new JSONObject();
+					queue = new JSONObject(1);
 				JSONArray q = queue.optJSONArray("queue", new JSONArray());
 				int index = IntStream.range(0, q.length()).filter(x -> q.getJSONObject(x).getInt("userID") == userID)
 						.findFirst().orElse(-1);
@@ -910,7 +910,7 @@ static{
 				success.setPlain(true);
 				var e_ = q.remove(index);
 				if (requeue){//update level
-					q.put(new JSONObject().put("userID", userID)
+					q.put(new JSONObject(3).put("userID", userID)
 							.put("level", newData.getInt("level"))
 							.put("honor", newData.getInt("honour"))
 						);
@@ -925,9 +925,9 @@ static{
 			dequeue(userID, cityID, false);
 			store.update(List.of("monkeyCity", "pvp", "" + cityID, "queue"), queue -> {
 				if (queue == null)
-					queue = new JSONObject();
+					queue = new JSONObject(1);
 				JSONArray q = queue.optJSONArray("queue", new JSONArray());
-				q.put(new JSONObject().put("userID", userID)
+				q.put(new JSONObject(3).put("userID", userID)
 						.put("level", level)
 						.put("honor", honor)
 					);
@@ -1031,7 +1031,7 @@ below 100 has different behavior
 				: "" + lossHonor(w, l, a, false) + ", " + winHonor(w, l, a, false, false);
 	}
 
-	public static JSONObject BLANK_CORE = new JSONObject().put("core", new JSONObject());
+	public static JSONObject BLANK_CORE = new JSONObject(1).put("core", new JSONObject());
 
 	public static Iterable<Integer> jIterI(JSONArray array) {
 		return (() -> Spliterators.iterator(jStreamI(array).spliterator()));
@@ -1059,10 +1059,10 @@ below 100 has different behavior
 
 	public static JSONObject mergeContent(JSONObject content, JSONObject update) {
 		if (content == null)
-			content = new JSONObject();
+			content = new JSONObject(10);
 		var tiles = content.optJSONArray("tiles", new JSONArray());
 		var newTiles = update.optJSONArray("tiles", new JSONArray());
-		var updateContent = update.optJSONObject("content", new JSONObject());
+		var updateContent = update.optJSONObject("content", new JSONObject(10));
 		for (String key : updateContent.keySet()) {
 			if (!key.equals("tiles"))
 				content.put(key, updateContent.get(key));
@@ -1083,7 +1083,7 @@ below 100 has different behavior
 	//cityName INDEX LEVEL XP
 	public static JSONObject mergeInfo(JSONObject info, JSONObject update) {
 		if (info == null)
-			info = new JSONObject();
+			info = new JSONObject(6);
 		var change = update.getJSONObject("cityInfoChange");
 		if (change != null)
 			info.put("cityName", update.get("cityName")).put("level", update.get("cityLevel"))
@@ -1095,7 +1095,7 @@ below 100 has different behavior
 
 	public static JSONObject mergeCore(JSONObject core, JSONObject update) {
 		if (core == null)
-			core = new JSONObject();
+			core = new JSONObject(3);
 		for (String topKey : List.of("core", "monkeyKnowledge", "crates")) {
 			JSONObject oldCore = core.optJSONObject(topKey, new JSONObject());
 			JSONObject newCore = update.optJSONObject(topKey);
@@ -1110,7 +1110,7 @@ below 100 has different behavior
 	}
 
 	private static JSONObject DEFAULT_CRATES() {
-		return new JSONObject().put("own", 0).put("requested", new JSONArray()).put("sent", new JSONArray())
+		return new JSONObject(5).put("own", 0).put("requested", new JSONArray()).put("sent", new JSONArray())
 				.put("pending", new JSONArray()).put("received", new JSONArray());
 	}
 }%>
@@ -1120,8 +1120,8 @@ public static class CTUtil {
 
 	public static JSONObject newCTRoom(int level, int cityID, JSONObject payload) {
 		String roomID = "" + ThreadLocalRandom.current().nextLong();
-		var newRoom = new JSONObject().put("contestedTerritory",
-				new JSONObject().put("cities", new JSONArray()).put("score", new JSONObject())
+		var newRoom = new JSONObject(8).put("contestedTerritory",
+				new JSONObject(8).put("cities", new JSONArray()).put("score", new JSONObject())
 						.put("data", payload.get("data")).put("roomID", roomID).put("levelTier", ctTier(level))
 						.put("minRounds", ctMinRound(level)).put("lastLootTime", System.currentTimeMillis())
 						.put("startTime", System.currentTimeMillis()));
@@ -1132,7 +1132,7 @@ public static class CTUtil {
 		var cities = room.getJSONObject("contestedTerritory").getJSONArray("cities");
 		if(Util.jStream(cities).noneMatch(x->x.getInt("userID") == userID))
 			cities
-				.put(new JSONObject()
+				.put(new JSONObject(6)
 					.put("userName",player.get("userName"))
 					.put("userID",userID)
 					.put("cityLevel",player.get("cityLevel"))
