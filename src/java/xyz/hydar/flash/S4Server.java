@@ -25,6 +25,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import xyz.hydar.flash.util.FlashUtils;
@@ -514,10 +515,20 @@ class S4GameClient extends ClientContext {
 					if(parent.players.size()<2){
 						//not apoc, lms, or samples
 						if(parent.mode!=7 && parent.mode!=5 && parent.mode!=4){
-							boost((byte)100, 0);
-							if (parent.code == 400||Math.abs(parent.code-2089076591)<20) {
+							var targetLvl = S4Server.BOOST_NUMBER_CODES.get(parent.code);
+							if(targetLvl != null) {
+								int diff = targetLvl - this.player.level();
+								while(parent.players.size() < 4 && diff > 0) {
+									int boostLvl = Math.min(diff, 100);
+									boost((byte)boostLvl , 0);
+									diff -= boostLvl;
+								}
+							}else {
 								boost((byte)100, 0);
-								boost((byte)100, 0);
+								if (parent.code == 400||Math.abs(parent.code-2089076591)<20) {
+									boost((byte)100, 0);
+									boost((byte)100, 0);
+								}
 							}
 						}else{
 							//System.out.println("else");
@@ -946,9 +957,9 @@ class S4GameClient extends ClientContext {
 	public void processChat(String[] msg) throws IOException{
 		announce(switch (msg[0].toLowerCase()) {
 			case "!source"->"https://github.com/GlennnM/FlashPrivateServer";
-			case "!help"->"Flash Private Server by Glenn M.\nCommands:\n!fill, !boost <lvl>, !vsboost, !deadtab, !unboost\n!start, !waveskip, !unlock, !ping, !source, !seed, !stats, !code, !range, !leave";
+			case "!help"->"Flash Private Server by Glenn M.\nCommands:\n!fill, !boost <level>, !vsboost, !deadtab, !unboost\n!start, !waveskip, !unlock, !ping, !source, !seed, !stats, !code, !range, !leave";
 			case "!seed"->"Current seed: "+parent.seed+"\nMap ID: "+parent.map+"\nMode: "+parent.mode;
-			case "!code"->"Current code: "+parent.code+"\nMap ID: "+parent.map+"\nMode: "+parent.mode+"\nSpecial codes: 400, apoc, lms, avs, samp";
+			case "!code"->"Current code: "+parent.code+"\nMap ID: "+parent.map+"\nMode: "+parent.mode+"\nSpecial codes: 400, apoc, lms, avs, samp , bo100, bo250, etc";
 			case "!range"->"Accepting levels "+parent.minLvl+"-"+parent.maxLvl;
 			case "!host"->"You are "+(id==parent.host?"":"not ")+"the host.";
 			case "!ping"->"Ping: "+ping+"ms, "+(1000/(0xffff&frameTime))+" reported FPS";
@@ -1193,7 +1204,7 @@ public class S4Server extends ServerContext{
 	private static final int MAX_PORT=CONFIG.sas4Ports.max();
 	private static final int PORT_STEP=CONFIG.sas4Ports.step();
 	public static volatile int nextPort = MIN_PORT;
-
+	public static final Map<Integer, Integer> BOOST_NUMBER_CODES;
 	static {
 		TimeZone MINUS8=TimeZone.getTimeZone("GMT-8");
 		Calendar c=Calendar.getInstance(MINUS8);
@@ -1211,6 +1222,16 @@ public class S4Server extends ServerContext{
 		bot=tmp1;
 		vsbot=tmp2;
 		deadtab=tmp3;
+		
+		BOOST_NUMBER_CODES = Map.copyOf(
+				IntStream.range(1, 400)
+					.boxed()
+					.collect(Collectors.toMap(
+							x->FlashUtils.sas4MatchCode("bo"+x), 
+							x->x
+						)
+					)
+			);
 	}
 	//	this.map=(new short[]{1092,1095,1094,1100,1093,1099,1096,1111,1113})[(int)(Math.random()*9)];
 	// onsl pods sur ls vac po vip is md
