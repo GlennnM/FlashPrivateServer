@@ -959,7 +959,7 @@ class S4GameClient extends ClientContext {
 			case "!source"->"https://github.com/GlennnM/FlashPrivateServer";
 			case "!help"->"Flash Private Server by Glenn M.\nCommands:\n!fill, !boost <level>, !vsboost, !deadtab, !unboost\n!start, !waveskip, !unlock, !ping, !source, !seed, !stats, !code, !range, !leave";
 			case "!seed"->"Current seed: "+parent.seed+"\nMap ID: "+parent.map+"\nMode: "+parent.mode;
-			case "!code"->"Current code: "+parent.code+"\nMap ID: "+parent.map+"\nMode: "+parent.mode+"\nSpecial codes: 400, apoc, lms, avs, samp , bo100, bo250, etc";
+			case "!code"->"Current code: "+parent.code+"\nMap ID: "+parent.map+"\nMode: "+parent.mode+"\nSpecial codes: 400, apoc, lms, avs, samp, b09, b100, b250, etc";
 			case "!range"->"Accepting levels "+parent.minLvl+"-"+parent.maxLvl;
 			case "!host"->"You are "+(id==parent.host?"":"not ")+"the host.";
 			case "!ping"->"Ping: "+ping+"ms, "+(1000/(0xffff&frameTime))+" reported FPS";
@@ -1224,10 +1224,10 @@ public class S4Server extends ServerContext{
 		deadtab=tmp3;
 		
 		BOOST_NUMBER_CODES = Map.copyOf(
-				IntStream.range(1, 400)
+				IntStream.range(1, 401)
 					.boxed()
 					.collect(Collectors.toMap(
-							x->FlashUtils.sas4MatchCode("bo"+x), 
+							x->FlashUtils.sas4MatchCode("b%02d".formatted(x)), 
 							x->x
 						)
 					)
