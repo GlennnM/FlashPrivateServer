@@ -987,7 +987,7 @@ class S4GameClient extends ClientContext {
 				else if(FlashUtils.isShort(msg[1]))
 					boost(Short.parseShort(msg[1]), 0);
 				yield null;
-			}case "!vsboost"->{
+			}case "!vsboost", "!vsb"->{
 				if(msg.length==1)
 					boost((byte)100, 1);
 				else if(FlashUtils.isShort(msg[1]))
