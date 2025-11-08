@@ -244,8 +244,6 @@ static{
 					modifyCrates(friendID, 1);
 				sent.put(newCrate);
 			}
-			updateCrates(userID, myCrates);
-			updateCrates(friendID, friendCrates);
 			return updateCrates(userID, myCrates) && success && updateCrates(friendID, friendCrates);
 		}
 		public JSONObject getCrates(int userID){
