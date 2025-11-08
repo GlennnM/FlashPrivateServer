@@ -53,7 +53,8 @@ static{
 			try{
 				Thread.sleep(100);
 				hydar.ee.ctx.setAttribute("done", 1);
-				hydar.ee.compile(Path.of("../src/webapp/BMC.jsp"));
+				if(Files.exists(Path.of("../src/webapp/BMC.jsp")))
+					hydar.ee.compile(Path.of("../src/webapp/BMC.jsp"));
 				hydar.ee.ctx.setAttribute("done", null);
 			}catch(InterruptedException e){
 				Thread.currentThread().interrupt();
