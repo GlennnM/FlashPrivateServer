@@ -214,7 +214,7 @@ class BattlesGameServer extends ServerContext{
 			"Known issues:\n-wins and losses aren't shown\n-wins, losses, battlescore don't update")+"\n")
 			.getBytes();
 	public static final byte[] WELCOME = ("RelayMsg,SentChatMsg," + FlashUtils.encode(
-			"Welcome to Flash Private Server! Please report any bugs to Glenn M#9606 on discord, and use !help for a list of commands.")+"\n")
+			"Welcome to Flash Private Server! Please report any bugs to glenn_m on discord, and use !help for a list of commands.")+"\n")
 			.getBytes();
 	public static final byte[] SHIFT9 = ("RelayMsg,SentChatMsg,"
 			+ FlashUtils.encode("they WILL die,\n(only you can see this)")+"\n").getBytes();

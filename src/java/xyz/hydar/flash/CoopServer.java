@@ -207,7 +207,7 @@ class CoopGameServer extends ServerContext {
 	public volatile boolean full=false;
 	public volatile boolean welcome=false;
 	public final String code;
-	public static final byte[] WELCOME=("106,214,"+FlashUtils.encode("\nWelcome to Flash Private Server!\nType !help for a list of commands, and report any bugs to Glenn M#9606")+"\n").getBytes();
+	public static final byte[] WELCOME=("106,214,"+FlashUtils.encode("\nWelcome to Flash Private Server!\nType !help for a list of commands, and report any bugs to glenn_m")+"\n").getBytes();
 	public CoopGameServer(CoopPlayer p1, String code, String map, int mode, int reverse) throws IOException {
 		this.p1 = p1;
 		this.map=map;
