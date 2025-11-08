@@ -598,6 +598,7 @@ class S4GameClient extends ClientContext {
 						buffer.get(offset+24,chars);
 						if(buffer.get(offset+24)=='!') {
 							String[] msg=new String(chars, StandardCharsets.UTF_8).split(" ",2);
+							Arrays.setAll(msg, i->msg[i].trim());
 							processChat(msg);
 						}
 					}

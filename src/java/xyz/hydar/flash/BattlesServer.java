@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -602,6 +603,7 @@ class BattlesGameClient extends LineClientContext {
 				if(decoded==null)
 					return null;
 				String[] cmd = decoded.trim().split(" ",2);
+				Arrays.setAll(cmd, i->cmd[i].trim());
 				switch (cmd[0]) {
 				case "!help":
 					send(BattlesGameServer.HELP);
