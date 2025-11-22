@@ -16,8 +16,6 @@ Setting up client (vanilla NK archive):
 - or just play the game with a fiddler rule active that performs the same redirect, i.e.:<br> (`regex:^https://web-monkey-city.ninjakiwi.com/` -> `http://localhost:5572/`)
 - To enable events, use another fiddler rule <br>(`regex:^https://static-api.ninjakiwi.com/nkapi/skusettings/99d5c454171a3f5027a0563eb784a366.json` -> `http://localhost:5572/99d5c454171a3f5027a0563eb784a366.json`)
 
-effect on achievements and stuff isn't entirely known(most likely your tiles ones will be reset), use an alt if you can!!!
-
 ### Status
 
 **working:** 
@@ -30,5 +28,6 @@ effect on achievements and stuff isn't entirely known(most likely your tiles one
 - crates
 
 eventually: starting city based on tiles achievements, support for different storage backend, save transfer of some kind, pvp bots, new tile format?
+
 
 
