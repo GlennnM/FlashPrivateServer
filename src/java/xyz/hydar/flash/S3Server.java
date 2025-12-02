@@ -578,11 +578,14 @@ class Room {
 	private final StringBuffer ranks=new StringBuffer(100);
 
 	public volatile boolean end = false;
-	public static final String[] MAP_URLS = new String[] { "http://sas3maps.ninjakiwi.com/sas3maps/FarmhouseMap.swf",
-			"http://sas3maps.ninjakiwi.com/sas3maps/AirbaseMap.swf",
-			"http://sas3maps.ninjakiwi.com/sas3maps/KarnivaleMap.swf",
-			"http://sas3maps.ninjakiwi.com/sas3maps/VerdammtenstadtMap.swf",
-			"http://sas3maps.ninjakiwi.com/sas3maps/BlackIsleMap.swf" };
+	public static final String NK_MAP_URL = "http://sas3maps.ninjakiwi.com/sas3maps/";
+	public static final String BASE_MAP_URL = "https://sas4fs-maps.github.io/sas3maps/";
+			
+	public static final String[] MAP_URLS = new String[] { BASE_MAP_URL+"FarmhouseMap.swf",
+			BASE_MAP_URL+"AirbaseMap.swf",
+			BASE_MAP_URL+"KarnivaleMap.swf",
+			BASE_MAP_URL+"VerdammtenstadtMap.swf",
+			BASE_MAP_URL+"BlackIsleMap.swf" };
 	public Room(S3Client p1, int mode, int nm) {
 		players.add(p1);
 		this.mode = mode;
