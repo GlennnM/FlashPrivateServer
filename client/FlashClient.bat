@@ -5,8 +5,8 @@ goto :EOF
 :PS
 
 
-$VERSION = "4.0.2"
-$SIZE = 118386517
+$VERSION = "4.0.3"
+$SIZE = 118380434
 $win_steam =${env:ProgramFiles(x86)}+"\Steam\steamapps\common\Ninja Kiwi Archive\resources"
 $win_standalone1=${env:LocalAppData}+"\Programs\Ninja Kiwi Archive\resources"
 $win_standalone2=${env:ProgramFiles}+"\Ninja Kiwi\Ninja Kiwi Archive\resources"
