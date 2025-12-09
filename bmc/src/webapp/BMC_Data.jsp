@@ -134,6 +134,7 @@ static{
 					.put("level",info.opt("cityLevel"))
 					.put("cityName",info.get("name"))
 					.put("xp",info.optInt("xp"))
+					.put("honour",info.optInt("honour"))
 					.put("xpDebt",info.optInt("xpDebt"))
 					.put("userName",payload.get("userName"))
 					.put("userClan",payload.get("userClan"))
@@ -586,7 +587,7 @@ static{
 					cities.put(new JSONObject(6)
 							.put("cityIndex", index)
 							.put("level", info.getInt("level"))
-							.put("honour", info.getInt("honour"))
+							.put("honour", info.optInt("honour"))
 							.put("name", info.getString("userName"))
 							.put("clan", info.getString("userClan"))
 							.put("youHaveAlreadyAttacked", false)//TODO: attacks.contains thing...
@@ -823,7 +824,8 @@ static{
 				;
 			sender.put("userID", ""+userID)//MUST BE STRING!!!
 				.put("cityIndex", cityID);
-			addAttack(target.getInt("userID"), target.getInt("cityIndex"), new JSONObject(payload.toString()));
+			if(!noScoreUpdate.contains(userID))
+				addAttack(target.getInt("userID"), target.getInt("cityIndex"), new JSONObject(payload.toString()));
 			addAttack(userID, cityID, payload);
 			//TODO: verify if attack should happen? ie attacked recently, city level, ...
 			//then add attack to pvp core for both sender and target(target first)
@@ -919,7 +921,7 @@ static{
 					return queue;
 				success.setPlain(true);
 				var e_ = q.remove(index);
-				if (requeue){//update level
+				if (requeue && !noScoreUpdate.contains(userID)){//update level
 					q.put(new JSONObject(3).put("userID", userID)
 							.put("level", newData.getInt("level"))
 							.put("honor", newData.getInt("honour"))
@@ -937,10 +939,11 @@ static{
 				if (queue == null)
 					queue = new JSONObject(1);
 				JSONArray q = queue.optJSONArray("queue", new JSONArray());
-				q.put(new JSONObject(3).put("userID", userID)
-						.put("level", level)
-						.put("honor", honor)
-					);
+				if(!noScoreUpdate.contains(userID))
+					q.put(new JSONObject(3).put("userID", userID)
+							.put("level", level)
+							.put("honor", honor)
+						);
 				//attackedBy or something? or just get that while taking from queue
 				//probably the latter
 				queue.put("queue", q);
