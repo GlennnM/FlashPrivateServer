@@ -67,7 +67,7 @@ static{
 	/**does stuff like putCity(0,{},..)*/
 	public static class BMCData{
 		private final ObjectStore store;
-		private volatile Set<Integer> noScoreUpdate;
+		private volatile Set<Integer> noScoreUpdate = Set.of();
 		public BMCData(ObjectStore store){
 			this.store = store;
 		}
@@ -815,6 +815,13 @@ static{
 			exitPacifist(userID, cityID);
 			addToQueue(userID, cityID, sender.getInt("cityLevel"), sender.getInt("honour"));
 			long now = System.currentTimeMillis();
+			
+			var eID = target.getInt("userID");
+			if(!payload.getBoolean("revenge")){
+				String canAttack = canAttack(userID, eID, getCityThing(eID, cityID, "info").optInt("honour"), cityID);
+				if(!"yes".equals(canAttack))
+					return new JSONObject(3).put("success",false).put("state",canAttack).put("error","bmc_game");
+			}
 			payload.put("attackID", "" + ThreadLocalRandom.current().nextLong())
 				.put("timeLaunched", now)
 				.put("status", AttackStatus.NEW_SENT)
@@ -825,13 +832,29 @@ static{
 			sender.put("userID", ""+userID)//MUST BE STRING!!!
 				.put("cityIndex", cityID);
 			if(!noScoreUpdate.contains(userID))
-				addAttack(target.getInt("userID"), target.getInt("cityIndex"), new JSONObject(payload.toString()));
+				addAttack(eID, target.getInt("cityIndex"), new JSONObject(payload.toString()));
 			addAttack(userID, cityID, payload);
-			//TODO: verify if attack should happen? ie attacked recently, city level, ...
-			//then add attack to pvp core for both sender and target(target first)
-			//add fields: attackID, status, timeLaunched, ...
-			//update sender timeUntilPacifist?
 			return new JSONObject(8).put("success", true);
+		}
+		private String canAttack(int userID, int eID, int eHonor, int cityID){
+			long now = System.currentTimeMillis();
+			var eCore = getPVPCore(eID, cityID);
+			if(now - eCore.optLong("exitedPacifistAt") > 24l*3600*1000*3 && eHonor <= 1000)
+				return "pacifist";
+			var eAttacks = eCore.getJSONArray("attacks");
+			int nAttacks = (int) Util.jStream(eAttacks)
+					.filter(x -> x.getJSONObject("target").getInt("userID") == eID)
+					.filter(x -> x.getInt("status") < AttackStatus.RESOLVED)
+					.count();
+			long alreadyAttackedAt = Util.jStream(eAttacks)
+					.filter(x -> x.getJSONObject("target").getInt("userID") == eID)
+					.filter(x -> x.getJSONObject("sender").getInt("userID") == userID)
+					.mapToLong(x -> x.getLong("timeLaunched")).max().orElse(0);
+			if (nAttacks > 4)
+				return "maxAttacks";
+			if(now - alreadyAttackedAt < 24l * 3600 * 1000)
+				return "already";
+			return "yes";
 		}
 		public JSONObject exitPacifist(int userID, int cityID){
 			return updatePVPCore(userID, cityID, x->
@@ -878,20 +901,8 @@ static{
 			int matchedID = -1;
 			for (var e : candidates) {
 				int eID = e.getInt("userID");
-				var eCore = getPVPCore(eID, cityID);
-				if(now - eCore.optLong("exitedPacifistAt") > 24l*3600*1000*3 && e.getInt("honor") <= 1000)
-					continue;
-				var eAttacks = eCore.getJSONArray("attacks");
-				int nAttacks = (int) Util.jStream(eAttacks)
-						.filter(x -> x.getJSONObject("target").getInt("userID") == eID)
-						.filter(x -> x.getInt("status") < AttackStatus.RESOLVED)
-						.count();
-				long alreadyAttackedAt = Util.jStream(eAttacks)
-						.filter(x -> x.getJSONObject("target").getInt("userID") == eID)
-						.filter(x -> x.getJSONObject("sender").getInt("userID") == userID)
-						.mapToLong(x -> x.getLong("timeLaunched")).max().orElse(0);
-				if (nAttacks > 5 || now - alreadyAttackedAt < 24l * 3600 * 1000)
-					continue;
+				if(!"yes".equals(canAttack(userID, eID, e.getInt("honor"), cityID)))
+						continue;
 				//TODO: only do this if attack actually sent
 				matchedID = dequeue(eID, cityID, true) ? eID : -1;
 				if (matchedID>=0) break;
