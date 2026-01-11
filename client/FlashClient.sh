@@ -10,7 +10,7 @@ fi
 
 echo "Detected version: $ver"
 
-if [ "$ver" != "4.0.3" ]; then
+if [ "$ver" != "4.1" ]; then
     echo "Version does not match latest. Update at https://github.com/GlennnM/FlashPrivateServer" >&2
     exit 1
 fi
