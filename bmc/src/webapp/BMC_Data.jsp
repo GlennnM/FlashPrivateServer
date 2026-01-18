@@ -777,7 +777,7 @@ static{
 		
 
 		public JSONObject closeAttack(int userID, int cityID, String attackID){
-			int[] opp = new int[1];
+			int[] opp = new int[2];
 			var now = System.currentTimeMillis();
 			updateAttack(userID, cityID, attackID, attack->{
 				var sender = attack.getJSONObject("sender");
@@ -792,9 +792,10 @@ static{
 						sender.put("resolutionSeen",sender.optLong("resolutionSeen", now));
 					}
 				opp[0] = userID==targetID ? senderID : targetID;
+				opp[1] = (userID==targetID ? sender : target).getInt("cityIndex");
 				return attack;
 			});
-			updateAttack(opp[0], cityID, attackID, attack->{//TODO: assumes same city id(this is fine)
+			updateAttack(opp[0], opp[1], attackID, attack->{//TODO: assumes same city id(this is fine)
 				if(attack.getInt("status") == AttackStatus.RESOLVED){	
 					var target = attack.getJSONObject("target");
 					var sender = attack.getJSONObject("sender");
@@ -817,8 +818,10 @@ static{
 			long now = System.currentTimeMillis();
 			
 			var eID = target.getInt("userID");
+			var eCityID = target.getInt("cityIndex");
 			if(!payload.getBoolean("revenge")){
-				String canAttack = canAttack(userID, eID, getCityThing(eID, cityID, "info").optInt("honour"), cityID);
+				var eInfo = getCityThing(eID, eCityID, "info");
+				String canAttack = eInfo == null ? "no_city" : canAttack(userID, eID, eInfo.optInt("honour"), eCityID);
 				if(!"yes".equals(canAttack))
 					return new JSONObject(3).put("success",false).put("state",canAttack).put("error","bmc_game");
 			}
@@ -832,13 +835,13 @@ static{
 			sender.put("userID", ""+userID)//MUST BE STRING!!!
 				.put("cityIndex", cityID);
 			if(!noScoreUpdate.contains(userID))
-				addAttack(eID, target.getInt("cityIndex"), new JSONObject(payload.toString()));
+				addAttack(eID, eCityID, new JSONObject(payload.toString()));
 			addAttack(userID, cityID, payload);
 			return new JSONObject(8).put("success", true);
 		}
-		private String canAttack(int userID, int eID, int eHonor, int cityID){
+		private String canAttack(int userID, int eID, int eHonor, int eCityID){
 			long now = System.currentTimeMillis();
-			var eCore = getPVPCore(eID, cityID);
+			var eCore = getPVPCore(eID, eCityID);
 			if(now - eCore.optLong("exitedPacifistAt") > 24l*3600*1000*3 && eHonor <= 1000)
 				return "pacifist";
 			var eAttacks = eCore.getJSONArray("attacks");
