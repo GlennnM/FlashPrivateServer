@@ -795,7 +795,7 @@ static{
 				opp[1] = (userID==targetID ? sender : target).getInt("cityIndex");
 				return attack;
 			});
-			updateAttack(opp[0], opp[1], attackID, attack->{//TODO: assumes same city id(this is fine)
+			updateAttack(opp[0], opp[1], attackID, attack->{
 				if(attack.getInt("status") == AttackStatus.RESOLVED){	
 					var target = attack.getJSONObject("target");
 					var sender = attack.getJSONObject("sender");
