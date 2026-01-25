@@ -1148,7 +1148,7 @@ below 100 has different behavior
 <%-- CTUtil --%>
 <%!
 public static class CTUtil {
-
+	public static long DAY = 24*3600*1000l;
 	public static JSONObject newCTRoom(int level, int cityID, JSONObject payload) {
 		String roomID = "" + ThreadLocalRandom.current().nextLong();
 		var newRoom = new JSONObject(8).put("contestedTerritory",
@@ -1172,11 +1172,11 @@ public static class CTUtil {
 	}
 	
 	private static int week(long millis) {
-		return (int) ((millis / (1000 * 60 * 60 * 24) - 4) / 7);
+		return (int) ((millis / (DAY) - 4) / 7);
 	}
 
 	private static long endOfWeek(long roomStartTime) {
-		return ((week(roomStartTime) + 1L) * 7 + 4) * 24 * 3600 * 1000;
+		return ((week(roomStartTime) + 1L) * 7 + 4) * DAY;
 	}
 	//for cases where bloons retook while someone was leader
 	//problem - what if they submitted bad scores during that time???
@@ -1189,7 +1189,7 @@ public static class CTUtil {
 			return time > 0;
 		}).filter(x -> !x.equals("" + leader)).forEach(id -> {
 			JSONObject score = scores.getJSONObject("" + id);
-			long durationWithoutCurrent = Math.min(24 * 3600 * 1000,
+			long durationWithoutCurrent = Math.min(DAY,
 					Math.min(endOfWeek, now) - score.getLong("time")) + score.optLong("durationWithoutCurrent");
 			score.put("durationWithoutCurrent", durationWithoutCurrent).put("current", 0).put("time", 0);
 		});
@@ -1232,7 +1232,7 @@ public static class CTUtil {
 			long durationTime = score.optLong("durationTime");
 			long duration = score.optLong("durationWithoutCurrent") +
 			//if time > 0, you were the last leader(even though you would no longer be)
-					(time > 0 ? (Math.min(endOfWeek, now) - Math.max(time, durationTime)) : 0);
+					(time > 0 ? (Math.min(DAY, Math.min(endOfWeek, now) - time)) : 0);
 			score.put("time", time).put("durationTime", durationTime).put("duration", duration);
 		}
 	}
@@ -1242,7 +1242,7 @@ public static class CTUtil {
 		long now = System.currentTimeMillis();
 		return scores.keySet().stream().filter(x -> {
 			long time = scores.getJSONObject(x).optLong("time");
-			return time > 0 && (now - time) < 24 * 3600 * 1000;
+			return time > 0 && (now - time) < DAY;
 		}).filter(x -> {
 			int round = scores.getJSONObject(x).optInt("current");
 			return round >= minRounds;
@@ -1255,7 +1255,7 @@ public static class CTUtil {
 		int score = newScore.optInt("score");
 		long time = newScore.optLong("time");
 		long now = System.currentTimeMillis();
-		if (score < minRounds || (now - time) >= 24 * 3600 * 1000 || week(now) != week(time))
+		if (score < minRounds || (now - time) >= DAY || week(now) != week(time))
 			return false;
 		int leader = findLeader(scores, minRounds);
 		return leader < 0 || scores.getJSONObject("" + leader).optInt("current") < score;
@@ -1264,7 +1264,7 @@ public static class CTUtil {
 	public static int ctMinRound(int level) {
 		int tier = ctTier(level);
 		return 
-		//		0 == 0 ? 1 : 
+				//0 == 0 ? 1 : 
 		switch (tier) {
 			case 1, 2, 3, 4 -> 2 + tier * 4;
 			case 5 -> 22;
