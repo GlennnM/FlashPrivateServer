@@ -639,7 +639,7 @@ static{
 				var res = new JSONObject()
 						.put("resolution","win")
 						.put("attackSucceeded", true)
-						.put("wasHardcore", false)
+						.put("hardcore", false)
 						.put("info","");
 				resolveAttack(userID, cityID, att.getString("attackID"), res);*/
 			}
@@ -730,11 +730,11 @@ static{
 					){//problem: not only the target can resolve the attack	
 						target.put("honour", defHonor);
 						var attSucc = resolution.getBoolean("attackSucceeded");
-						var wasHc = resolution.optBoolean("wasHardcore");
+						var wasHc = resolution.optBoolean("hardcore");
 						var isFriend = attack.getBoolean("isFriend");//will be used for honor calc
 						attack.put("status", AttackStatus.RESOLVED)
 							.put("resolution", resolution.getString("resolution"))
-							.put("wasHardcore", wasHc)
+							.put("hardcore", wasHc)
 							.put("attackSucceeded", attSucc)
 							.put("info", resolution.getString("info"))
 							.put("timeResolved", System.currentTimeMillis())
@@ -1589,5 +1589,6 @@ public static class FileObjectStore implements ObjectStore {
 }
 //public static class DBObjectStore ?!?!!
 //public static class S3ObjectStore ?!???!?!?!?!?!
+
 
 %>
