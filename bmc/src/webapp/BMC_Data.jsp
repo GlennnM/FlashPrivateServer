@@ -639,7 +639,7 @@ static{
 				var res = new JSONObject()
 						.put("resolution","win")
 						.put("attackSucceeded", true)
-						.put("hardcore", false)
+						.put("wasHardcore", false)
 						.put("info","");
 				resolveAttack(userID, cityID, att.getString("attackID"), res);*/
 			}
@@ -734,7 +734,7 @@ static{
 						var isFriend = attack.getBoolean("isFriend");//will be used for honor calc
 						attack.put("status", AttackStatus.RESOLVED)
 							.put("resolution", resolution.getString("resolution"))
-							.put("hardcore", wasHc)
+							.put("wasHardcore", wasHc)
 							.put("attackSucceeded", attSucc)
 							.put("info", resolution.getString("info"))
 							.put("timeResolved", System.currentTimeMillis())
@@ -1589,6 +1589,5 @@ public static class FileObjectStore implements ObjectStore {
 }
 //public static class DBObjectStore ?!?!!
 //public static class S3ObjectStore ?!???!?!?!?!?!
-
 
 %>
