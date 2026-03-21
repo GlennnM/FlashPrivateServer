@@ -83,7 +83,7 @@ class S3Client extends TextClientContext {
 		
 		send(s);
 		if (S3Server.verbose)
-			System.out.println("OUT: " + s);
+			System.out.println("OUT: " + s.replace("\0",""));
 	}
 	//Remove a zombie and add to kills/xp.
 	public void killWithCredit(int znum, StringBuilder spawnCmd) {
@@ -97,6 +97,8 @@ class S3Client extends TextClientContext {
 	public void onMessage(String m){
 		// "extension message" - main protocol for the game. A message triggers a
 		// "command"(
+		if(S3Server.verbose)
+			IO.println("IN: "+m.replace("\0",""));
 		if (m.startsWith("%xt%S")) {
 			List<String> msg = Arrays.asList(m.split("%"));
 			if(msg.size()<6) return;
@@ -197,35 +199,38 @@ class S3Client extends TextClientContext {
 				room.tryLoad();
 				break;
 			}
-			msg.set(2, "" + cmd);
-			msg.set(3, "" + msg.get(6));
-			msg.set(4, "" + -1);
-			if (cmd == 4) {
-				this.ready = true;
-				room.startTime = FlashUtils.now();
-				if (room.allReady() && !room.setup)
-					room.setup();
-				msg.set(msg.size() - 2, "" + room.SBEmult);
-				msg.set(msg.size() - 1, "" + room.barriHP);
-				Collections.swap(msg,3,4);
-				msg.remove(5);
-			}else if (WRITE_FROM.contains(cmd) && cmd != 26) {
-				if(msg.size()<8)
-					return;
-				msg.remove(2);
-				msg.remove(2);
-				Collections.swap(msg,2,3);
-				msg.set(5, "" + myPlayerNum);
-				if (cmd == 7) {
-					msg.set(4, "0");
+			if(cmd!=7) {
+				msg.set(2, "" + cmd);
+				msg.set(3, "" + msg.get(6));
+				msg.set(4, "" + -1);
+				if (cmd == 4) {
+					this.ready = true;
+					room.startTime = FlashUtils.now();
+					if (room.allReady() && !room.setup)
+						room.setup();
+					msg.set(msg.size() - 2, "" + room.SBEmult);
+					msg.set(msg.size() - 1, "" + room.barriHP);
+					Collections.swap(msg,3,4);
+					msg.remove(5);
+				}else if (WRITE_FROM.contains(cmd) && cmd != 26) {
+					if(msg.size()<8)
+						return;
+					msg.remove(2);
+					msg.remove(2);
+					Collections.swap(msg,2,3);
+					msg.set(5, "" + myPlayerNum);
+					if (cmd == 7) {
+						msg.set(4, ""+room.flashTime());
+					}
 				}
+				msg.add("\0");
+				String pl = String.join("%", msg);
+				
+				if (WRITE_FROM.contains(cmd) && cmd != 23 && cmd != 20)
+					room.writeFrom(this, pl);
+				else if (cmd != 4 || room.allReady())
+					room.writeAll(pl);
 			}
-			msg.add("\0");
-			String pl = String.join("%", msg);
-			if (WRITE_FROM.contains(cmd) && cmd != 23 && cmd != 20)
-				room.writeFrom(this, pl);
-			else if (cmd != 4 || room.allReady())
-				room.writeAll(pl);
 			// 7 name
 			// 8 lvl
 			// 12 mode
@@ -815,7 +820,9 @@ class Room {
 	public void parseDamage(String dmgStr, S3Client player) {
 		int playerNum=player.myPlayerNum;
 		String[] damages = dmgStr.split(",");
-		StringBuilder hitCmd = null;
+		StringBuilder hitCmd = new StringBuilder(damages.length * 9 + 25)
+				.append("%xt%7%-1%").append(flashTime()).append("%")
+				.append(playerNum).append("%");;
 		StringBuilder targetCmd = null;
 		StringBuilder spawnCmd=new StringBuilder();
 		boolean forgetAboutTarget=damages.length>10||zombies.size()>2048;
@@ -824,28 +831,31 @@ class Room {
 			String[] params = s.split(":");
 			int znum=Integer.parseInt(params[0]);
 			int dmg=Integer.parseInt(params[1]);
+			String infectors = params.length<4 ? "" : ":"+params[3];
 			player.damage += dmg;
 			if (params.length > 2 && params[2].equals("d")) {
+				hitCmd.append(znum).append(":0:d").append(infectors).append(",");//':d' indicates that the zombie should die
 				tryEndWave=true;
 				player.killWithCredit(znum, spawnCmd);
 			} else {
 				Zombie z = zombies.get(znum);
 				if (z != null) {
 					if ((z.hp -= dmg) <= 0) {
-						if (hitCmd == null)
-							hitCmd=new StringBuilder(damages.length * 9 + 25)
-								.append("%xt%7%-1%").append(flashTime()).append("%")
-								.append(playerNum).append("%");
-						hitCmd.append(znum).append(":1:d,");//':d' indicates that the zombie should die
+						hitCmd.append(znum).append(":0:d").append(infectors).append(",");//':d' indicates that the zombie should die
 						tryEndWave=true;
 						player.killWithCredit(znum, spawnCmd);
-					} else if(!forgetAboutTarget&&z.target!=playerNum){
-						if (targetCmd == null) 
-							targetCmd = new StringBuilder(damages.length * 5 + 25)
-								.append("%xt%22%-1%").append(flashTime()).append("%")
-								.append(playerNum).append("%[");
-						z.target=playerNum;
-						targetCmd.append(znum).append(',');
+					} else {
+						hitCmd.append(znum).append(":").append(z.hp)
+							.append(infectors.isEmpty() ? "" : ":"+infectors)
+							.append(",");//final hp instead of damage
+						if(!forgetAboutTarget&&z.target!=playerNum){
+							if (targetCmd == null) 
+								targetCmd = new StringBuilder(damages.length * 5 + 25)
+									.append("%xt%22%-1%").append(flashTime()).append("%")
+									.append(playerNum).append("%[");
+							z.target=playerNum;
+							targetCmd.append(znum).append(',');
+						}
 					}
 				}
 			}
