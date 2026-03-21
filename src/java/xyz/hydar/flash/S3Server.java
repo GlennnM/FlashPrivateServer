@@ -98,7 +98,7 @@ class S3Client extends TextClientContext {
 		// "extension message" - main protocol for the game. A message triggers a
 		// "command"(
 		if(S3Server.verbose)
-			IO.println("IN: "+m.replace("\0",""));
+			System.out.println("IN: "+m.replace("\0",""));
 		if (m.startsWith("%xt%S")) {
 			List<String> msg = Arrays.asList(m.split("%"));
 			if(msg.size()<6) return;
@@ -352,7 +352,7 @@ class SpawnTask implements Runnable {
 			//delay before spawning next group
 			int delay = switch (room.mode) {
 				case 2 -> room.bracket3(3)?2500:1000;
-				case 1 -> (Math.max(2000 - wave * 200 - room.p1 * 25, 900));//speeds up over time
+				case 1 -> (Math.max(2500 - wave * 200 - room.p1 * 25, 900));//speeds up over time
 				default -> Math.max(2000 - room.p1 * 10, 1000);
 			};
 			Room.timer.schedule(new SpawnTask(room), delay,TimeUnit.MILLISECONDS);
@@ -822,7 +822,7 @@ class Room {
 		String[] damages = dmgStr.split(",");
 		StringBuilder hitCmd = new StringBuilder(damages.length * 9 + 25)
 				.append("%xt%7%-1%").append(flashTime()).append("%")
-				.append(playerNum).append("%");;
+				.append(playerNum).append("%");
 		StringBuilder targetCmd = null;
 		StringBuilder spawnCmd=new StringBuilder();
 		boolean forgetAboutTarget=damages.length>10||zombies.size()>2048;
