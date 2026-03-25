@@ -178,22 +178,29 @@ class S3Client extends TextClientContext {
 				}
 				break;
 			case 20:
-				int barrier=Integer.parseInt(msg.get(8));
+				int barrierId=Integer.parseInt(msg.get(8));
 				int startTime=Integer.parseInt(msg.get(9));
-				if(barrier<0 || barrier>1000)return;//limit size of map
+				if(barrierId<0 || barrierId>1000)return;//limit size of map
 				int time=room.flashTime();
+				var barrier = room.barriers
+					.computeIfAbsent(barrierId, x->new Room.Barrier(room.players.size()));
 				if("1".equals(msg.get(10))) {
-					
-					int status = room.barriers
-						.computeIfAbsent(barrier, x->new Room.Barrier(room.players.size()))
-						.acquire(startTime, time);
+					int status = barrier.repair(startTime, time);
 					if(status<=0){
 						if(status<0)
-							room.barriers.remove(barrier);
+							room.barriers.remove(barrierId);
 						return;
 					}
+					//could give barri xp here
+					//but it seems to not actually exist in the regular game?
+				}else {
+					double damage = Double.parseDouble(msg.get(11));
+					barrier.hit(damage);
 				}
 				msg.set(9,""+time);
+				//if client thinks hp is above 600 it will stop updating(updates are only sent when hp phase reached)
+				//(and the hp phases are hard coded to 600 max hp)
+				msg.set(11, ""+  Math.min(600, Math.max(0, room.barriHP - barrier.dmg().intValue())));
 				break;
 			case 26:
 				room.tryLoad();
@@ -219,9 +226,6 @@ class S3Client extends TextClientContext {
 					msg.remove(2);
 					Collections.swap(msg,2,3);
 					msg.set(5, "" + myPlayerNum);
-					if (cmd == 7) {
-						msg.set(4, ""+room.flashTime());
-					}
 				}
 				msg.add("\0");
 				String pl = String.join("%", msg);
@@ -517,23 +521,27 @@ class Room {
 	 * of a packet with the same time value, depending on player count,
 	 * and then start allowing them again.
 	 * */
-	static record Barrier(AtomicInteger time, AtomicInteger repeats, int max) {
-		Barrier(int max){
-			this(new AtomicInteger(-1),new AtomicInteger(max), max);
+	static record Barrier(AtomicInteger time, AtomicInteger repeats, DoubleAdder dmg, int maxRepeats) {
+		Barrier(int maxRepeats){
+			this(new AtomicInteger(-1),new AtomicInteger(maxRepeats),new DoubleAdder(), maxRepeats);
+		}
+		void hit(double damage) {
+			dmg.add(damage);
 		}
 		/**
-		 * Update time and repeats.
+		 * Update time and repeats and reset damage.
 		 * If startTime(included in packet) is greater than
 		 * the previous time(or prev is -1)
 		 * we set it to newTime(which is absolute from clock).
 		 * Returns: the time if successful, 0 if did nothing
 		 * , -1 if it should be deallocated(repeat max reached).
 		 * */
-		int acquire(int startTime, int newTime) {
+		int repair(int startTime, int newTime) {
 			//Update the value and check if it was successfully modified at the same time.
+			int hp = Math.min(1, (int)dmg.sumThenReset());
 			if(time.getAndAccumulate(startTime, (x,y)->x<y?newTime:x)<startTime) {
-				repeats.set(max);
-				return newTime;
+				repeats.set(maxRepeats);
+				return hp;
 			}else if(startTime==0){
 				return (repeats.decrementAndGet() > 0) ? 0 : -1;
 			}
@@ -614,7 +622,9 @@ class Room {
 		this.setup = true;
 		this.rankAvg = (int)(players.stream().mapToInt(x->x.rank).average().orElse(0));
 		this.SBEmult = (1f + this.rankAvg / 10f) / 2f * (nm==0?1f:10f);
-		this.barriHP = (int) (600f * this.SBEmult * this.SBEmult);
+		this.barriHP = 600;
+		//this scaling is possibly intended but isn't used in practice
+		//(int) (600f * this.SBEmult * this.SBEmult);
 		switch (mode) {
 		case 1:
 			waveTotal = 3;
