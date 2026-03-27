@@ -113,6 +113,10 @@ class S4GameServer extends ServerContext{
 	public S4GameClient getHost() {
 		return getPlayer(host);
 	}
+	/**returns the host level*/
+	public short getHostLevel() {
+		return getPlayer(host).player.level();
+	}
 	/**Runs at most once a second when players send a ping or time packet(-9 or -3)<br>
 	 * Performs tasks that need to be performed continuously before the game starts, such as updating the auto-start timer and level ranges.<br>Public lobbies(code=0) only.*/
 	public void autoTick() throws IOException {
@@ -158,7 +162,7 @@ class S4GameServer extends ServerContext{
 			autoClear();
 		}else if(autostart&&this.allLoaded()){
 			if (players.size() == 2) {
-				this.startAt = Math.max(startAt,lastTick+20000);
+				this.startAt = Math.max(startAt,lastTick+30000);
 			}else if (players.size() == 4) {
 				this.startAt = lastTick;
 			}
@@ -177,10 +181,11 @@ class S4GameServer extends ServerContext{
 		this.startAt=-1;
 	}
 	/**Returns true if a level {@code lvl} player can join this lobby.<br>
-	 * Returns false if the lobby is started(), full, or the level is out of the lobby range.*/
+	 * Returns false if the lobby is started, full, or the level is out of the lobby range.*/
 	public boolean allows(short lvl) {
 		return (!this.started()) && (this.players != null) && (this.players.size() < 4) && (lvl <= maxLvl)
-				&& (lvl >= minLvl);
+				&& (lvl >= minLvl)
+				&& !(this.code == 0 && lvl - getHostLevel() > 20 && this.players.size() > 1);
 	}
 	/**Returns true if all players are level 96 or higher, allowing for a level 101 boost according to the default rules.*/
 	public boolean can101(){
@@ -386,6 +391,13 @@ class S4GameClient extends ClientContext {
 			}
 		}
 		parent.autoCheck();
+		if(parent.code == 0  &&
+				!bot && //adding bot outside range not allowed in the first place
+			Math.abs(player.level() - parent.getHostLevel()) > 20) {
+			
+			startGame(false);
+			chat("Game started instantly due to level gap.", true);
+		}
 		if(parent.players.size()==3&&!bot)unboost();
 	}
 	/**Alert all players of the bot specified by target and then register it, since bots don't have output buffers.*/
@@ -529,7 +541,7 @@ class S4GameClient extends ClientContext {
 									boost((byte)100, 0);
 									boost((byte)100, 0);
 								}
-							}
+							} 
 						}else{
 							//System.out.println("else");
 							boost((byte)100, 2);
@@ -539,7 +551,8 @@ class S4GameClient extends ClientContext {
 					}
 					valid=validate(data);
 					if((parent.code==0&&!valid)||
-							(player.level()<15 && parent.mode>2 && parent.mode<100 && valid)) {
+							(player.level()<15 && parent.mode>2 && parent.mode<100 && valid)
+							) {
 						var msg=valid?
 								"You need to be level 15 to play events":
 								"You can't join this lobby.\nTry a private/sandbox lobby(code apoc, lms, samp) instead";
@@ -798,12 +811,13 @@ class S4GameClient extends ClientContext {
 		}
 		return true;
 	}
-
 	/**Add a bot, if possible. {@code vs} is 0 for normal bots, 1 for vs bots, and 2 for deadtabs*/
 	public void boost(short level,int vs) throws IOException {
 		if ((level>101&&(parent.code==0||valid))||(level==101&&!parent.can101())||
 				parent.players.size() > 3||parent.started()
 				//||(vs>1&&parent.mode!=7&&parent.mode!=3)
+				//only 1 direction - lvl 15 player is allowed to add a lvl 100 boost
+				|| (parent.code == 0 && parent.getHostLevel() - level > 20)
 				) {
 			chat("Unable to boost.",false);
 			return;
@@ -961,7 +975,8 @@ class S4GameClient extends ClientContext {
 			case "!help"->"Flash Private Server by Glenn M.\nCommands:\n!fill, !boost <level>, !vsboost, !deadtab, !unboost\n!start, !waveskip, !unlock, !ping, !source, !seed, !stats, !code, !range, !leave";
 			case "!seed"->"Current seed: "+parent.seed+"\nMap ID: "+parent.map+"\nMode: "+parent.mode;
 			case "!code"->"Current code: "+parent.code+"\nMap ID: "+parent.map+"\nMode: "+parent.mode+"\nSpecial codes: 400, apoc, lms, avs, samp, b09, b100, b250, etc";
-			case "!range"->"Accepting levels "+parent.minLvl+"-"+parent.maxLvl;
+			case "!range"->"Accepting levels "+parent.minLvl+"-"+parent.maxLvl+
+				(parent.code==0?"\nKick bots before adding players >20 levels away!":"");
 			case "!host"->"You are "+(id==parent.host?"":"not ")+"the host.";
 			case "!ping"->"Ping: "+ping+"ms, "+(1000/(0xffff&frameTime))+" reported FPS";
 			case "!skipi", "!waveskip"->{
@@ -1036,11 +1051,13 @@ class S4GameClient extends ClientContext {
 				if(parent.started()) {
 					yield "The game already started";
 				}else if(!parent.autostart || (parent.minLvl<0&&parent.maxLvl>100)) {
-					yield "This lobby already allows all levels";
+					yield "This lobby already allows all levels"+
+							(parent.code==0?"\nKick bots before adding players >20 levels away!":"");
 				}else if(id==parent.host) {
 					parent.minLvl=-1;
 					parent.maxLvl=101;
-					yield "Now accepting all levels";
+					yield "Now accepting all levels"+
+							(parent.code==0?"\nKick bots before adding players >20 levels away!":"");
 				}else yield "You are not the host";
 			}
 			case "!map"->{
