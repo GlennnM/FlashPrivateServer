@@ -156,8 +156,9 @@ public abstract class ServerContext{//TODO: options: ssl
 									ctx.newClient().start(result);
 								} catch (IOException e) {
 									
+								} finally {
+									server.accept(null,this);
 								}
-								server.accept(null,this);
 							}else close2();
 						}
 
@@ -221,7 +222,13 @@ public abstract class ServerContext{//TODO: options: ssl
 					while(ctx.alive) {
 						try {
 							Socket client=server.accept();
-							ctx.newClient().start(client);
+							DEFAULT.newThread(()->{
+								try {
+									ctx.newClient().start(client);
+								} catch (IOException e) {
+									
+								}
+							}).start();
 						}catch(SocketTimeoutException ste) {
 							continue;
 						}

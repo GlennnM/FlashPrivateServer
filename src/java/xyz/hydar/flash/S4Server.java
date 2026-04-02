@@ -183,9 +183,12 @@ class S4GameServer extends ServerContext{
 	/**Returns true if a level {@code lvl} player can join this lobby.<br>
 	 * Returns false if the lobby is started, full, or the level is out of the lobby range.*/
 	public boolean allows(short lvl) {
+		var host = getHost();
 		return (!this.started()) && (this.players != null) && (this.players.size() < 4) && (lvl <= maxLvl)
 				&& (lvl >= minLvl)
-				&& !(this.code == 0 && lvl - getHostLevel() > 20 && this.players.size() > 1);
+				&& !(this.code == 0 && 
+					(host==null || host.player==null || (lvl - host.player.level() > 20 && this.players.size() > 1))
+				);
 	}
 	/**Returns true if all players are level 96 or higher, allowing for a level 101 boost according to the default rules.*/
 	public boolean can101(){

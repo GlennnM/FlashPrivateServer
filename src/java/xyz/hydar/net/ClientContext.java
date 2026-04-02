@@ -366,6 +366,8 @@ public abstract class ClientContext{
 			public void send(ByteBuffer b){
 				outLock.lock();
 				try {
+					if(b.isDirect())//TODO: warning or prevent this some other way or something
+						b = ByteBuffer.allocate(b.remaining()).put(b).flip();
 					sendImpl(b,false);
 				}finally {
 					outLock.unlock();
