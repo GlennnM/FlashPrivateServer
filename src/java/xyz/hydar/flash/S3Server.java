@@ -313,7 +313,7 @@ class SpawnTask implements Runnable {
 		// create loc5
 		float chanceSum = 0.0f;
 		for (var z : ZombieType.values()) {
-			if (//(z.index==9)&& 
+			if (//(z.index==9)&&
 			!(room.map == 1 && z.index == 9) && z.weight <= loc2) {
 				loc3.add(z);
 				chanceSum+=z.chance;
@@ -348,10 +348,6 @@ class SpawnTask implements Runnable {
 			cmds.append(room.spawnCmd(loc12,-1,time));
 		}
 		String spawnCmd = cmds.toString();
-		if (spawnCmd.length() > 0) {
-			room.writeAll(spawnCmd);
-			room.flushAll();
-		}
 		if (++room.p1 < room.p4) {
 			//delay before spawning next group
 			int delay = switch (room.mode) {
@@ -360,6 +356,26 @@ class SpawnTask implements Runnable {
 				default -> Math.max(2000 - room.p1 * 10, 1000);
 			};
 			Room.timer.schedule(new SpawnTask(room), delay,TimeUnit.MILLISECONDS);
+		}else {
+			//if you kill the dev before this happens, it should do things
+			//does the spawning alg know that a dev is alive??????
+			if (room.init && (room.mode!=1 || room.nests.isEmpty()) && !(room.bracket3(3)) && room.r.compareAndSet(false,true)){
+				if (S3Server.verbose)
+					System.out.println("||||||Wave end");
+				room.endWave();
+				room.flushAll();
+				return;
+			}
+		}
+		//send after wave end check and p1++
+		//this could cause the last wave to get skipped, but the client doesn't know about the zombies yet
+		//so they couldn't possibly have killed them if there were actually going to be any
+		if (spawnCmd.length() > 0) {
+			room.writeAll(spawnCmd);
+			room.flushAll();
+		}else {
+			//wave end might not happen if all capacity has been used
+			
 		}
 	}
 }
@@ -459,7 +475,7 @@ class PowerupTask implements Runnable {
 /**index is the type ID, weight and chance affect spawning, cap affects spawning as well as round ends.*/
 enum ZombieType {
 	SWARMER(0,1,100f,1f,160,10), RUNNER(1,4,30f,1.5f,100,15), CHOKER(2,10,15f,6f,500,60),
-	BLOATER(3,12,5f,15f,3000,150), SHADOW(4,14,2f,12f,2500,120), MAMUSHKA(5,16,1f,108f,4000,360),
+	BLOATER(3,12,5f,15f,3000,150), SHADOW(4,14,2f,12f,2500,120), MAMUSHKA(5,16,0.3f,108f,4000,360),
 	MAMUSHKA2(6,999,0f,36f,3000,120), MAMUSHKA3(7,999,0f,12f,2000,40), MAMUSHKA4(8,999,0f,4f,1000,40),
 	DEVASTATOR(9,18,0.1f,600f,30000,6000), SKELEMAN(10,999,0f,3f,300,0), WORM(11,999,0f,0.5f,100,5),
 	NEST(12,999,0f,1f,80000,6000);
@@ -937,13 +953,13 @@ class Room {
 			for (var z : zombies.keySet()) {
 				hitCmd.append(z).append(":1:d,");
 			}
-			zombies.clear();
-			totalCapacity.reset();
-			nextSpawnNum.addAndGet(ThreadLocalRandom.current().nextInt(4));
 			hitCmd.deleteCharAt(hitCmd.length() - 1).append("%\0");
 			writeAll(hitCmd.toString());
 			flushAll();
 		}
+		zombies.clear();
+		totalCapacity.reset();
+		nextSpawnNum.addAndGet(ThreadLocalRandom.current().nextInt(4));
 		writeAll("%xt%18%-1%0%" + wave + "%" + waveTotal + "%\0");
 		p1 = 0;
 		p2 = 0.0f;
