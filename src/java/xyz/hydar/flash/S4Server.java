@@ -60,6 +60,7 @@ class S4GameServer extends ServerContext{
 	public volatile int startAt=-1;
 	public volatile int lastTick=0;
 	public volatile int ingameSince=Integer.MAX_VALUE;
+	public final AtomicBoolean locked=new AtomicBoolean();
 	public final AtomicBoolean started=new AtomicBoolean();
 	public final AtomicBoolean ingame=new AtomicBoolean();
 	/**
@@ -139,6 +140,10 @@ class S4GameServer extends ServerContext{
 		}
 	}
 
+	/**Returns whether players are allowed.*/
+	public boolean locked() {
+		return locked.get() || started();
+	}
 	/**Returns whether building has started.*/
 	public boolean started() {
 		return started.get();
@@ -184,7 +189,7 @@ class S4GameServer extends ServerContext{
 	 * Returns false if the lobby is started, full, or the level is out of the lobby range.*/
 	public boolean allows(short lvl) {
 		var host = getHost();
-		return (!this.started()) && (this.players != null) && (this.players.size() < 4) && (lvl <= maxLvl)
+		return (!this.locked()) && (this.players != null) && (this.players.size() < 4) && (lvl <= maxLvl)
 				&& (lvl >= minLvl)
 				&& !(this.code == 0 && 
 					(host==null || host.player==null || (lvl - host.player.level() > 20 && this.players.size() > 1))
@@ -397,9 +402,8 @@ class S4GameClient extends ClientContext {
 		if(parent.code == 0  &&
 				!bot && //adding bot outside range not allowed in the first place
 			Math.abs(player.level() - parent.getHostLevel()) > 20) {
-			
-			startGame(false);
-			chat("Game started instantly due to level gap.", true);
+			parent.locked.set(true);
+			chat("Lobby locked due to level gap, no more players can join.", true);
 		}
 		if(parent.players.size()==3&&!bot)unboost();
 	}
@@ -817,7 +821,7 @@ class S4GameClient extends ClientContext {
 	/**Add a bot, if possible. {@code vs} is 0 for normal bots, 1 for vs bots, and 2 for deadtabs*/
 	public void boost(short level,int vs) throws IOException {
 		if ((level>101&&(parent.code==0||valid))||(level==101&&!parent.can101())||
-				parent.players.size() > 3||parent.started()
+				parent.players.size() > 3||parent.locked()
 				//||(vs>1&&parent.mode!=7&&parent.mode!=3)
 				//only 1 direction - lvl 15 player is allowed to add a lvl 100 boost
 				|| (parent.code == 0 && parent.getHostLevel() - level > 20)
