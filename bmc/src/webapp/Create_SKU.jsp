@@ -1,3 +1,5 @@
+<%@page import="java.util.function.UnaryOperator"%>
+<%@page import="java.util.stream.Stream"%>
 <%@page import="java.time.Month"%>
 <%@page import="java.util.Set"%>
 <%@page import="java.util.stream.Collectors"%>
@@ -155,21 +157,31 @@
 	}
 	public static void createSKU(int id, String sig, HttpServletRequest request)
 			throws IOException, NoSuchAlgorithmException {
+		createSKU(id, sig, request, x->x);
+	}
+	public static void createSKU(int id, String sig, HttpServletRequest request, UnaryOperator<JSONObject> processor)
+			throws IOException, NoSuchAlgorithmException {
 		switch(id){
 		case 7:
-			createSKU(id,"/99d5c454171a3f5027a0563eb784a366.json", sig, -8, 8, 28, request, APR_30_2025, basicEvents7);
+			createSKU(id,"/99d5c454171a3f5027a0563eb784a366.json", sig, -8, 8, 28, request, APR_30_2025, basicEvents7, processor);
 			break;
 		case 14:
-			createSKU(id,"/9a0a8254da299947492b4e1eb15291f1.json", sig, -30, 14, 63, request, FEB_3_2025, basicEvents14);
+			createSKU(id,"/9a0a8254da299947492b4e1eb15291f1.json", sig, -30, 14, 63, request, FEB_3_2025, basicEvents14, processor);
 			break;
 		}
+	}
+	public static Stream<String> jss(JSONArray array) {
+		return IntStream.range(0, array.length()).mapToObj(array::getString);
+	}
+	public static Stream<JSONObject> js(JSONArray array) {
+		return IntStream.range(0, array.length()).mapToObj(array::getJSONObject);
 	}
 	/**
 	* Create SKU file, will be saved to file given by URL
 	* Should be run at least every few days on requests (use ctx.consumeSKU after)
 	* not all requests since that would make lag
 	*/
-	public synchronized static void createSKU(int id, String url, String sig, int start, int end, int repeat, HttpServletRequest request, LocalDateTime origin, JSONArray basicEvents)
+	public synchronized static void createSKU(int id, String url, String sig, int start, int end, int repeat, HttpServletRequest request, LocalDateTime origin, JSONArray basicEvents, UnaryOperator<JSONObject> processor)
 			throws IOException, NoSuchAlgorithmException {
 		var sku_enc = request.getServletContext().getResourceAsStream("/" + id + "_ORIGIN.json").readAllBytes();
 		var sku_dec = decrypt(sku_enc);
@@ -179,10 +191,31 @@
 		var sku_real = new JSONObject(tmp.getString("data"));
 		var events = sku_real.getJSONObject("settings").getJSONArray("events");
 		List<JSONObject> newEvents = getEvents(request, start, end, repeat, origin, basicEvents);
-		newEvents.addAll(IntStream.range(0, events.length()).mapToObj(events::getJSONObject)
+		newEvents.addAll(js(events)
 				.filter(x -> x.getLong("end") > System.currentTimeMillis()).toList());
+		try{
+			JSONArray customEvents = new JSONArray(
+					new String(request.getServletContext().getResourceAsStream("/" + id + "_custom_events.json").readAllBytes())
+				);
+			js(customEvents)
+				.flatMap(x->jss(x.optJSONArray("ids",new JSONArray(1).put(x.optString("id"))))
+							.map(theId->x.put("id",theId))
+						)
+				.forEach(x->
+					newEvents.stream()
+					.filter(e->e.getString("id").endsWith(x.getString("id")))
+					.findFirst()
+					.ifPresent(e->x.keySet()
+							.stream()
+							.filter(k->!k.equals("ids") && !k.equals("id"))
+							.forEach(k->e.put(k,x.get(k)))
+						)
+				);
+				
+		}catch(Exception ioe){
+			ioe.printStackTrace();
+		}
 		sku_real.getJSONObject("settings").put("events", new JSONArray(newEvents));
-
 		if(id == 14){//sas4
 			var h = (JSONObject) (sku_real.query("/settings/Settings/FestivalHoliday/Halloween"));
 			var c = (JSONObject) (sku_real.query("/settings/Settings/FestivalHoliday/Christmas"));
@@ -199,7 +232,7 @@
 				e.put("Active",true);
 			}
 		}
-
+		sku_real = processor.apply(sku_real);
 		tmp.put("data", sku_real.toString());
 		var MD = MessageDigest.getInstance("MD5");
 		MD.update(sig.getBytes());
