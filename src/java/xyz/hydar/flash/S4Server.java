@@ -1029,7 +1029,8 @@ class S4GameClient extends ClientContext {
 			case "!source"->"https://github.com/GlennnM/FlashPrivateServer";
 			case "!help"->"Flash Private Server by Glenn M.\nCommands:\n!fill, !boost <level>, !vsboost, !deadtab, !unboost\n!start, !waveskip, !unlock, !ping, !source, !seed, !stats, !code, !range, !leave";
 			case "!seed"->"Current seed: "+parent.seed+"\nMap ID: "+parent.map+"\nMode: "+parent.mode;
-			case "!code"->"Current code: "+parent.code+"\nMap ID: "+parent.map+"\nMode: "+parent.mode+"\nSpecial codes: 400, apoc, lms, avs, samp, b09, b100, b250, etc";
+			case "!code"->"Current code: "+parent.code+"\nMap ID: "+parent.map+"\nMode: "+parent.mode+
+				"\nSpecial codes: 400, apoc, lms, avs, vsa, acs, sta, b09, b100, b250, etc";
 			case "!range"->"Accepting levels "+parent.minLvl+"-"+parent.maxLvl+
 				(parent.code==0?"\nKick bots before adding players >20 levels away!":"");
 			case "!host"->"You are "+(id==parent.host?"":"not ")+"the host.";
@@ -1410,9 +1411,9 @@ public class S4Server extends ServerContext{
 				int code=requestedCode;
 				short mode = requestedMode<2?switch(code) {
 					case 193486639, 253193259, 1870369476->3;//avs, alpha, alphavirus
-					case 193498321, 264330093 -> 4;//lms, last man standing
-					case 2090085224, 193502727, 744744362, 2106828268, 274496549, 1815900785-> 5;//apoc, poc, apocalypse, skipi, waveskip, sandbox
-					case 2090715702, 2107572390, 1168011283 -> 7;//samp, samples, virussamples
+					case 193498321, 264330093, 193506157  -> 4;//lms, last man standing, sta
+					case 2090085224, 193502727, 744744362, 2106828268, 274496549, 1815900785, 193486012 -> 5;//apoc, poc, apocalypse, skipi, waveskip, sandbox, acs
+					case 2090715702, 2107572390, 1168011283, 193509391 -> 7;//samp, samples, virussamples, vsa
 					default->requestedMode;
 					//extra modes:0="any" 6="contracts", they play exactly like normal games
 					//(so not included)
