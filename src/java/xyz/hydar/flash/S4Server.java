@@ -271,8 +271,9 @@ class S4GameClient extends ClientContext {
 	public final boolean bot;
 	public final int vs;
 	private float load=0f;
-	private short ping=0;
-	private short frameTime=1000;
+	private volatile int ping=0;
+	private volatile int fps=1;
+	private volatile boolean laggy = false;
 	private boolean valid=false;
 	protected ByteBuffer local;//write to self
 	protected ByteBuffer remote;//write to peers
@@ -425,6 +426,10 @@ class S4GameClient extends ClientContext {
 		if(parent.autostart){
 			parent.autoCheck();
 		}
+	}
+	/**Return most recent FPS estimate*/
+	public int fps() {
+		return this.fps;
 	}
 	/**Force loading or building to complete.*/
 	public void fullLoad() {
@@ -581,8 +586,12 @@ class S4GameClient extends ClientContext {
 				break;
 			case -9:
 				ping=buffer.getShort();
-				frameTime=buffer.getShort();
+				short frameTime=buffer.getShort();
 				if(frameTime==0)frameTime++;
+				this.fps = (1000/(0xffff&frameTime));
+				this.laggy = parent.players.stream().filter(x->!x.bot)
+						.mapToInt(x->x.fps)
+						.max().orElse(0) > this.fps * 3;
 				parent.autoTick();
 			break;
 			case -2:
@@ -598,7 +607,7 @@ class S4GameClient extends ClientContext {
 						&& buffer.get(offset+19)==0x1
 						) {
 					var target=parent.getPlayer(buffer.getInt(offset+20));
-					if(target!=null && target.bot) {
+					if(target!=null && (target.bot || target.laggy)) {
 						buffer.putInt(offset+20,-1);//-1 resets targeting
 						local(23)
 							.put((byte)-2)
@@ -985,7 +994,7 @@ class S4GameClient extends ClientContext {
 			case "!range"->"Accepting levels "+parent.minLvl+"-"+parent.maxLvl+
 				(parent.code==0?"\nKick bots before adding players >20 levels away!":"");
 			case "!host"->"You are "+(id==parent.host?"":"not ")+"the host.";
-			case "!ping"->"Ping: "+ping+"ms, "+(1000/(0xffff&frameTime))+" reported FPS";
+			case "!ping"->"Ping: "+ping+"ms, "+fps+" reported FPS";
 			case "!skipi", "!waveskip"->{
 				if(parent.skipi)
 					yield "Waveskip is already enabled.";
