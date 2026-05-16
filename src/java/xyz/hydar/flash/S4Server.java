@@ -17,6 +17,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
@@ -246,6 +247,10 @@ class S4GameServer extends ServerContext{
 	public int flashTime() {
 		return (int)(FlashUtils.now()-startedAt);
 	}
+	public void transferHost(byte id) {
+		players.stream()
+			.forEach(x->x.send(new byte[] {(byte)-7,host,id}));
+	}
 	public void allHost() {
 		players.stream()
 			.filter(x->x.id!=host)
@@ -268,6 +273,7 @@ class S4GameClient extends ClientContext {
 	public volatile boolean loaded=false;
 	public volatile boolean built=false;
 
+	private volatile float x,y;
 	public final boolean bot;
 	public final int vs;
 	private float load=0f;
@@ -527,6 +533,8 @@ class S4GameClient extends ClientContext {
 			alive=false;
 			return;
 		}
+		// save x and y on player sync packet
+		// save x and y for mobs 
 		switch(opcode){
 			case 0:
 				if(!parent.started()){
@@ -592,6 +600,8 @@ class S4GameClient extends ClientContext {
 				this.laggy = parent.players.stream().filter(x->!x.bot)
 						.mapToInt(x->x.fps)
 						.max().orElse(0) > this.fps * 3;
+				if(this.laggy && parent.ingame() && parent.getHost() == this)
+					parent.transferHost(getNonLaggyPeer());
 				parent.autoTick();
 			break;
 			case -2:
@@ -608,7 +618,10 @@ class S4GameClient extends ClientContext {
 						) {
 					var target=parent.getPlayer(buffer.getInt(offset+20));
 					if(target!=null && (target.bot || target.laggy)) {
-						buffer.putInt(offset+20,-1);//-1 resets targeting
+						int newTarget = target.bot ? -1 : //-1 resets targeting
+							target.getNonLaggyPeer();
+						
+						buffer.putInt(offset+20,newTarget);
 						local(23)
 							.put((byte)-2)
 							.putInt(18).put((byte)(5))
@@ -616,7 +629,7 @@ class S4GameClient extends ClientContext {
 							.putInt(buffer.getInt(offset+11))//enemy ID
 							.putInt(-1)
 							.put((byte)1)//opcode(target)
-							.putInt(-1);//player to target
+							.putInt(newTarget);//player to target
 					}
 				}
 				//chat packet - possibly run commands
@@ -647,7 +660,26 @@ class S4GameClient extends ClientContext {
 					//dont relay if no peers
 					if(getPeer()==null)break;
 				}
-				//loading/building packet - update loading status
+				else if(subop==0x05 && actualSize==64
+					&& buffer.getInt(offset+11)==id
+					&& buffer.getInt(offset+15)==-1 
+					&& buffer.get(offset+19)==0x01) {
+					/**System.out.printf("%f,%f\t%f,%f\t%f,%f\t%f\t%f,%f\n",
+							buffer.getFloat(offset+20),
+							buffer.getFloat(offset+24),
+							buffer.getFloat(offset+28),
+							buffer.getFloat(offset+32),
+							buffer.getFloat(offset+36),
+							buffer.getFloat(offset+40),
+							buffer.getFloat(offset+44),
+							buffer.getFloat(offset+48),
+							buffer.getFloat(offset+52)
+							);*/
+					this.x = buffer.getFloat(offset+28);
+					this.y = buffer.getFloat(offset+32);
+					//IO.println(actualSize);
+					//IO.println(HexFormat.of().formatHex(ByteBuffer.allocate(actualSize).put(buffer.slice(offset,actualSize)).array()));
+				}
 				else if(subop==0x07&&actualSize==20) {
 					float load=buffer.getFloat(offset+8);
 					if(!parent.started()) {
@@ -949,6 +981,13 @@ class S4GameClient extends ClientContext {
 			if(thread.id!=id&&!thread.bot) 
 				return thread;
 		return null;
+	}
+	/**Returns the closest player who is not lagging and is not a bot*/
+	public byte getNonLaggyPeer() {
+		return (byte) parent.players.stream().filter(x->!x.bot&&!x.laggy)
+			.sorted(Comparator.comparingDouble(x->Math.hypot(x.x - this.x, x.y - this.y)))
+			.mapToInt(x->x.id)
+			.findFirst().orElse(id);
 	}
 	/**Send a chat message.
 	 * @param all - whether the message should be seen by all players, or only this player
