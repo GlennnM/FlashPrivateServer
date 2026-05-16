@@ -248,6 +248,7 @@ class S4GameServer extends ServerContext{
 		return (int)(FlashUtils.now()-startedAt);
 	}
 	public void transferHost(byte id) {
+		this.host = id;
 		players.stream()
 			.forEach(x->x.send(new byte[] {(byte)-7,host,id}));
 	}
@@ -599,7 +600,7 @@ class S4GameClient extends ClientContext {
 				this.fps = (1000/(0xffff&frameTime));
 				this.laggy = parent.players.stream().filter(x->!x.bot)
 						.mapToInt(x->x.fps)
-						.max().orElse(0) > this.fps * 3;
+						.max().orElse(0) > this.fps * 2;
 				if(this.laggy && parent.ingame() && parent.getHost() == this)
 					parent.transferHost(getNonLaggyPeer());
 				parent.autoTick();
