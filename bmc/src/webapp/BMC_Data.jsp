@@ -63,6 +63,7 @@ static{
 	}
 }
 %><%!
+	static final int MAX_FRIEND_HONOR = Integer.MAX_VALUE; //above this value friend attacks give no honor(default 1500)
 	static final long CT_QUEUE_TIME = 24L * 3600 * 1000 * 3;//time a new CT is joinable for
 	/**does stuff like putCity(0,{},..)*/
 	public static class BMCData{
@@ -1040,7 +1041,7 @@ below 100 has different behavior
 		return facs[0];
 	}
 	public static double baseHonor(int w, int l, boolean attackSuccess, boolean friend){
-		if(friend && w>1500 && l>1500)
+		if(friend && w>MAX_FRIEND_HONOR && l>MAX_FRIEND_HONOR)
 			return 0;
 		double d = Math.abs(w-l);
 		double base = (attackSuccess ? 29 : 28);
