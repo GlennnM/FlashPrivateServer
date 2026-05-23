@@ -1,15 +1,5 @@
 [
 	{
-		"ids":["m821gzfh","m3y9ck6t","m3y9chpx"],
-		"name":"LMS",
-		"type":"LastManStanding",
-		"metadata":{
-			 "--Event-Rewards":"default",
-			 "Event-Preset":"Last Man Standing",
-			 "--Map-Preset":"Any"
-		}
-	},
-	{
 		
       "ids":["m3y9cfuz","m3y9cic5","m3y9ckt1"],
 	  "metadata":{
