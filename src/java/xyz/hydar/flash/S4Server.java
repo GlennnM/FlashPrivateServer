@@ -452,7 +452,7 @@ class S4GameClient extends ClientContext {
 			changeMap(map);
 		}else if(parent.mapSet==-1) {
 			announce("Map changes are not enabled");
-		}else if((index=Arrays.binarySearch(S4Server.EVENT_MAP_SETS[parent.mapSet],map))>=0) {
+		}else if((index=FlashUtils.shortSearch(S4Server.EVENT_MAP_SETS[parent.mapSet], map))>=0) {
 			changeMap(map);
 			if(parent.code!=0)
 				announce("Map changed to "+(index+1));
@@ -1135,7 +1135,7 @@ class S4GameClient extends ClientContext {
 					}else
 						yield "Invalid map/not Apoc or LMS, or you aren't the host.";
 				}else
-					yield "Specify a map: 1-9 = normal maps, 10+ = contract maps";
+					yield "Specify a map: 1-9 = normal maps, 10-15 = contract maps, 16+ = custom maps";
 			}case "!disconnect","!leave"->{
 				this.alive=false;
 				yield "Disconnecting player...";
@@ -1267,12 +1267,12 @@ public class S4Server extends ServerContext{
 	public static final String ip=CONFIG.HOST;
 	public static final short[] NORMAL_MAPS={1008, 1018, 1067, 1009, 1054, 1043, 1016, 1101, 1110};
 	public static final short[] NM_MAPS={1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1112};
-	public static final short[] EVENT_MAPS={1092,1093,1094,1095,1096,1099,1100,1111,1113,1114,1115,1116,1117,1118,1119};
+	public static final short[] EVENT_MAPS={1092,1093,1094,1095,1096,1099,1100,1111,1113,1114,1115,1116,1117,1118,1119,1019};
 	public static final short[][] EVENT_MAP_SETS = { EVENT_MAPS,
-			{ 1092, 1093, 1094, 1095, 1099, 1100, 1113, 1114, 1116, 1117, 1118, 1119 },
-			{ 1092, 1093, 1095, 1099, 1113, 1114, 1116, 1117, 1119 }, { 1092, 1093, 1099, 1116 },
-			{ 1092, 1094, 1095, 1099, 1100, 1114, 1119 } };
-	public static final String[] EVENT_MAP_DESC={"All","All except Ice(8),VIP(5),Highway(11)","1, 2, 4, 6, 9, 10, 12, 13, 15","Ons(1), Vac(2), PO(6), Crash Site(12)","??? VS maps or something"};
+			{ 1092, 1093, 1094, 1095, 1099, 1100, 1113, 1114, 1116, 1117, 1118, 1119, 1019},
+			{ 1092, 1093, 1095, 1099, 1113, 1114, 1116, 1117, 1119, 1019 }, { 1092, 1093, 1099, 1116, 1019 },
+			{ 1092, 1094, 1095, 1099, 1100, 1114, 1119} };
+	public static final String[] EVENT_MAP_DESC={"All","All except Ice(8),VIP(5),Highway(11)","1, 2, 4, 6, 9, 10, 12, 13, 15, 16","Ons(1), Vac(2), PO(6), Crash Site(12), Ice2(16)","??? VS maps or something"};
 	private static final ZoneId MINUS8=ZoneId.of("GMT-8");
 	private static final LocalDateTime FEB_16_2022;
 	private static final int MIN_PORT=CONFIG.sas4Ports.min();
