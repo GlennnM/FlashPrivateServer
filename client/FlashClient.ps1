@@ -1,6 +1,6 @@
 
-$VERSION = "4.2"
-$SIZE = 123791556
+$VERSION = "4.3"
+$SIZE = 123791374
 $win_steam =${env:ProgramFiles(x86)}+"\Steam\steamapps\common\Ninja Kiwi Archive\resources"
 $win_standalone1=${env:LocalAppData}+"\Programs\Ninja Kiwi Archive\resources"
 $win_standalone2=${env:ProgramFiles}+"\Ninja Kiwi\Ninja Kiwi Archive\resources"
@@ -203,6 +203,7 @@ if ($IsWindows -or $ENV:OS) {
 if($global:count_ -gt 0){
     "You can now play multiplayer on the NK Archive! If some installations failed, scroll up to see which ones succeeded."
 }else{
-    "Make sure you have the Ninja Kiwi Archive installed.\nIf you do, this might be due to a non-default Steam folder or other drive used for storage. Try installing manually: https://github.com/GlennnM/FlashPrivateServer#second-method---all-platforms-manual-installation"
+    "Make sure you have the Ninja Kiwi Archive installed."
+	"If you do, this might be due to a non-default Steam folder or other drive used for storage. Try installing manually: https://github.com/GlennnM/FlashPrivateServer#second-method---all-platforms-manual-installation"
 }
 $X = Read-Host "Press enter to exit..."
