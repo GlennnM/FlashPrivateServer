@@ -560,7 +560,7 @@ class S4GameClient extends ClientContext {
 								}
 							}else {
 								boost((byte)100, 0);
-								if (parent.code == 400||Math.abs(parent.code-2089076591)<20) {
+								if (parent.code == 400|| parent.code == 2089076591) {
 									boost((byte)100, 0);
 									boost((byte)100, 0);
 								}
@@ -1436,10 +1436,10 @@ public class S4Server extends ServerContext{
 				}
 				int code=requestedCode;
 				short mode = requestedMode<2?switch(code) {
-					case 193486639, 253193259, 1870369476->3;//avs, alpha, alphavirus
-					case 193498321, 264330093, 193506157  -> 4;//lms, last man standing, sta
-					case 2090085224, 193502727, 744744362, 2106828268, 274496549, 1815900785, 193486012 -> 5;//apoc, poc, apocalypse, skipi, waveskip, sandbox, acs
-					case 2090715702, 2107572390, 1168011283, 193509391 -> 7;//samp, samples, virussamples, vsa
+					case 193486639, 253193259, 1870369476, 2089127973->3;//avs, alpha, alphavirus, avs(MPban)
+					case 193498321, 264330093, 193506157, 2089139655  -> 4;//lms, last man standing, sta, lms(MPban)
+					case 2090085224, 193502727, 744744362, 2106828268, 274496549, 1815900785, 193486012, 218507486 -> 5;//apoc, poc, apocalypse, skipi, waveskip, sandbox, acs, apoc(MPban)
+					case 2090715702, 2107572390, 1168011283, 193509391, 2089150725 -> 7;//samp, samples, virussamples, vsa, vsa(MPban)
 					default->requestedMode;
 					//extra modes:0="any" 6="contracts", they play exactly like normal games
 					//(so not included)
@@ -1454,12 +1454,6 @@ public class S4Server extends ServerContext{
 					.findFirst()
 					.orElseGet(()->new S4GameServer(mode, code, autostart));
 				//list.forEach(x->System.out.println(""+x.code+" "+x.alive+" "+x.started()+" "+x.players+" "+x.port));
-				if(list.add(g)) {
-					g.start(IntStream.generate(S4Server::nextPort).limit(100), isNio());
-				}
-				//System.out.println(games);
-				//byte[] data = new byte[arrayLength*2];
-				//src.get(14,data);//"the array"(discard)
 				byte[] ip = S4Server.ip.getBytes(StandardCharsets.UTF_8);
 				//System.out.println("started() GS on "+g.getPort());
 				var pl = ByteBuffer.allocate(10+ip.length)
@@ -1468,8 +1462,43 @@ public class S4Server extends ServerContext{
 					.putShort((short)g.getPort())
 					.putShort(mode)
 					.putInt(code);
+				if(list.add(g)) {
+					g.start(IntStream.generate(S4Server::nextPort).limit(100), isNio());
+					pl.putShort(ip.length+2, (short) g.getPort());
+				}else if(g.players.size() == 0) {
+					//IO.println("NO PLAYERS!!");
+					//someone just made the lobby but didn't join it; wait for them
+					AtomicInteger count = new AtomicInteger();
+					Runnable alertJoin = ()->{
+						if(alive) {
+							if(g.players.size() > 0) {
+								//IO.println("FOUND PLAYER!!!");
+								send(pl.flip());
+								alive=false;
+							}else if(count.incrementAndGet() == 10) {//player has taken too long to join
+								g.dequeue();
+								try{
+									//retry once
+									//IO.println("RE-CALLING!!!");
+									onData(src.position(end),l4);
+									Scheduler.schedule(()->{alive=false;},8000);
+								}catch(IOException ioe) {
+									alive=false;
+								}
+							}
+						}
+					};
+					//hydar
+					IntStream.rangeClosed(1,10)
+						.forEach(x->Scheduler.schedule(alertJoin,x*1000));
+					return;
+				}
 				send(pl.flip());
 				alive=false;
+				//System.out.println(games);
+				//byte[] data = new byte[arrayLength*2];
+				//src.get(14,data);//"the array"(discard)
+				
 			}
 			@Override
 			public void onOpen() {
