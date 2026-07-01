@@ -264,11 +264,21 @@ class S3Client extends TextClientContext {
 		CONFIG.acquire(this);
 	}
 	@Override
+	public void onTimeout() {
+		//if in queue, keep waiting
+		if(this.room==null || this.room.setup)
+			super.onTimeout();
+	}
+	@Override
 	public void onClose(){
-		if (room != null) {
-			room.dropPlayer(this);
+		try {
+			doubleWrite("<msg t='sys'><body action='apiKO' r='0'><ver v='165'/></body></msg>\0");
+		}finally {
+			if (room != null) {
+				room.dropPlayer(this);
+			}
+			CONFIG.release(this);
 		}
-		CONFIG.release(this);
 	}
 }
 /**Starts a wave, scheduling powerup and spawn tasks.*/

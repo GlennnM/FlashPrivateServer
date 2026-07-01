@@ -10,6 +10,7 @@ import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.InterruptedByTimeoutException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -133,7 +134,7 @@ public abstract class ClientContext{
 	/**Runs when the socket is closed. The socket may or may not be open at this point.*/
 	public abstract void onClose() throws IOException;
 	/**Runs when a timeout occurs. Default behavior closes the connection. Will not be run in NIO mode with no ScheduledExectorService provided.*/
-	public void onTimeout() {alive=false;}
+	public void onTimeout() {close();}
 	/**Runs when data is received. The buffer's position will be at the end of the input it received, which will be of length bytes.*/
 	public abstract void onData(ByteBuffer data, int length) throws IOException;
 	/**Sends the contents of the provided ByteBuffer(from position to limit).*/
@@ -453,8 +454,10 @@ public abstract class ClientContext{
 							}if(result<0)
 								ctx.alive=false;
 						}catch (IOException e) {
+							e.printStackTrace();
 							ctx.alive=false;
 						}catch (Exception e) {
+							e.printStackTrace();
 							ctx.alive=false;
 							throw e;
 						}finally {
@@ -472,15 +475,27 @@ public abstract class ClientContext{
 					//TODO: make sure onCLose not called more than once
 					@Override
 					public void failed(Throwable exc, Void attachment) {
-						close2();
+						boolean isTimeout = false;
+						try {
+							if(ses!=null && exc instanceof InterruptedByTimeoutException) {
+								isTimeout=true;
+								onTimeout();
+							}
+						}finally {
+							if(!isTimeout || !ctx.alive)
+								close2();
+						}	
 					}
 				});
 			}
 			@Override
 			public void close() {
 				ctx.alive=false;
+				//TODO: this doesn't end connection instantly (but using close() would result in improper cleanup)
 				try {
 					client.shutdownInput();
+				} catch (IOException e) {}
+				try {
 					client.shutdownOutput();
 				} catch (IOException e) {}
 			}

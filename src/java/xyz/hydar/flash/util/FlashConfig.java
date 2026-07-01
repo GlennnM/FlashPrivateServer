@@ -161,7 +161,7 @@ public class FlashConfig{
 		SAS4_ENABLED=b(get("SAS4.enabled"));
 		SAS4_PORT=i(get("SAS4.port"));
 		SAS4_NIO=b(get("SAS4.nio"));
-		SAS3=ClientOptions.from(get("SAS3.client"));
+		SAS3=ClientOptions.from(get("SAS3.client"),Scheduler.ses);
 		SAS3_MOBCAP=i(get("SAS3.mobcap"));
 		SAS3_ENABLED=b(get("SAS3.enabled"));
 		SAS3_PORT=i(get("SAS3.port"));
