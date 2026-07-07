@@ -1,3 +1,9 @@
+<%@page import="java.util.zip.DeflaterOutputStream"%>
+<%@page import="java.nio.charset.StandardCharsets"%>
+<%@page import="java.util.zip.InflaterInputStream"%>
+<%@page import="java.io.ByteArrayInputStream"%>
+<%@page import="java.io.ByteArrayOutputStream"%>
+<%@page import="java.util.zip.InflaterOutputStream"%>
 <%@page import="java.time.ZoneId"%>
 <%@page import="java.time.Instant"%>
 <%@page import="java.time.LocalDateTime"%>
@@ -63,6 +69,8 @@ static{
 	}
 }
 %><%!
+	static final int MAX_CLOSED_ATTACKS = 20;
+	static final int BOT_ID = 1;
 	static final int MAX_FRIEND_HONOR = Integer.MAX_VALUE; //above this value friend attacks give no honor(default 1500)
 	static final long CT_QUEUE_TIME = 24L * 3600 * 1000 * 3;//time a new CT is joinable for
 	/**does stuff like putCity(0,{},..)*/
@@ -602,6 +610,7 @@ static{
 			return getPVPCore(userID, cityID, false);
 		}
 		public JSONObject getPVPCore(int userID, int cityID, boolean fromDirectOrCityList){
+			updateBotAttacks(userID, cityID);
 			//attack status updates might have to happen here?
 			//-->find which state the expire countdown would start in
 			long now = System.currentTimeMillis();
@@ -647,6 +656,8 @@ static{
 			return ret;
 		}
 		public JSONObject updatePVPCore(int userID, int cityID, UnaryOperator<JSONObject> update){
+			if(userID==BOT_ID)
+				return null;
 			return store.update(List.of("monkeyCity", ""+userID, "pvp", ""+cityID, "core"),core->{
 				if(core==null)
 					core = new JSONObject(2).put("attacks",new JSONArray()).put("timeUntilPacifist", 0);
@@ -718,9 +729,18 @@ static{
 		}
 		public JSONObject resolveAttack(int userID, int cityID, String attackID, JSONObject resolution, boolean recall) {
 			int[] changes = new int[2];
-			var tmpTarget = updateAndGetAttack(userID, cityID, attackID, x->x).getJSONObject("target");
-			int defHonor = getCityThing(tmpTarget.getInt("userID"), tmpTarget.getInt("cityIndex"), "info")
-					.getInt("honour");
+			var tmpAtk = updateAndGetAttack(userID, cityID, attackID, x->x);
+			var tmpTarget = tmpAtk.getJSONObject("target");
+			var tmpSender = tmpAtk.getJSONObject("sender");
+			var targetID = tmpTarget.getInt("userID");
+			int defHonor = targetID == BOT_ID ? 
+					Util.getBotCity(
+							cityID,
+							tmpSender.getInt("cityLevel"),
+							tmpSender.getInt("honour")
+						).getInt("honour"):
+					getCityThing(targetID, tmpTarget.getInt("cityIndex"), "info")
+						.getInt("honour");
 			var a =  updateAndGetAttack(userID, cityID, attackID, attack->{
 				var sender = attack.getJSONObject("sender");
 				var target = attack.getJSONObject("target");
@@ -750,7 +770,8 @@ static{
 						sender.put("honourChange", changes[0]);
 						target.put("honourChange", changes[1]);
 						//started with target: FF->TT, started with sender TF->FT
-						((isSender ^ recall) ? sender : target).put("resolutionSeen", System.currentTimeMillis());
+						var targetBot = target.getInt("userID") == BOT_ID;
+						(((isSender && !targetBot) ^ recall) ? sender : target).put("resolutionSeen", System.currentTimeMillis());
 					}
 					return attack;
 				}
@@ -759,16 +780,22 @@ static{
 			// .honour, .senderCity, 
 			var sender = a.getJSONObject("sender");
 			var target = a.getJSONObject("target");
-			boolean isSender = sender.getInt("userID") == userID;
+			int senderID = sender.getInt("userID");
+			int senderCityIndex = sender.getInt("cityIndex");
+			boolean isSender = senderID == userID;
 			//TODO: attacker doesn't see as themself
 			//if(!isSender)
 			//	updateAttack(sender.getInt("userID"), sender.getInt("cityIndex"), attackID, discard->a);
-			if(!isSender && (sender.getInt("userID") != target.getInt("userID"))){
-				resolveAttack(sender.getInt("userID"), sender.getInt("cityIndex"), attackID,
-						resolution, true);
+			if(!isSender){
+				if(senderID != BOT_ID)
+					resolveAttack(senderID, senderCityIndex, attackID, resolution, true);
+				else 
+					closeAttack(userID, cityID, attackID);//bot doesn't need to see the resolution
 			}
-			var senderCity = getFriend(sender.getInt("userID"), sender.getInt("cityIndex"));
-			
+			var senderCity = senderID == BOT_ID ? 
+					Util.getBotCity(senderCityIndex, sender.getInt("level"), 0)
+						.put("honour",sender.getInt("honour")) :
+					getFriend(senderID, senderCityIndex);
 			return new JSONObject(10)
 					.put("honour", (isSender ? target : sender).getInt("honour"))
 					.putOpt("sender", isSender ? null : sender)
@@ -776,7 +803,7 @@ static{
 					.put("senderCity", senderCity);
 		}
 		
-
+		//NOTE: can be run as either sender or target
 		public JSONObject closeAttack(int userID, int cityID, String attackID){
 			int[] opp = new int[2];
 			var now = System.currentTimeMillis();
@@ -796,36 +823,61 @@ static{
 				opp[1] = (userID==targetID ? sender : target).getInt("cityIndex");
 				return attack;
 			});
-			updateAttack(opp[0], opp[1], attackID, attack->{
-				if(attack.getInt("status") == AttackStatus.RESOLVED){	
-					var target = attack.getJSONObject("target");
-					var sender = attack.getJSONObject("sender");
-					attack.put("status",AttackStatus.CLOSED);
-					target.put("resolutionSeen",target.optLong("resolutionSeen", now));
-					sender.put("resolutionSeen",sender.optLong("resolutionSeen", now));
-				}
-				return attack;
-			});
+			if(opp[0] != BOT_ID)
+				updateAttack(opp[0], opp[1], attackID, attack->{
+					if(attack.getInt("status") == AttackStatus.RESOLVED){	
+						var target = attack.getJSONObject("target");
+						var sender = attack.getJSONObject("sender");
+						attack.put("status",AttackStatus.CLOSED);
+						target.put("resolutionSeen",target.optLong("resolutionSeen", now));
+						sender.put("resolutionSeen",sender.optLong("resolutionSeen", now));
+					}
+					return attack;
+				});
 			return new JSONObject(8).put("success", true);
 		}
-
+		public void pruneAttacks(int userID, int cityID){
+			updatePVPCore(userID, cityID, core->{
+				var attacks = core.getJSONArray("attacks");
+				if(attacks.length() > MAX_CLOSED_ATTACKS){
+					int closedAttacks = 0;
+					for(int i=attacks.length()-1; i>=0; i--){
+						if(attacks.getJSONObject(i).getInt("status")  == AttackStatus.CLOSED
+								&& ++closedAttacks > MAX_CLOSED_ATTACKS){
+							int cutoff = i;
+							IntStream.range(0, cutoff)
+								.map(x-> cutoff - x)
+								.filter(x-> attacks.getJSONObject(x).getInt("status") == AttackStatus.CLOSED)
+								.forEach(attacks::remove);
+							break;
+						}
+					}
+				}
+				return core;
+			});
+		}
 		%>
 		<%-- PVP - QUEUE/SEND --%>
 		<%!public JSONObject sendAttack(int userID, int cityID, JSONObject payload) {
 			var sender = payload.getJSONObject("sender");
 			var target = payload.getJSONObject("target");
-			exitPacifist(userID, cityID);
-			addToQueue(userID, cityID, sender.getInt("cityLevel"), sender.getInt("honour"));
+			if(userID != BOT_ID){
+				exitPacifist(userID, cityID);
+				addToQueue(userID, cityID, sender.getInt("cityLevel"), sender.getInt("honour"));
+				pruneAttacks(userID, cityID);
+			}
 			long now = System.currentTimeMillis();
 			
 			var eID = target.getInt("userID");
 			var eCityID = target.getInt("cityIndex");
 			if(!payload.getBoolean("revenge")){
 				var eInfo = getCityThing(eID, eCityID, "info");
-				String canAttack = eInfo == null ? "no_city" : canAttack(userID, eID, eInfo.optInt("honour"), eCityID);
+				String canAttack = eInfo == null ?
+						(eID==BOT_ID ? canAttackBot(userID, cityID) : "no_city"):
+						canAttack(userID, eID, eInfo.optInt("honour"), eCityID);
 				if(!"yes".equals(canAttack))
 					return new JSONObject(3).put("success",false).put("state",canAttack).put("error","bmc_game");
-			}
+			}//canAttackBot
 			payload.put("attackID", "" + ThreadLocalRandom.current().nextLong())
 				.put("timeLaunched", now)
 				.put("status", AttackStatus.NEW_SENT)
@@ -835,9 +887,10 @@ static{
 				;
 			sender.put("userID", ""+userID)//MUST BE STRING!!!
 				.put("cityIndex", cityID);
-			if(!noScoreUpdate.contains(userID))
+			if(!noScoreUpdate.contains(userID) && eID != BOT_ID)
 				addAttack(eID, eCityID, new JSONObject(payload.toString()));
-			addAttack(userID, cityID, payload);
+			if(userID != BOT_ID)
+				addAttack(userID, cityID, payload);
 			return new JSONObject(8).put("success", true);
 		}
 		private String canAttack(int userID, int eID, int eHonor, int eCityID){
@@ -911,9 +964,13 @@ static{
 				matchedID = dequeue(eID, cityID, true) ? eID : -1;
 				if (matchedID>=0) break;
 			}
-			if (matchedID < 0)
-				return new JSONObject(8).put("success", false);
-			var match = getFriend(matchedID, cityID);
+			if (matchedID < 0){
+				// attempt to attack bot
+				if(!"yes".equals(canAttackBot(userID, cityID)))
+					return new JSONObject(8).put("success", false);
+				matchedID=BOT_ID;
+			}
+			var match = matchedID==BOT_ID ? Util.getBotCity(cityID, level, honor) : getFriend(matchedID, cityID);
 
 			return new JSONObject(8).put("matchedOpponent",
 					new JSONObject(6).put("userID", matchedID).put("quickMatchID", matchedID)//TODO: find out what these do
@@ -964,6 +1021,86 @@ static{
 				queue.put("queue", q);
 				return queue;
 			});
+		}
+	%>
+		<%-- PVP - BOTS --%>
+	<%!
+		private String canAttackBot(int userID, int cityID){
+			long now = System.currentTimeMillis();
+			var core = getPVPCore(userID, cityID);
+			var attacks = core.getJSONArray("attacks");
+			int nAttacks = (int) Util.jStream(attacks)
+					.filter(x -> x.getJSONObject("target").getInt("userID") == BOT_ID)
+					.filter(x -> x.getInt("status") < AttackStatus.RESOLVED)
+					.count();
+			long alreadyAttackedAt = Util.jStream(attacks)
+					.filter(x -> x.getJSONObject("target").getInt("userID") == BOT_ID)
+					.mapToLong(x -> x.getLong("timeLaunched")).max().orElse(0);
+			if (nAttacks > 4)
+				return "maxAttacks";
+			if(nAttacks > 0 && now - alreadyAttackedAt < 8l * 3600 * 1000)
+				return "already";
+			return "yes";
+		}
+		// "tick" the bot attacks
+		// resolve after 12-24 hours
+		// need to decode attack :(
+		public void updateBotAttacks(int userID, int cityID){
+			List<Runnable> toResolve = new ArrayList<>();
+			updatePVPCore(userID, cityID, core->{
+				var attacks = core.getJSONArray("attacks");
+				for(var attack: Util.jIter(attacks)){
+					var sender = attack.getJSONObject("sender");
+					var target = attack.getJSONObject("target");
+					if(target.getInt("userID") == BOT_ID && attack.getInt("status") < AttackStatus.RESOLVED){
+						var id = attack.getString("attackID");
+						var resolveDelta = (480l + (Math.abs(Long.parseLong(id)) % 480)) * 60 * 1000;//defend the attack after 8-16h
+						var launchTime = attack.getLong("timeLaunched");
+						var now = System.currentTimeMillis();
+						if(now > launchTime + resolveDelta){
+							toResolve.add(()->{
+								resolveAttack(userID, cityID, id, new JSONObject()
+										.put("attackSucceeded", false)
+										.put("hardcore", false)
+										.put("info","eNpdjcEOgjAQBc/yFaRnYgApokf1YmI0Qe9koRtAodVSMMb475Y2RuN15u3s05mQnte3HrebLMvI0p2HnmYiP2OhTo8rWkoOBhDP1TJvhOBHJZGXqiKutjsEthqpHSgJxWUPLRqZ1gNKag0opRVKM1aC132b4h0kG5e+PRYKmlT0nHUjDBJD5T/4lNbQVd9EQH1b6aAZoET282j0Mz+MplEcJzTyQxrRhfN6A03jS9g=")
+										.put("resolution","loss")
+									);
+							});
+							//now revenge
+							toResolve.add(()->{
+								var newCityInfo = getCityThing(userID, cityID, "info");
+								var x = new JSONObject(Util.unpack(attack.getString("attack")))
+									.put("isRevenge", true)
+									.put("defenderUserName", sender.getString("name"))
+									.put("defenderUserClan", sender.getString("clan"))
+									.put("defenderCityIndex", cityID)
+									.put("attackerID", ""+BOT_ID)
+									.put("defenderID", ""+userID)
+									.put("quickMatchID", ""+userID)
+									.put("messageToOpponent","")
+									.put("defenderCityLevel", newCityInfo.getInt("level"));
+								var n = new JSONObject(7)
+										.put("action","attack")
+										.put("isFriend",false)
+										.put("revenge",true)
+										.put("quickMatchID",""+userID)
+										.put("attackDefinition",Util.pack(x.toString()))
+										.put("target", getFriend(userID, cityID).put("userID", userID).put("cityIndex", cityID))
+										.put("sender", Util.getBotCity(
+												cityID, 
+												newCityInfo.getInt("level"), 
+												newCityInfo.getInt("honour")
+											)
+										);
+								sendAttack(BOT_ID, cityID, n);
+							});
+							
+						}
+					}
+				}
+				return core;
+			});
+			toResolve.forEach(Runnable::run);
 		}%>
 <%!
 	
@@ -1141,9 +1278,36 @@ below 100 has different behavior
 		return core;
 	}
 
+	public static String unpack(String data){
+		try(var in1 = new ByteArrayInputStream(data.getBytes(StandardCharsets.ISO_8859_1));
+			var b64=Base64.getDecoder().wrap(in1);
+			var inf = new InflaterInputStream(b64);){
+				return new String(inf.readNBytes(1024000), StandardCharsets.UTF_8);
+		}catch(IOException ioe){return null;}
+	}
+	public static String pack(String data){
+		var baos = new ByteArrayOutputStream(data.length());
+		try(var b64=Base64.getEncoder().wrap(baos);
+			var def = new DeflaterOutputStream(b64);){
+			def.write(data.getBytes(StandardCharsets.UTF_8));
+		}catch(IOException ioe){return null;}
+		return baos.toString(StandardCharsets.ISO_8859_1);
+	}
 	private static JSONObject DEFAULT_CRATES() {
 		return new JSONObject(5).put("own", 0).put("requested", new JSONArray()).put("sent", new JSONArray())
 				.put("pending", new JSONArray()).put("received", new JSONArray());
+	}
+
+	public static JSONObject getBotCity(int cityID, int level, int honor){
+		return new JSONObject(8)
+				.put("userID", ""+BOT_ID)
+				.put("cityIndex", cityID)
+				.put("level", level)
+				.put("cityLevel", level)
+				.put("honour", (int) Math.min(honor*0.75, 10000))
+				.put("name", "sam ninjakiwi")
+				.put("clan", "kong")
+				.put("youHaveAlreadyAttacked", false);
 	}
 }%>
 <%-- CTUtil --%>

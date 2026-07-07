@@ -26,8 +26,9 @@ Setting up client (vanilla NK archive):
 - MvM
 - client(archive mod) + server switcher in game settings
 - crates
+- MvM bots
 
-eventually: starting city based on tiles achievements, support for different storage backend, save transfer of some kind, pvp bots, new tile format?
+eventually: starting city based on tiles achievements, support for different storage backend, save transfer of some kind, new tile format?
 
 
 
