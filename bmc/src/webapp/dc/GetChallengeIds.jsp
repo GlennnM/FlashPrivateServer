@@ -1,3 +1,4 @@
+<%@page import="java.time.ZoneOffset"%>
 <%@page import="java.time.LocalDate"%>
 <%@page import="java.io.InputStreamReader"%>
 <%@page import="java.io.BufferedReader"%>
@@ -14,11 +15,12 @@
 static volatile Instant lastUpdate=Instant.ofEpochMilli(0);
 static volatile String data;
 static volatile long cacheOffset=-1;
+volatile int x = 0;
 %><%
 response.resetBuffer();
 //Calendar cache = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 LocalDate cache = LocalDate.ofInstant(lastUpdate, ZoneId.of("GMT"));
-LocalDate now = LocalDate.now(ZoneId.of("GMT"));
+LocalDate now = LocalDate.now(ZoneId.of("GMT"));//.plusDays(x++);
 LocalDate origin = LocalDateTime.of(2018, 7, 1, 0, 0)
 	.atZone(ZoneId.of("GMT"))
 	.toLocalDate();
@@ -38,11 +40,12 @@ if(offset!=0){
 		co=0;
 	}else
 		dat.append(data);
+	String lastId = "";
 	for(long i=0;i<co;i++)
 		x.nextDouble();
 	for(long i=co;i<eventOffset;i++){
 		x.nextDouble();
-		var event = ChronoUnit.DAYS.addTo(origin,i);
+		var event = origin.plusDays(i);//ChronoUnit.DAYS.addTo(origin,i);
 		if(event.getYear()>2022||(event.getYear()==2022&&event.getMonthValue()>=5)){
 			dat.append("\n");
 			ByteArrayOutputStream bo = new ByteArrayOutputStream();
@@ -71,16 +74,24 @@ if(offset!=0){
 			String q=new String(Base64.getDecoder().decode(n.getBytes(StandardCharsets.UTF_8)),StandardCharsets.UTF_8);
 			q=q.replace("\""+e.substring(0,8)+"\"","null");
 			int start=q.indexOf("\"id\"")+7;
+			
 			String id = q.substring(start,q.indexOf("\"",start));
+			if(event.getMonthValue() == 5 && event.getYear() == 2026 && (event.getDayOfMonth() == 28 || event.getDayOfMonth() == 29)){
+				System.err.println(id);
+				id = lastId;
+			}
+			//System.err.printf("%d %d %d %s\n", event.getMonthValue(), event.getDayOfMonth(), event.getYear(), id);
 			//System.out.println(id);
 			dat.append(id);
+			lastId = id;
 			x = prev;
 		}
 		
 	}
 	data=dat.toString();
 	cacheOffset=eventOffset;
-	lastUpdate=Instant.now();
+	var nowTime = now.atStartOfDay();
+	lastUpdate = nowTime.toInstant(ZoneId.of("GMT").getRules().getOffset(nowTime));
 }
 out.print(data);
 %>
