@@ -1,0 +1,194 @@
+[
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/1-normal.png",
+		"ach_name": "Beat Normal Mode",
+		"description": "Beat the game in Normal Mode",
+		"id": 67,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/2-hard.png",
+		"ach_name": "Beat Hard Mode",
+		"description": "Beat the game in Hard Mode",
+		"id": 68,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/3-panic.png",
+		"ach_name": "Beat Panic Mode",
+		"description": "Beat the game in Panic Mode",
+		"id": 69,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/4-clearfelling.png",
+		"ach_name": "Clear Felling",
+		"description": "Chop down all trees in Northwood",
+		"id": 70,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/5-stripmining.png",
+		"ach_name": "Strip Mining",
+		"description": "Mine out all gold in Hammerton",
+		"id": 71,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/6-environmentaldisaster.png",
+		"ach_name": "Environmental Disaster",
+		"description": "Chop down all trees and mine all gold in Devil's Reach",
+		"id": 72,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/7-friendtotheforest.png",
+		"ach_name": "Friend of the forest",
+		"description": "Pass Northwood without cutting down a single tree",
+		"id": 74,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/8-nooneleftbehind.png",
+		"ach_name": "No one left behind",
+		"description": "Pass Starfall without losing a single unit",
+		"id": 75,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/9-redisthenewblack.png",
+		"ach_name": "Red is the New Black",
+		"description": "Kill 100 orcs in a single level with your cursor sword",
+		"id": 76,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/10-allmylegions.png",
+		"ach_name": "All My Legions",
+		"description": "Win a level with an army of 200 or more units",
+		"id": 77,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/11-knightsoftheroundtable.png",
+		"ach_name": "Knights of the Round Table",
+		"description": "Have 10 or more level 4 horsemen at any time",
+		"id": 78,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/12-robinwho.png",
+		"ach_name": "Robin Who?",
+		"description": "Have 30 or more level 4 archers at any time",
+		"id": 79,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/13-letshuntsomeorcs.png",
+		"ach_name": "Lets Hunt Some Orc",
+		"description": "Kill 100,000 orcs",
+		"id": 80,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/14overachiever.png",
+		"ach_name": "Overachiever",
+		"description": "Get a 3 star rating on all levels normal difficulty",
+		"id": 81,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/15-perfectionist.png",
+		"ach_name": "Perfectionist",
+		"description": "Get 3 stars on all levels on all difficultys",
+		"id": 82,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/16-freeplay50.png",
+		"ach_name": "50 at Willow Glen",
+		"description": "Get to wave 50 in Freeplay mode at Willow Glen",
+		"id": 98,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/17-freeplay100.png",
+		"ach_name": "100 at Willow Glen",
+		"description": "Get to wave 100 in Freeplay mode at Willow Glen",
+		"id": 99,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/18-freeplay300.png",
+		"ach_name": "150 at Willow Glen",
+		"description": "Get to wave 150 in Freeplay mode at Willow Glen",
+		"id": 100,
+		"points": 150
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/19-freeplay50.png",
+		"ach_name": "50 at Dawnridge",
+		"description": "Get to wave 50 in Freeplay mode at Dawnridge",
+		"id": 101,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/20-freeplay100.png",
+		"ach_name": "100 at Dawnridge",
+		"description": "Get to wave 100 in Freeplay mode at Dawnridge",
+		"id": 102,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/21-freeplay300.png",
+		"ach_name": "150 at Dawnridge",
+		"description": "Get to wave 150 in Freeplay mode at Dawnridge",
+		"id": 103,
+		"points": 150
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/22-freeplay50.png",
+		"ach_name": "50 at Brimstone",
+		"description": "Get to wave 50 in Freeplay mode at Brimstone",
+		"id": 104,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/23-freeplay100.png",
+		"ach_name": "100 at Brimstone",
+		"description": "Get to wave 100 in Freeplay mode at Brimstone",
+		"id": 105,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/panic/ach/24-freeplay300.png",
+		"ach_name": "150 at Brimstone",
+		"description": "Get to wave 150 in Freeplay mode at Brimstone",
+		"id": 106,
+		"points": 150
+	}
+]

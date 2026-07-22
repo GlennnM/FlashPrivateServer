@@ -1,0 +1,554 @@
+[
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_guildWarrior_badge_02.png",
+		"ach_name": "Battle Veteran 1",
+		"description": "Win 5 Hero Battles",
+		"id": 818,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_guildWarrior_badge_03.png",
+		"ach_name": "Battle Veteran 2",
+		"description": "Win 25 Hero Battles",
+		"id": 819,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_guildWarrior_badge_04.png",
+		"ach_name": "Battle Veteran 3",
+		"description": "Win 100 Hero Battles",
+		"id": 820,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_guildWarrior_badge_05.png",
+		"ach_name": "Battle Veteran 4",
+		"description": "Win 250 Hero Battles",
+		"id": 821,
+		"points": 500
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_guildWarrior_badge_06.png",
+		"ach_name": "Battle Veteran 5",
+		"description": "Win 1000 Hero Battles",
+		"id": 822,
+		"points": 1000
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_campaignVictor_badge_01.png",
+		"ach_name": "Campaign Victor 1",
+		"description": "Defeat Campaign 1 on Normal",
+		"id": 811,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_campaignVictor_badge_02.png",
+		"ach_name": "Campaign Victor 2",
+		"description": "Defeat Campaign 2 on Normal",
+		"id": 812,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_campaignVictor_badge_03.png",
+		"ach_name": "Campaign Victor 3",
+		"description": "Defeat Campaign 3 on Normal",
+		"id": 813,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_campaignVictor_badge_04.png",
+		"ach_name": "Campaign Victor 4",
+		"description": "Defeat Campaign 4 on Normal",
+		"id": 814,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_campaignVictor_badge_05.png",
+		"ach_name": "Campaign Victor 5",
+		"description": "Defeat Campaign 5 on Normal",
+		"id": 815,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_campaignVictor_badge_06.png",
+		"ach_name": "Campaign Victor 6",
+		"description": "Defeat Campaign 6 on Normal",
+		"id": 816,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_craftWeapon_badge_01.png",
+		"ach_name": "Craft Weapon 1",
+		"description": "Craft a Weapon",
+		"id": 763,
+		"points": 5
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_craftWeapon_badge_02.png",
+		"ach_name": "Craft Weapon 2",
+		"description": "Craft 5 Weapons",
+		"id": 764,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_craftWeapon_badge_03.png",
+		"ach_name": "Craft Weapon 3",
+		"description": "Craft 10 Weapons",
+		"id": 765,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_craftWeapon_badge_04.png",
+		"ach_name": "Craft Weapon 4",
+		"description": "Craft 20 Weapons",
+		"id": 766,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_craftWeapon_badge_05.png",
+		"ach_name": "Craft Weapon 5",
+		"description": "Craft 50 Weapons",
+		"id": 767,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_craftWeapon_badge_06.png",
+		"ach_name": "Craft Weapon 6",
+		"description": "Craft 100 Weapons",
+		"id": 768,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_feastHall_badge_01.png",
+		"ach_name": "Feast Hall 1",
+		"description": "Level up your Feast Hall to Level 3",
+		"id": 805,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_feastHall_badge_02.png",
+		"ach_name": "Feast Hall 2",
+		"description": "Level up your Feast Hall to Level 5",
+		"id": 806,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_feastHall_badge_03.png",
+		"ach_name": "Feast Hall 3",
+		"description": "Level up your Feast Hall to Level 7",
+		"id": 807,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_feastHall_badge_04.png",
+		"ach_name": "Feast Hall 4",
+		"description": "Level up your Feast Hall to Level 8",
+		"id": 808,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_feastHall_badge_05.png",
+		"ach_name": "Feast Hall 5",
+		"description": "Level up your Feast Hall to Level 9",
+		"id": 809,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_feastHall_badge_06.png",
+		"ach_name": "Feast Hall 6",
+		"description": "Level up your Feast Hall to Level 10",
+		"id": 810,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_guildWarrior_badge_01.png",
+		"ach_name": "Guild Warrior",
+		"description": "Join a Guild",
+		"id": 804,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_newHero_badge_01.png",
+		"ach_name": "Heroes 1",
+		"description": "Increase your Hero Roster to 12",
+		"id": 784,
+		"points": 5
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_newHero_badge_10.png",
+		"ach_name": "Heroes 10",
+		"description": "Increase your Hero Roster to 30",
+		"id": 793,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_newHero_badge_02.png",
+		"ach_name": "Heroes 2",
+		"description": "Increase your Hero Roster to 14",
+		"id": 785,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_newHero_badge_03.png",
+		"ach_name": "Heroes 3",
+		"description": "Increase your Hero Roster to 16",
+		"id": 786,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_newHero_badge_04.png",
+		"ach_name": "Heroes 4",
+		"description": "Increase your Hero Roster to 18",
+		"id": 787,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_newHero_badge_05.png",
+		"ach_name": "Heroes 5",
+		"description": "Increase your Hero Roster to 20",
+		"id": 788,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_newHero_badge_06.png",
+		"ach_name": "Heroes 6",
+		"description": "Increase your Hero Roster to 22",
+		"id": 789,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_newHero_badge_07.png",
+		"ach_name": "Heroes 7",
+		"description": "Increase your Hero Roster to 24",
+		"id": 790,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_newHero_badge_08.png",
+		"ach_name": "Heroes 8",
+		"description": "Increase your Hero Roster to 26",
+		"id": 791,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_newHero_badge_09.png",
+		"ach_name": "Heroes 9",
+		"description": "Increase your Hero Roster to 28",
+		"id": 792,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_loggedIn_badge_01.png",
+		"ach_name": "Logged In!",
+		"description": "Sign in to back up your data",
+		"id": 817,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_skillScroll_badge_01.png",
+		"ach_name": "Skill Scrolls 1",
+		"description": "Have one of your Heroes use a Skill Scroll",
+		"id": 769,
+		"points": 5
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_skillScroll_badge_10.png",
+		"ach_name": "Skill Scrolls 10",
+		"description": "Train a Skill to Level 10",
+		"id": 778,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_skillScroll_badge_02.png",
+		"ach_name": "Skill Scrolls 2",
+		"description": "Train a Skill to Level 2",
+		"id": 770,
+		"points": 5
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_skillScroll_badge_03.png",
+		"ach_name": "Skill Scrolls 3",
+		"description": "Train a Skill to Level 3",
+		"id": 771,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_skillScroll_badge_04.png",
+		"ach_name": "Skill Scrolls 4",
+		"description": "Train a Skill to Level 4",
+		"id": 772,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_skillScroll_badge_05.png",
+		"ach_name": "Skill Scrolls 5",
+		"description": "Train a Skill to Level 5",
+		"id": 773,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_skillScroll_badge_06.png",
+		"ach_name": "Skill Scrolls 6",
+		"description": "Train a Skill to Level 6",
+		"id": 774,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_skillScroll_badge_07.png",
+		"ach_name": "Skill Scrolls 7",
+		"description": "Train a Skill to Level 7",
+		"id": 775,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_skillScroll_badge_08.png",
+		"ach_name": "Skill Scrolls 8",
+		"description": "Train a Skill to Level 8",
+		"id": 776,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_skillScroll_badge_09.png",
+		"ach_name": "Skill Scrolls 9",
+		"description": "Train a Skill to Level 9",
+		"id": 777,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_maxPower_badge_01.png",
+		"ach_name": "Training 1",
+		"description": "Train a Hero to Level 15",
+		"id": 794,
+		"points": 5
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_maxPower_badge_10.png",
+		"ach_name": "Training 10",
+		"description": "Train a Hero to Level 55",
+		"id": 803,
+		"points": 500
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_maxPower_badge_02.png",
+		"ach_name": "Training 2",
+		"description": "Train a Hero to Level 20",
+		"id": 795,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_maxPower_badge_03.png",
+		"ach_name": "Training 3",
+		"description": "Train a Hero to Level 25",
+		"id": 796,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_maxPower_badge_04.png",
+		"ach_name": "Training 4",
+		"description": "Train a Hero to Level 30",
+		"id": 797,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_maxPower_badge_05.png",
+		"ach_name": "Training 5",
+		"description": "Train a Hero to Level 35",
+		"id": 798,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_maxPower_badge_06.png",
+		"ach_name": "Training 6",
+		"description": "Train a Hero to Level 40",
+		"id": 799,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_maxPower_badge_07.png",
+		"ach_name": "Training 7",
+		"description": "Train a Hero to Level 45",
+		"id": 800,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_maxPower_badge_08.png",
+		"ach_name": "Training 8",
+		"description": "Train a Hero to Level 50",
+		"id": 801,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_maxPower_badge_09.png",
+		"ach_name": "Training 9",
+		"description": "Train three Heroes to Level 50",
+		"id": 802,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_treasureRaid_badge_01.png",
+		"ach_name": "Treasure Raid 1",
+		"description": "Defeat another players Tower",
+		"id": 779,
+		"points": 5
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_treasureRaid_badge_02.png",
+		"ach_name": "Treasure Raid 2",
+		"description": "Defeat 3 player Towers",
+		"id": 780,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_treasureRaid_badge_03.png",
+		"ach_name": "Treasure Raid 3",
+		"description": "Defeat 10 player Towers",
+		"id": 781,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_treasureRaid_badge_04.png",
+		"ach_name": "Treasure Raid 4",
+		"description": "Defeat 50 player Towers",
+		"id": 782,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_treasureRaid_badge_05.png",
+		"ach_name": "Treasure Raid 5",
+		"description": "Defeat 200 player Towers",
+		"id": 783,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_heroGuard_badge_01.png",
+		"ach_name": "Wizard Tower 1",
+		"description": "Defeat a floor of the Wizard Tower",
+		"id": 823,
+		"points": 5
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_heroGuard_badge_02.png",
+		"ach_name": "Wizard Tower 2",
+		"description": "Defeat 3 floors of the Wizard Tower",
+		"id": 824,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_heroGuard_badge_03.png",
+		"ach_name": "Wizard Tower 3",
+		"description": "Defeat 5 floors of the Wizard Tower",
+		"id": 825,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_heroGuard_badge_04.png",
+		"ach_name": "Wizard Tower 4",
+		"description": "Defeat 10 floors of the Wizard Tower",
+		"id": 826,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_heroGuard_badge_05.png",
+		"ach_name": "Wizard Tower 5",
+		"description": "Defeat 20 floors of the Wizard Tower",
+		"id": 827,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_heroGuard_badge_06.png",
+		"ach_name": "Wizard Tower 6",
+		"description": "Defeat 50 floors of the Wizard Tower",
+		"id": 828,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_heroGuard_badge_07.png",
+		"ach_name": "Wizard Tower 7",
+		"description": "Defeat 100 floors of the Wizard Tower",
+		"id": 829,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_heroGuard_badge_08.png",
+		"ach_name": "Wizard Tower 8",
+		"description": "Defeat 200 floors of the Wizard Tower",
+		"id": 830,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/tower_keepers/ach/ico_heroGuard_badge_09.png",
+		"ach_name": "Wizard Tower 9",
+		"description": "Defeat all 30 floors of a single Wizard Tower",
+		"id": 831,
+		"points": 250
+	}
+]

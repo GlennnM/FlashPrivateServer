@@ -1,0 +1,807 @@
+[
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/001-LevelUp.png",
+		"ach_name": "Level Up",
+		"description": "Reach level 2 with one character",
+		"id": 356,
+		"points": 5
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/002-GoesUpTo11.png",
+		"ach_name": "Goes up to 11",
+		"description": "Reach level 11 with one character",
+		"id": 357,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/003-50Cal.png",
+		"ach_name": ".50 cal",
+		"description": "Reach level 50 with one character",
+		"id": 358,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/004-TestDriven.png",
+		"ach_name": "Test Driven",
+		"description": "Level up an Assault, Medic, and Heavy character to level 10",
+		"id": 359,
+		"points": 20
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/005-FullStables.png",
+		"ach_name": "Full Stables",
+		"description": "Hold a level 20 character in each of the 3 character slots",
+		"id": 360,
+		"points": 75
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/006-Quicksilver.png",
+		"ach_name": "Quicksilver",
+		"description": "Apply 25 total skill points on a single character between Fast Reload and Fast Movement (at least 5 points in each)",
+		"id": 361,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/007-Tank.png",
+		"ach_name": "Tank",
+		"description": "Apply 25 total skill points on a single character between Toughness and Body Armor Expert (at least 5 points in each)",
+		"id": 362,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/008-Regenerator.png",
+		"ach_name": "Regenerator",
+		"description": "Apply 25 total skill points on a single character between Health Regen and Energy Regen (at least 5 points each)",
+		"id": 363,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/009-PistolWhipped.png",
+		"ach_name": "Pistol Whipped",
+		"description": "Bash 1,000 zombies using the Close Quarters Combat skill (Assault class)",
+		"id": 364,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/010-FieldCommander.png",
+		"ach_name": "Field Commander",
+		"description": "Wipe out 10,000 zombies with the Assault Team skill (Assault class)",
+		"id": 365,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/011-CleanupOnAisle13.png",
+		"ach_name": "Cleanup on Aisle 13",
+		"description": "Slow 5,000 zombies with the Biocleanse Bomb skill (Medic class)",
+		"id": 366,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/012-ZombieHealThyself.png",
+		"ach_name": "Zombie Heal Thyself",
+		"description": "Heal to death 10,000 zombies with the Zombie Antidote skill (Medic class)",
+		"id": 367,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/013-NotToday.png",
+		"ach_name": "Not Today",
+		"description": "Resist 1,000 zombie attacks using the Die Another Day skill (Heavy class)",
+		"id": 368,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/014-ZombiesGoBoom.png",
+		"ach_name": "Zombies Go Boom",
+		"description": "Vaporize 10,000 zombies with the Aerial Bombardment skill (Heavy Class)",
+		"id": 369,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/015-LooseChange.png",
+		"ach_name": "Loose Change",
+		"description": "Pick up $1,000,000 in SAS4 Cash loot drops",
+		"id": 370,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/016-Grenadier.png",
+		"ach_name": "Grenadier",
+		"description": "Kill 5,000 zombies using grenades",
+		"id": 371,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/017-MyLittleFriend.png",
+		"ach_name": "My Little Friend",
+		"description": "Kill 5,000 zombies using turrets",
+		"id": 372,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/018-ForMe.png",
+		"ach_name": "For Me?",
+		"description": "Open 10 Strongboxes",
+		"id": 373,
+		"points": 5
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/019-Boxer.png",
+		"ach_name": "Boxer",
+		"description": "Open 100 Strongboxes",
+		"id": 374,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/020-Recycler.png",
+		"ach_name": "Recycler",
+		"description": "Sell 5,000 weapons or gear pieces",
+		"id": 375,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/021-MostToysWin.png",
+		"ach_name": "Most Toys Wins",
+		"description": "Open 10,000 Strongboxes",
+		"id": 376,
+		"points": 750
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/041-CompleteSet.png",
+		"ach_name": "Complete Set",
+		"description": "Encounter and destroy 1 of each zombie, elite, and boss type",
+		"id": 396,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/042-YouShambleIScramble.png",
+		"ach_name": "You Shamble, I Scramble",
+		"description": "Pulverize 5,000 Shamblers",
+		"id": 397,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/043-Stalkee.png",
+		"ach_name": "Stalkee",
+		"description": "Obliterate 5,000 Stalkers",
+		"id": 398,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/044-OhSpit.png",
+		"ach_name": "Oh Spit",
+		"description": "Chew up 5,000 Spitters",
+		"id": 399,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/045-RunZombieRun.png",
+		"ach_name": "Run, Zombie, Run",
+		"description": "Kneecap 5,000 Runners",
+		"id": 400,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/046-Liposuction.png",
+		"ach_name": "Liposuction",
+		"description": "Drop 5,000 Bloaters",
+		"id": 401,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/047-ShieldsDown.png",
+		"ach_name": "Shields Down",
+		"description": "Bash through 5,000 Shielders",
+		"id": 402,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/048-Hurl.png",
+		"ach_name": "Hurl",
+		"description": "De-worm 1,000 Regurgitators",
+		"id": 403,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/049-Fireman.png",
+		"ach_name": "Fireman",
+		"description": "Extinguish 1,000 Wickers",
+		"id": 404,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/050-Hacked.png",
+		"ach_name": "Hacked",
+		"description": "Terminate 1,000 Zombie Mechs",
+		"id": 405,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/051-Devastation.png",
+		"ach_name": "Devastation",
+		"description": "Eviscerate 1,000 Devastators",
+		"id": 406,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/052-Necrophobe.png",
+		"ach_name": "Necrophobe",
+		"description": "Snuff 1,000 Necrosis bosses",
+		"id": 407,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/053-ZombieReaper.png",
+		"ach_name": "Zombie Reaper",
+		"description": "Personally curb stomp 1,000,000 zombies",
+		"id": 408,
+		"points": 500
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/054-Augmented.png",
+		"ach_name": "Augmented",
+		"description": "Add your first augment to any weapon or armor piece",
+		"id": 409,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/055-Upgraded.png",
+		"ach_name": "Upgraded",
+		"description": "Fill any augmentation slot up to grade 5 on any single weapon or armor piece",
+		"id": 410,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/056-MoBetta.png",
+		"ach_name": "Mo Betta",
+		"description": "Make a total of 50 augmentations across all weapon and armor pieces",
+		"id": 411,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/057-Top10.png",
+		"ach_name": "Top 10",
+		"description": "Fill any augmentation slot up to grade 10 on any single weapon or armor piece",
+		"id": 412,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/058-WeaponSpecialist.png",
+		"ach_name": "Weapon Specialist",
+		"description": "Make a total of 1,000 augmentations across all weapons",
+		"id": 413,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/059-ArmorSpecialist.png",
+		"ach_name": "Armor Specialist",
+		"description": "Make a total of 1,000 augmentations across all armor pieces",
+		"id": 414,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/participant.png",
+		"ach_name": "Participant",
+		"description": "Participate in an Active Event",
+		"id": 483,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/competitor.png",
+		"ach_name": "Competitor",
+		"description": "Place in the top 25% of an Active Event",
+		"id": 484,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/champion.png",
+		"ach_name": "Champion",
+		"description": "Place in the top 1% of an Active Event",
+		"id": 485,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/carryoverchampion.png",
+		"ach_name": "Carry-over Champion",
+		"description": "Place in the top 1% of 2 Active Events in a row",
+		"id": 486,
+		"points": 250
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/iamlegend.png",
+		"ach_name": "I Am Legend",
+		"description": "Place in the top 1% of 5 Active Events",
+		"id": 487,
+		"points": 500
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/bountyhunter.png",
+		"ach_name": "Bounty Hunter",
+		"description": "Place in the top 50% of a Bounty",
+		"id": 488,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/headhunter.png",
+		"ach_name": "Head Hunter",
+		"description": "Place in the top 25% of 25 Bounties",
+		"id": 489,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/iamdog.png",
+		"ach_name": "I Am Dog",
+		"description": "Place in the top 50% of 50 Bounties",
+		"id": 490,
+		"points": 500
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/071-BronzeChampion.png",
+		"ach_name": "Bronze Champion",
+		"description": "Earn a Bronze medal in a Championship",
+		"id": 563,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/072-GoldChampionI.png",
+		"ach_name": "Gold Champion I",
+		"description": "Earn one Gold medal in a Championship",
+		"id": 564,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/073-GoldChampionII.png",
+		"ach_name": "Gold Champion II",
+		"description": "Earn two Gold medals from Championships",
+		"id": 565,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/074-GoldChampionIII.png",
+		"ach_name": "Gold Champion III",
+		"description": "Earn three Gold medals from Championships",
+		"id": 566,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/075-GoldChampionIV.png",
+		"ach_name": "Gold Champion IV",
+		"description": "Earn four Gold medals from Championships",
+		"id": 567,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/076-GoldChampionV.png",
+		"ach_name": "Gold Champion V",
+		"description": "Earn five Gold medals from Championships",
+		"id": 568,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/077-DiamondChampion.png",
+		"ach_name": "Diamond Champion",
+		"description": "Earn a Diamond medal in a Championship",
+		"id": 569,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/491-initiate.png",
+		"ach_name": "Initiate",
+		"description": "Reach Level 3 in any Mastery",
+		"id": 491,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/492-lmg-master.png",
+		"ach_name": "LMG Master",
+		"description": "Reach Level 5 in LMG Mastery",
+		"id": 492,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/493-turret-master.png",
+		"ach_name": "Turret Master",
+		"description": "Reach Level 5 in Turret Mastery",
+		"id": 493,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/494-etc-etc-master.png",
+		"ach_name": "Grenade Master",
+		"description": "Reach Level 5 in Grenade Mastery",
+		"id": 494,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/495-smg-master.png",
+		"ach_name": "SMG Master",
+		"description": "Reach Level 5 in SMG Mastery",
+		"id": 495,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/496-pistol-master.png",
+		"ach_name": "Pistol Master",
+		"description": "Reach Level 5 in Pistol Mastery",
+		"id": 496,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/497-shotgun-master.png",
+		"ach_name": "Shotgun Master",
+		"description": "Reach Level 5 in Shotgun Mastery",
+		"id": 497,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/498-assault-rifle-master.png",
+		"ach_name": "Assault Rifle Master",
+		"description": "Reach Level 5 in Assault Rifle Mastery",
+		"id": 498,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/499-rocket-launcher-master.png",
+		"ach_name": "Rocket Launcher Master",
+		"description": "Reach Level 5 in Rocket Launcher Mastery",
+		"id": 499,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/500-sniper-rifle-master.png",
+		"ach_name": "Sniper Rifle Master",
+		"description": "Reach Level 5 in Sniper Rifle Mastery",
+		"id": 500,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/501-special-master.png",
+		"ach_name": "Flame Thrower Master",
+		"description": "Reach Level 5 in Flame Thrower Mastery",
+		"id": 501,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/502-romper-stomper.png",
+		"ach_name": "Romper Stomper",
+		"description": "Reach Level 5 in Boots Mastery",
+		"id": 502,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/503-throw-down-the-gauntlet.png",
+		"ach_name": "Throw Down the Gauntlet",
+		"description": "Reach Level 5 in Gloves Mastery",
+		"id": 503,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/504-darth-sparkle.png",
+		"ach_name": "Darth Sparkle",
+		"description": "Reach Level 5 in Helmet Mastery",
+		"id": 504,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/505-who-wears-the-pants.png",
+		"ach_name": "Who Wears the Pants?",
+		"description": "Reach Level 5 in Pants Mastery",
+		"id": 505,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/506-made-of-real-gorilla-chest.png",
+		"ach_name": "Made of real Gorilla Chest",
+		"description": "Reach Level 5 in Vest Mastery",
+		"id": 506,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/507-high-damage-ammo-master.png",
+		"ach_name": "High Damage Ammo Master",
+		"description": "Reach Level 5 in High Damage Ammo Mastery",
+		"id": 507,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/060-The-Nightmare-Begins.png",
+		"ach_name": "The Nightmare Begins",
+		"description": "Win a mission in Nightmare Mode",
+		"id": 532,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/061-I-Am-The-Nightmare.png",
+		"ach_name": "I AM the Nightmare",
+		"description": "Win 5 missions in one day with a single character in Nightmare Mode",
+		"id": 533,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/062-Sweet-Dreams.png",
+		"ach_name": "Sweet Dreams",
+		"description": "Kill 1,000 Nightmarish Zombies",
+		"id": 534,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/063-Night-Night-Freddy.png",
+		"ach_name": "Night Night, Freddy",
+		"description": "Kill 1 Nightmarish Boss",
+		"id": 535,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/064-Hellraiser.png",
+		"ach_name": "Hellraiser",
+		"description": "Kill 50 Nightmarish Bosses",
+		"id": 536,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/065-Black-Is-The-New-Red.png",
+		"ach_name": "BLACK is the new RED",
+		"description": "Equip a BLACK piece of equipment or weapon",
+		"id": 537,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/066-The-Augmented-Elite.png",
+		"ach_name": "The Augmented Elite",
+		"description": "Use an Elite Augment Core",
+		"id": 538,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/067-Ultimate-Badass.png",
+		"ach_name": "Ultimate Badass",
+		"description": "Augment a weapon to 4 Star Grade 12",
+		"id": 539,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/068-AssaultRifle-Collection.png",
+		"ach_name": "Gun Collector",
+		"description": "Collect all standard Assault Rifles",
+		"id": 540,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/069-Vest-Collection.png",
+		"ach_name": "In-VEST-ed",
+		"description": "Collect all standard Vests",
+		"id": 541,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/070-AllWeaponsandArmour-Collection.png",
+		"ach_name": "Gotta Catch Em All",
+		"description": "Collect all standard equipment and weapons",
+		"id": 542,
+		"points": 200
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/022-Impounded.png",
+		"ach_name": "Impounded",
+		"description": "Kill 5 or more zombies with a single car explosion",
+		"id": 377,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/040-YouHaveNoSecrets.png",
+		"ach_name": "You Have No Secrets",
+		"description": "Find all hidden stashes in the original 7 maps",
+		"id": 395,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/023-MapMasterOnslaught.png",
+		"ach_name": "Map Master - Onslaught",
+		"description": "Successfully defend the ship 1,000 times",
+		"id": 378,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/025-MapMasterVaccine.png",
+		"ach_name": "Map Master - Vaccine",
+		"description": "Successfully extract the vaccine 1,000 times",
+		"id": 380,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/027-MapMasterSurvivors.png",
+		"ach_name": "Map Master - Survivors",
+		"description": "Survive Survivors 1,000 times",
+		"id": 382,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/030-MapMasterPods.png",
+		"ach_name": "Map Master - Pods",
+		"description": "Successfully defeat the pods 1,000 times",
+		"id": 385,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/032-MapMasterVIP.png",
+		"ach_name": "Map Master - VIP",
+		"description": "Successfully escort the whiny VIP 1,000 times",
+		"id": 387,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/035-MapMasterPowerOut.png",
+		"ach_name": "Map Master - Power Out",
+		"description": "Successfully complete Power Out 1,000 times",
+		"id": 390,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/037-MapMasterLastStand.png",
+		"ach_name": "Map Master - Last Stand",
+		"description": "Make 1,000 successful stands",
+		"id": 392,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/0402-MapChampionIceStation.png",
+		"ach_name": "Map Champion - Ice Station",
+		"description": "Successfully complete Ice Station 100 times",
+		"id": 543,
+		"points": 75
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/0401-MapChampionMeltdown.png",
+		"ach_name": "Map Champion - Meltdown",
+		"description": "Successfully cooldown Meltdown 100 times",
+		"id": 546,
+		"points": 75
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/024-NoneShallPass.png",
+		"ach_name": "None Shall Pass",
+		"description": "Defeat all zombies on Onslaught without allowing either of the ramp doors to fall",
+		"id": 379,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/026-TeamSprint.png",
+		"ach_name": "Team Sprint",
+		"description": "Complete Vaccine with a 4 player team where you extract the vaccine by getting it to the ship in less than 5 minutes",
+		"id": 381,
+		"points": 75
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/028-Hero.png",
+		"ach_name": "Hero",
+		"description": "Rescue every single survivor on the Survivors map",
+		"id": 383,
+		"points": 75
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/029-Zero.png",
+		"ach_name": "Zero",
+		"description": "Allow every survivor to, well, not survive",
+		"id": 384,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/031-Precision.png",
+		"ach_name": "Precision",
+		"description": "Do not open any pods besides the boss pod in the boss encounter room",
+		"id": 386,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/033-Transporter.png",
+		"ach_name": "Transporter",
+		"description": "Evacuate the VIP without him taking any damage",
+		"id": 388,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/sas4/034-Redecorator.png",
+		"ach_name": "Redecorator",
+		"description": 
+"Destroy every breakable object in the VIP\\\\","id":389,"points":25},{"hidden":0,"thumb":"https://thumbs.ninjakiwi.com/sas4/036-ZeroCasualties.png","ach_name":"Zero Casualties","description":"Complete Power Out without any player on a 4 player team taking any damage from the central turret","id":391,"points":75},{"hidden":0,"thumb":"https://thumbs.ninjakiwi.com/sas4/038-NLL.png","ach_name":"NLL","description":"Complete Last Stand without a single zombie getting through","id":393,"points":25},{"hidden":0,"thumb":"https://thumbs.ninjakiwi.com/sas4/039-HardLine.png","ach_name":"Hard Line","description":"Complete Last Stand without letting a single zombie past the first barrier","id":394,"points":50},{"hidden":0,"thumb":"https://thumbs.ninjakiwi.com/sas4/0406-Mechanic.png","ach_name":"Mechanic","description":"End the truck ride on Ice Station with the truck on full health","id":544,"points":75},{"hidden":0,"thumb":"https://thumbs.ninjakiwi.com/sas4/0405-IceStationIllBeTheActionHero.png","ach_name":"Ill Be the Action Hero","description":"Ensure none of the HVM soldiers need to retreat during the defending of the Ice Station","id":545,"points":25},{"hidden":0,"thumb":"https://thumbs.ninjakiwi.com/sas4/0404-MeltdownSpeedRun.png","ach_name":"Meltdown Countdown","description":"Complete Meltdown in under 3:30","id":547,"points":50},{"hidden":1,"thumb":"https://thumbs.ninjakiwi.com/sas4/0403-MeltdownPickUpAll3.png","ach_name":"Trying To Turn Superhero","description":"Use all of the radioactive med packs in Meltdown","id":548,"points":25}]

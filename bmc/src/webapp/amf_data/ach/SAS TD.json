@@ -1,0 +1,394 @@
+[
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Mean-Streets-Bronze.jpg",
+		"ach_name": "Mean Streets Bronze",
+		"description": "Complete Mean Streets on Normal",
+		"id": 51,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Subzero-Bronze.jpg",
+		"ach_name": "Subzero Bronze",
+		"description": "Complete Subzero on Normal",
+		"id": 54,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Dead-Warehouse-Bronze.jpg",
+		"ach_name": "Dead Warehouse Bronze",
+		"description": "Complete Dead Warehouse on Normal",
+		"id": 57,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Shop-Till-You-Drop-Bronze.jpg",
+		"ach_name": "Shop till you Drop Bronze",
+		"description": "Complete Shop till you Drop on Normal",
+		"id": 128,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Killtop-Bronze.jpg",
+		"ach_name": "Killtop Bronze",
+		"description": "Complete Killtop on Normal",
+		"id": 131,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Touchdown-Bronze.jpg",
+		"ach_name": "Touchdown Bronze",
+		"description": "Complete Touchdown on Normal",
+		"id": 146,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/CleanupAisle13-Bronze.jpg",
+		"ach_name": "Clean Up On Aisle 13 Bronze",
+		"description": "Complete Clean Up On Aisle 13 on Normal",
+		"id": 160,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Mansion-Bronze.jpg",
+		"ach_name": "Outbreak Mansion Bronze",
+		"description": "Complete Outbreak Mansion on Normal",
+		"id": 272,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Mean-Streets-Silver.jpg",
+		"ach_name": "Mean Streets Silver",
+		"description": "Complete Mean Streets on Elite",
+		"id": 52,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Subzero-Silver.jpg",
+		"ach_name": "Subzero Silver",
+		"description": "Complete Subzero on Elite",
+		"id": 55,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Dead-Warehouse-Silver.jpg",
+		"ach_name": "Dead Warehouse Silver",
+		"description": "Complete Dead Warehouse on Elite",
+		"id": 58,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Shop-Till-You-Drop-Silver.jpg",
+		"ach_name": "Shop till you Drop Silver",
+		"description": "Complete Shop till you Drop on Elite",
+		"id": 129,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Killtop-Silver.jpg",
+		"ach_name": "Killtop Silver",
+		"description": "Complete Killtop on Elite",
+		"id": 132,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Touchdown-Silver.jpg",
+		"ach_name": "Touchdown Silver",
+		"description": "Complete Touchdown on Elite",
+		"id": 147,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/CleanupAisle13-Silver.jpg",
+		"ach_name": "Clean Up On Aisle 13 Silver",
+		"description": "Complete Clean Up On Aisle 13 on Elite",
+		"id": 161,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Mansion-Silver.jpg",
+		"ach_name": "Outbreak Mansion Silver",
+		"description": "Complete Outbreak Mansion on Elite",
+		"id": 273,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Mean-Streets-Gold.jpg",
+		"ach_name": "Mean Streets Gold",
+		"description": "Complete Mean Streets on Nightmare",
+		"id": 53,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Subzero-Gold.jpg",
+		"ach_name": "Subzero Gold",
+		"description": "Complete Subzero on Nightmare",
+		"id": 56,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Dead-Warehouse-Gold.jpg",
+		"ach_name": "Dead Warehouse Gold",
+		"description": "Complete Dead Warehouse on Nightmare",
+		"id": 59,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Shop-Till-You-Drop-Gold.jpg",
+		"ach_name": "Shop till you Drop Gold",
+		"description": "Complete Shop till you Drop on Nightmare",
+		"id": 130,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Killtop-Gold.jpg",
+		"ach_name": "Killtop Gold",
+		"description": "Complete Killtop on Nightmare",
+		"id": 133,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Touchdown-Gold.jpg",
+		"ach_name": "Touchdown Gold",
+		"description": "Complete Touchdown on Nightmare",
+		"id": 148,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/CleanupAisle13-Gold.jpg",
+		"ach_name": "Clean Up On Aisle 13 Gold",
+		"description": "Complete Clean Up On Aisle 13 on Nightmare",
+		"id": 162,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Mansion-Gold.jpg",
+		"ach_name": "Outbreak Mansion Gold",
+		"description": "Complete Outbreak Mansion on Nightmare",
+		"id": 274,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Mean-Streets-Master.jpg",
+		"ach_name": "Mean Streets Master",
+		"description": "Pass wave 100 on Mean Streets Nightmare",
+		"id": 134,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Sub-Zero-Ownage.jpg",
+		"ach_name": "Sub-Zero Ownage",
+		"description": "Pass wave 100 on Sub-Zero Nightmare",
+		"id": 135,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Dead-Warehouse-Dominance.jpg",
+		"ach_name": "Dead Warehouse Dominance",
+		"description": "Pass wave 100 on Dead Warehouse Nightmare",
+		"id": 136,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Parking-Lot-Punishment.jpg",
+		"ach_name": "Parking Lot Punishment",
+		"description": "Pass wave 100 on Shop till you Drop Nightmare",
+		"id": 137,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Killtop-on-the-Hilltop.jpg",
+		"ach_name": "Killtop on the Hilltop",
+		"description": "Pass wave 100 on Killtop Nightmare",
+		"id": 138,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Touchdown-Master.jpg",
+		"ach_name": "Touchdown Shutdown",
+		"description": "Pass wave 100 on Touchdown Nightmare",
+		"id": 149,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/CleanupAisle13-Master.jpg",
+		"ach_name": "Cleaned Up On Aisle 13",
+		"description": "Pass wave 100 on Clean Up On Aisle 13 Nightmare",
+		"id": 164,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Mansion-Master.jpg",
+		"ach_name": "Get Off My Lawn",
+		"description": "Pass wave 100 on Outbreak Mansion Nightmare",
+		"id": 276,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Mean-Streets-Apocalypse.jpg",
+		"ach_name": "Mean Streets Apocalypse",
+		"description": "Complete Mean Streets on Apocalypse",
+		"id": 151,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Subzero-Apocalypse.jpg",
+		"ach_name": "Subzero Apocalypse",
+		"description": "Complete Subzero on Apocalypse",
+		"id": 152,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Dead-Warehouse-Apocalypse.jpg",
+		"ach_name": "Dead Warehouse Apocalypse",
+		"description": "Complete Dead Warehouse on Apocalypse",
+		"id": 153,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Shop-Till-You-Drop-Apocalypse.jpg",
+		"ach_name": "Shop till you Drop Apocalypse",
+		"description": "Complete Shop till you Drop on Apocalypse",
+		"id": 154,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Killtop-Apocalypse.jpg",
+		"ach_name": "Killtop Apocalypse",
+		"description": "Complete Killtop on Apocalypse",
+		"id": 155,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Touchdown-Apocalypse.jpg",
+		"ach_name": "Touchdown Apocalypse",
+		"description": "Complete Touchdown on Apocalypse",
+		"id": 156,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/CleanupAisle13-Apocalypse.jpg",
+		"ach_name": "Clean Up On Aisle 13 Apocalypse",
+		"description": "Complete Clean Up On Aisle 13 on Apocalypse",
+		"id": 163,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Mansion-Apocalypse.jpg",
+		"ach_name": "Outbreak Mansion Apocalypse",
+		"description": "Complete Outbreak Mansion on Apocalypse",
+		"id": 275,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Airstruck!.jpg",
+		"ach_name": "Airstruck!",
+		"description": "Call in 20 Airstrikes",
+		"id": 140,
+		"points": 30
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Devastator-of-Devastators.jpg",
+		"ach_name": "Devastator of Devastators",
+		"description": "Kill 250 Devastators",
+		"id": 62,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Extreme-GrenadierExtreme-Grenadier.jpg",
+		"ach_name": "Extreme Grenadier",
+		"description": "Cook off 2500 grenades",
+		"id": 64,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Farsighted.jpg",
+		"ach_name": "Farsighted",
+		"description": "Place 100 SAS Snipers",
+		"id": 60,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Let-the-Bodies-Hit-the-Floor.jpg",
+		"ach_name": "Let the Bodies Hit the Floor",
+		"description": "Eviscerate 1,000,000 zombies",
+		"id": 65,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Longbow-Legend.jpg",
+		"ach_name": "Longbow Legend",
+		"description": "Call in 20 Longbow Helicopters",
+		"id": 139,
+		"points": 30
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Missile-Crisis.jpg",
+		"ach_name": "Missile Crisis",
+		"description": "Drop 20 Necro-Nukes",
+		"id": 141,
+		"points": 30
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Top-Gun.jpg",
+		"ach_name": "Top Gun",
+		"description": "Upgrade 100 Assault SAS to Brownings",
+		"id": 61,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/sastd/Weapons-Expert.jpg",
+		"ach_name": "Weapons Expert",
+		"description": "Unlock all top-tier weapon upgrades",
+		"id": 142,
+		"points": 50
+	}
+]

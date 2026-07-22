@@ -1,0 +1,58 @@
+[
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/btd4/ach/Monkey-Legend.jpg",
+		"ach_name": "Monkey Legend",
+		"description": "Reach Rank 60",
+		"id": 185,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/btd4/ach/Apopalypse-Now.jpg",
+		"ach_name": "Apopalypse Now",
+		"description": "Reach round 100 on Apopalypse mode on any track",
+		"id": 184,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/btd4/ach/Bloon-Veteran.jpg",
+		"ach_name": "Bloon Veteran",
+		"description": "Reach Rank 30",
+		"id": 183,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/btd4/ach/MOAB-Madness.jpg",
+		"ach_name": "MOAB Madness",
+		"description": "Beat the MOAB Madness Challenge",
+		"id": 182,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/btd4/ach/Lickity-Split.jpg",
+		"ach_name": "Lickity Split",
+		"description": "Beat the Lollipop Challenge",
+		"id": 181,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/btd4/ach/Rank-Up.jpg",
+		"ach_name": "Rank Up!",
+		"description": "Reach rank 10",
+		"id": 180,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/btd4/ach/Poppin-Good.jpg",
+		"ach_name": "Poppin Good",
+		"description": "Beat any beginner track on any difficulty",
+		"id": 179,
+		"points": 10
+	}
+]

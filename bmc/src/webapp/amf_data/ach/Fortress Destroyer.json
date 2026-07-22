@@ -1,0 +1,962 @@
+[
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/Luddite-6.png",
+		"ach_name": "Luddite VI",
+		"description": "Destroy 50,000 enemy Shipyards and Airbases",
+		"id": 689,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/HeavyHitter-5.png",
+		"ach_name": "Heavy Hitter V",
+		"description": "Do 5,000 damage from a single tower in one hit",
+		"id": 673,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/HeavyHitter-4.png",
+		"ach_name": "Heavy Hitter IV",
+		"description": "Do 2,500 damage from a single tower in one hit",
+		"id": 653,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/HeavyHitter-3.png",
+		"ach_name": "Heavy Hitter III",
+		"description": "Do 1,500 damage from a single tower in one hit",
+		"id": 632,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/HeavyHitter-2.png",
+		"ach_name": "Heavy Hitter II",
+		"description": "Do 900 damage from a single tower in one hit",
+		"id": 611,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/HeavyHitter-1.png",
+		"ach_name": "Heavy Hitter",
+		"description": "Do 500 damage from a single tower in one hit",
+		"id": 590,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/Luddite-5.png",
+		"ach_name": "Luddite V",
+		"description": "Destroy 25,000 enemy Shipyards and Airbases",
+		"id": 672,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/Luddite-4.png",
+		"ach_name": "Luddite IV",
+		"description": "Destroy 2,500 enemy Shipyards and Airbases",
+		"id": 652,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/Luddite-3.png",
+		"ach_name": "Luddite III",
+		"description": "Destroy 500 enemy Shipyards and Airbases",
+		"id": 631,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/Luddite-2.png",
+		"ach_name": "Luddite II",
+		"description": "Destroy 100 enemy Shipyards and Airbases",
+		"id": 610,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/Luddite-1.png",
+		"ach_name": "Luddite",
+		"description": "Destroy 25 enemy Shipyards and Airbases",
+		"id": 589,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BlackPrinceBuster-6.png",
+		"ach_name": "Black Prince Buster VI",
+		"description": "Defeat the Black Prince-type boss 2,000 times",
+		"id": 688,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BlackPrinceBuster-5.png",
+		"ach_name": "Black Prince Buster V",
+		"description": "Defeat the Black Prince-type boss 500 times",
+		"id": 671,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BlackPrinceBuster-4.png",
+		"ach_name": "Black Prince Buster IV",
+		"description": "Defeat the Black Prince-type boss 500 times",
+		"id": 651,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BlackPrinceBuster-3.png",
+		"ach_name": "Black Prince Buster III",
+		"description": "Defeat the Black Prince-type boss 100 times",
+		"id": 630,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BlackPrinceBuster-2.png",
+		"ach_name": "Black Prince Buster II",
+		"description": "Defeat the Black Prince-type boss 25 times",
+		"id": 609,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BlackPrinceBuster-1.png",
+		"ach_name": "Black Prince Buster",
+		"description": "Defeat the Black Prince-type boss 10 times",
+		"id": 588,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/KrackenKracker-6.png",
+		"ach_name": "Kraken Kracker VI",
+		"description": "Defeat the Kraken-type boss 2,000 times",
+		"id": 687,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/KrackenKracker-5.png",
+		"ach_name": "Kraken Kracker V",
+		"description": "Defeat the Kraken-type boss 500 times",
+		"id": 670,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/KrackenKracker-4.png",
+		"ach_name": "Kraken Kracker IV",
+		"description": "Defeat the Kraken-type boss 500 times",
+		"id": 650,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/KrackenKracker-3.png",
+		"ach_name": "Kraken Kracker III",
+		"description": "Defeat the Kraken-type boss 100 times",
+		"id": 629,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/KrackenKracker-2.png",
+		"ach_name": "Kraken Kracker II",
+		"description": "Defeat the Kraken-type boss 25 times",
+		"id": 608,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/KrackenKracker-1.png",
+		"ach_name": "Kraken Kracker",
+		"description": "Defeat the Kraken-type boss 10 times",
+		"id": 587,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/NexusNixer-6.png",
+		"ach_name": "Nexus Nixer VI",
+		"description": "Defeat the Nexus-class boss 2,000 times",
+		"id": 686,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/NexusNixer-5.png",
+		"ach_name": "Nexus Nixer V",
+		"description": "Defeat the Nexus-class boss 500 times",
+		"id": 669,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/NexusNixer-4.png",
+		"ach_name": "Nexus Nixer IV",
+		"description": "Defeat the Nexus-class boss 500 times",
+		"id": 649,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/NexusNixer-3.png",
+		"ach_name": "Nexus Nixer III",
+		"description": "Defeat the Nexus-class boss 100 times",
+		"id": 628,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/NexusNixer-2.png",
+		"ach_name": "Nexus Nixer II",
+		"description": "Defeat the Nexus-class boss 25 times",
+		"id": 607,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/NexusNixer-1.png",
+		"ach_name": "Nexus Nixer",
+		"description": "Defeat the Nexus-class boss 10 times",
+		"id": 586,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/HiveHarasser-6.png",
+		"ach_name": "Hive Harasser VI",
+		"description": "Defeat the Hive-class boss 2,000 times",
+		"id": 685,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/HiveHarasser-5.png",
+		"ach_name": "Hive Harasser V",
+		"description": "Defeat the Hive-class boss 500 times",
+		"id": 668,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/HiveHarasser-4.png",
+		"ach_name": "Hive Harasser IV",
+		"description": "Defeat the Hive-class boss 500 times",
+		"id": 648,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/HiveHarasser-3.png",
+		"ach_name": "Hive Harasser III",
+		"description": "Defeat the Hive-class boss 100 times",
+		"id": 627,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/HiveHarasser-2.png",
+		"ach_name": "Hive Harasser II",
+		"description": "Defeat the Hive-class boss 25 times",
+		"id": 606,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/HiveHarasser-1.png",
+		"ach_name": "Hive Harasser",
+		"description": "Defeat the Hive-class boss 10 times",
+		"id": 585,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/VanguardVictor-6.png",
+		"ach_name": "Vanguard Victor VI",
+		"description": "Defeat the Vanguard-class boss 2,000 times",
+		"id": 684,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/VanguardVictor-5.png",
+		"ach_name": "Vanguard Victor V",
+		"description": "Defeat the Vanguard-class boss 500 times",
+		"id": 667,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/VanguardVictor-4.png",
+		"ach_name": "Vanguard Victor IV",
+		"description": "Defeat the Vanguard-class boss 500 times",
+		"id": 647,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/VanguardVictor-3.png",
+		"ach_name": "Vanguard Victor III",
+		"description": "Defeat the Vanguard-class boss 100 times",
+		"id": 626,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/VanguardVictor-2.png",
+		"ach_name": "Vanguard Victor II",
+		"description": "Defeat the Vanguard-class boss 25 times",
+		"id": 605,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/VanguardVictor-1.png",
+		"ach_name": "Vanguard Victor",
+		"description": "Defeat the Vanguard-class boss 10 times",
+		"id": 584,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/Plasticide-6.png",
+		"ach_name": "Plasticide VI",
+		"description": "Eradicate plasticyte! Destroy 5,000,000 individual plasticyte targets",
+		"id": 683,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/Plasticide-5.png",
+		"ach_name": "Plasticide V",
+		"description": "Eradicate plasticyte! Destroy 1,000,000 individual plasticyte targets",
+		"id": 666,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/Plasticide-4.png",
+		"ach_name": "Plasticide IV",
+		"description": "Eradicate plasticyte! Destroy 100,000 individual plasticyte targets",
+		"id": 646,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/Plasticide-3.png",
+		"ach_name": "Plasticide III",
+		"description": "Eradicate plasticyte! Destroy 25,000 individual plasticyte targets",
+		"id": 625,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/Plasticide-2.png",
+		"ach_name": "Plasticide II",
+		"description": "Eradicate plasticyte! Destroy 5,000 individual plasticyte targets",
+		"id": 604,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/Plasticide-1.png",
+		"ach_name": "Plasticide",
+		"description": "Eradicate plasticyte! Destroy 1,000 individual plasticyte targets",
+		"id": 583,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/FleetBuilder-4.png",
+		"ach_name": "Fleet Builder IV",
+		"description": "Reach a fleet size of 15 simultaneously built ships",
+		"id": 645,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/FleetBuilder-3.png",
+		"ach_name": "Fleet Builder III",
+		"description": "Reach a fleet size of 10 simultaneously built ships",
+		"id": 624,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/FleetBuilder-2.png",
+		"ach_name": "Fleet Builder II",
+		"description": "Reach a fleet size of 7 simultaneously built ships",
+		"id": 603,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/FleetBuilder-1.png",
+		"ach_name": "Fleet Builder",
+		"description": "Reach a fleet size of 5 simultaneously built ships",
+		"id": 582,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/PointsControlled-6.png",
+		"ach_name": "Points Controlled VI",
+		"description": "Deal 50,000,000 damage with Control Point powers",
+		"id": 682,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/PointsControlled-5.png",
+		"ach_name": "Points Controlled V",
+		"description": "Deal 10,000,000 damage with Control Point powers",
+		"id": 665,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/PointsControlled-4.png",
+		"ach_name": "Points Controlled IV",
+		"description": "Deal 2,500,000 damage with Control Point powers",
+		"id": 644,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/PointsControlled-3.png",
+		"ach_name": "Points Controlled III",
+		"description": "Deal 1,000,000 damage with Control Point powers",
+		"id": 623,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/PointsControlled-2.png",
+		"ach_name": "Points Controlled II",
+		"description": "Deal 250,000 damage with Control Point powers",
+		"id": 602,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/PointsControlled-1.png",
+		"ach_name": "Points Controlled",
+		"description": "Deal 50,000 damage with Control Point powers",
+		"id": 581,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/PoisonPill-6.png",
+		"ach_name": "Poison Pill VI",
+		"description": "Deal 50,000,000 damage with corrosive-enhanced towers",
+		"id": 681,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/PoisonPill-5.png",
+		"ach_name": "Poison Pill V",
+		"description": "Deal 10,000,000 damage with corrosive-enhanced towers",
+		"id": 664,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/PoisonPill-4.png",
+		"ach_name": "Poison Pill IV",
+		"description": "Deal 2,500,000 damage with corrosive-enhanced towers",
+		"id": 643,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/PoisonPill-3.png",
+		"ach_name": "Poison Pill III",
+		"description": "Deal 1,000,000 damage with corrosive-enhanced towers",
+		"id": 622,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/PoisonPill-2.png",
+		"ach_name": "Poison Pill II",
+		"description": "Deal 250,000 damage with corrosive-enhanced towers",
+		"id": 601,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/PoisonPill-1.png",
+		"ach_name": "Poison Pill",
+		"description": "Deal 50,000 damage with corrosive-enhanced towers",
+		"id": 580,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/FirePower-6.png",
+		"ach_name": "Fire Power VI",
+		"description": "Deal 50,000,000 damage with thermally enhanced towers",
+		"id": 680,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/FirePower-5.png",
+		"ach_name": "Fire Power V",
+		"description": "Deal 10,000,000 damage with thermally enhanced towers",
+		"id": 663,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/FirePower-4.png",
+		"ach_name": "Fire Power IV",
+		"description": "Deal 2,500,000 damage with thermally enhanced towers",
+		"id": 642,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/FirePower-3.png",
+		"ach_name": "Fire Power III",
+		"description": "Deal 1,000,000 damage with thermally enhanced towers",
+		"id": 621,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/FirePower-2.png",
+		"ach_name": "Fire Power II",
+		"description": "Deal 250,000 damage with thermally enhanced towers",
+		"id": 600,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/FirePower-1.png",
+		"ach_name": "Fire Power",
+		"description": "Deal 50,000 damage with thermally enhanced towers",
+		"id": 579,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/RammerJammer-6.png",
+		"ach_name": "Rammer Jammer VI",
+		"description": "Deal 50,000,000 damage by ramming enemy units",
+		"id": 679,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/RammerJammer-5.png",
+		"ach_name": "Rammer Jammer V",
+		"description": "Deal 10,000,000 damage by ramming enemy units",
+		"id": 662,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/RammerJammer-4.png",
+		"ach_name": "Rammer Jammer IV",
+		"description": "Deal 2,500,000 damage by ramming enemy units",
+		"id": 641,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/RammerJammer-3.png",
+		"ach_name": "Rammer Jammer III",
+		"description": "Deal 1,000,000 damage by ramming enemy units",
+		"id": 620,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/RammerJammer-2.png",
+		"ach_name": "Rammer Jammer II",
+		"description": "Deal 250,000 damage by ramming enemy units",
+		"id": 599,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/RammerJammer-1.png",
+		"ach_name": "Rammer Jammer",
+		"description": "Deal 50,000 damage by ramming enemy units",
+		"id": 578,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BeamBlaster-6.png",
+		"ach_name": "Beam Blaster VI",
+		"description": "Deal 50,000,000 damage with Beam towers",
+		"id": 678,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BeamBlaster-5.png",
+		"ach_name": "Beam Blaster V",
+		"description": "Deal 10,000,000 damage with Beam towers",
+		"id": 661,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BeamBlaster-4.png",
+		"ach_name": "Beam Blaster IV",
+		"description": "Deal 2,500,000 damage with Beam towers",
+		"id": 640,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BeamBlaster-3.png",
+		"ach_name": "Beam Blaster III",
+		"description": "Deal 1,000,000 damage with Beam towers",
+		"id": 619,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BeamBlaster-2.png",
+		"ach_name": "Beam Blaster II",
+		"description": "Deal 250,000 damage with Beam towers",
+		"id": 598,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BeamBlaster-1.png",
+		"ach_name": "Beam Blaster",
+		"description": "Deal 50,000 damage with Beam towers",
+		"id": 577,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/MissileMaster-6.png",
+		"ach_name": "Missile Master VI",
+		"description": "Deal 50,000,000 damage with Missile towers",
+		"id": 677,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/MissileMaster-5.png",
+		"ach_name": "Missile Master V",
+		"description": "Deal 10,000,000 damage with Missile towers",
+		"id": 660,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/MissileMaster-4.png",
+		"ach_name": "Missile Master IV",
+		"description": "Deal 2,500,000 damage with Missile towers",
+		"id": 639,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/MissileMaster-3.png",
+		"ach_name": "Missile Master III",
+		"description": "Deal 1,000,000 damage with Missile towers",
+		"id": 618,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/MissileMaster-2.png",
+		"ach_name": "Missile Master II",
+		"description": "Deal 250,000 damage with Missile towers",
+		"id": 597,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/MissileMaster-1.png",
+		"ach_name": "Missile Master",
+		"description": "Deal 50,000 damage with Missile towers",
+		"id": 576,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/CannonCrafter-6.png",
+		"ach_name": "Cannon Crafter VI",
+		"description": "Deal 50,000,000 damage with Cannon towers",
+		"id": 676,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/CannonCrafter-5.png",
+		"ach_name": "Cannon Crafter V",
+		"description": "Deal 10,000,000 damage with Cannon towers",
+		"id": 659,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/CannonCrafter-4.png",
+		"ach_name": "Cannon Crafter IV",
+		"description": "Deal 2,500,000 damage with Cannon towers",
+		"id": 638,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/CannonCrafter-3.png",
+		"ach_name": "Cannon Crafter III",
+		"description": "Deal 1,000,000 damage with Cannon towers",
+		"id": 617,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/CannonCrafter-2.png",
+		"ach_name": "Cannon Crafter II",
+		"description": "Deal 250,000 damage with Cannon towers",
+		"id": 596,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/CannonCrafter-1.png",
+		"ach_name": "Cannon Crafter",
+		"description": "Deal 50,000 damage with Cannon towers",
+		"id": 575,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/AutocannonAutomaton-6.png",
+		"ach_name": "Autocannon Automaton VI",
+		"description": "Deal 50,000,000 damage with Auto Cannon towers",
+		"id": 675,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/AutocannonAutomaton-5.png",
+		"ach_name": "Autocannon Automaton V",
+		"description": "Deal 10,000,000 damage with Auto Cannon towers",
+		"id": 658,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/AutocannonAutomaton-4.png",
+		"ach_name": "Autocannon Automaton IV",
+		"description": "Deal 2,500,000 damage with Auto Cannon towers",
+		"id": 637,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/AutocannonAutomaton-3.png",
+		"ach_name": "Autocannon Automaton III",
+		"description": "Deal 1,000,000 damage with Auto Cannon towers",
+		"id": 616,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/AutocannonAutomaton-2.png",
+		"ach_name": "Autocannon Automaton II",
+		"description": "Deal 250,000 damage with Auto Cannon towers",
+		"id": 595,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/AutocannonAutomaton-1.png",
+		"ach_name": "Autocannon Automaton",
+		"description": "Deal 50,000 damage with Auto Cannon towers",
+		"id": 574,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/GatlingGuru-6.png",
+		"ach_name": "Gatling Guru VI",
+		"description": "Deal 50,000,000 damage with Gatling towers",
+		"id": 674,
+		"points": 250
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/GatlingGuru-5.png",
+		"ach_name": "Gatling Guru V",
+		"description": "Deal 10,000,000 damage with Gatling towers",
+		"id": 657,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/GatlingGuru-4.png",
+		"ach_name": "Gatling Guru IV",
+		"description": "Deal 2,500,000 damage with Gatling towers",
+		"id": 636,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/GatlingGuru-3.png",
+		"ach_name": "Gatling Guru III",
+		"description": "Deal 1,000,000 damage with Gatling towers",
+		"id": 615,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/GatlingGuru-2.png",
+		"ach_name": "Gatling Guru II",
+		"description": "Deal 250,000 damage with Gatling towers",
+		"id": 594,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/GatlingGuru-1.png",
+		"ach_name": "Gatling Guru",
+		"description": "Deal 50,000 damage with Gatling towers",
+		"id": 573,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BattlecruiserCommander-5.png",
+		"ach_name": "Battlecruiser Commander V",
+		"description": "Reach level 40 in any Battle Cruiser class ship",
+		"id": 656,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BattlecruiserCommander-4.png",
+		"ach_name": "Battlecruiser Commander IV",
+		"description": "Reach level 30 in any Battle Cruiser class ship",
+		"id": 635,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BattlecruiserCommander-3.png",
+		"ach_name": "Battlecruiser Commander III",
+		"description": "Reach level 20 in any Battle Cruiser class ship",
+		"id": 614,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BattlecruiserCommander-2.png",
+		"ach_name": "Battlecruiser Commander II",
+		"description": "Reach level 10 in any Battle Cruiser class ship",
+		"id": 593,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/BattlecruiserCommander-1.png",
+		"ach_name": "Battlecruiser Commander",
+		"description": "Reach level 5 in any Battle Cruiser class ship",
+		"id": 572,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/DestroyerCommander-5.png",
+		"ach_name": "Destroyer Commander V",
+		"description": "Reach level 40 in any Destroyer class ship",
+		"id": 655,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/DestroyerCommander-4.png",
+		"ach_name": "Destroyer Commander IV",
+		"description": "Reach level 30 in any Destroyer class ship",
+		"id": 634,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/DestroyerCommander-3.png",
+		"ach_name": "Destroyer Commander III",
+		"description": "Reach level 20 in any Destroyer class ship",
+		"id": 613,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/DestroyerCommander-2.png",
+		"ach_name": "Destroyer Commander II",
+		"description": "Reach level 10 in any Destroyer class ship",
+		"id": 592,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/DestroyerCommander-1.png",
+		"ach_name": "Destroyer Commander",
+		"description": "Reach level 5 in any Destroyer class ship",
+		"id": 571,
+		"points": 5
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/CorvetteCommander-5.png",
+		"ach_name": "Corvette Commander V",
+		"description": "Reach level 40 in any Corvette class ship",
+		"id": 654,
+		"points": 100
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/CorvetteCommander-4.png",
+		"ach_name": "Corvette Commander IV",
+		"description": "Reach level 30 in any Corvette class ship",
+		"id": 633,
+		"points": 50
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/CorvetteCommander-3.png",
+		"ach_name": "Corvette Commander III",
+		"description": "Reach level 20 in any Corvette class ship",
+		"id": 612,
+		"points": 25
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/CorvetteCommander-2.png",
+		"ach_name": "Corvette Commander II",
+		"description": "Reach level 10 in any Corvette class ship",
+		"id": 591,
+		"points": 10
+	},
+	{
+		"hidden": 1,
+		"thumb": "https://thumbs.ninjakiwi.com/fortress/CorvetteCommander-1.png",
+		"ach_name": "Corvette Commander",
+		"description": "Reach level 5 in any Corvette class ship",
+		"id": 570,
+		"points": 5
+	}
+]

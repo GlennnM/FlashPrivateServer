@@ -1,0 +1,146 @@
+[
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/100chartermember.png",
+		"ach_name": "100% Charter Member",
+		"description": "Collect 100% of the red blops within all stages of all 4 zones",
+		"id": 258,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/100club.png",
+		"ach_name": "100% Club",
+		"description": "Collect 100% of the red blops within all stages of a single zone",
+		"id": 254,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/14K.png",
+		"ach_name": "14K",
+		"description": "Achieve Gold level pop count on a single stage",
+		"id": 245,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/Brilliant.png",
+		"ach_name": "Brilliant",
+		"description": "Achieve Diamond level pop count on all stages of a single zone",
+		"id": 257,
+		"points": 200
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/Epic.png",
+		"ach_name": "Epic",
+		"description": "Purchase the Epic power for a single attack type",
+		"id": 250,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/Flawless.png",
+		"ach_name": "Flawless",
+		"description": "Achieve Diamond level pop count on all stages of all 4 zones",
+		"id": 261,
+		"points": 500
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/gold-standard.png",
+		"ach_name": "Gold Standard",
+		"description": "Achieve Gold level pop count on all stages of a single zone",
+		"id": 256,
+		"points": 100
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/got_em.png",
+		"ach_name": "Got Em",
+		"description": "Collect 100% blops on a single stage",
+		"id": 196,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/mega-epic.png",
+		"ach_name": "Mega Epic",
+		"description": "Purchase 15 Epic attack powers",
+		"id": 252,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/nobel-monkey.png",
+		"ach_name": "Nobel Monkey",
+		"description": "Complete all 12 levels of research for all research areas",
+		"id": 251,
+		"points": 50
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/power-play.png",
+		"ach_name": "Power Play",
+		"description": "Earn all 6 powerset badges on a single stage",
+		"id": 247,
+		"points": 20
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/powered-up.png",
+		"ach_name": "Powered Up",
+		"description": "Purchase all 6 Special Powers at least once",
+		"id": 253,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/powerset-champion.png",
+		"ach_name": "Powerset Champion",
+		"description": "Earn all 6 powerset badges for all 5 stages of a single zone",
+		"id": 255,
+		"points": 75
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/powerset-legend.png",
+		"ach_name": "Powerset Legend",
+		"description": "Earn all 6 powerset badges for all 5 stages of all 4 zones",
+		"id": 259,
+		"points": 150
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/Precious.png",
+		"ach_name": "Precious",
+		"description": "Achieve Diamond level pop count on a single stage",
+		"id": 246,
+		"points": 20
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/solid-gold.png",
+		"ach_name": "Solid Gold",
+		"description": "Achieve Gold level pop count on all stages of all 4 zones",
+		"id": 260,
+		"points": 300
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/Studious.png",
+		"ach_name": "Studious",
+		"description": "Complete all 12 levels within a single research area",
+		"id": 249,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/bsm2/ach/super-monkey.png",
+		"ach_name": "Super Monkey",
+		"description": "Complete 20 stages at Bronze level or higher",
+		"id": 248,
+		"points": 50
+	}
+]

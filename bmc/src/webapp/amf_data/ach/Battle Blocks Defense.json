@@ -1,0 +1,26 @@
+[
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/little_red.png",
+		"ach_name": "Complete Wave 10",
+		"description": "Finish the first ten waves to get Bronze!",
+		"id": 17,
+		"points": 10
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/little_red.png",
+		"ach_name": "Complete Wave 25",
+		"description": "Finish the first twenty five waves to get Silver!",
+		"id": 18,
+		"points": 25
+	},
+	{
+		"hidden": 0,
+		"thumb": "https://thumbs.ninjakiwi.com/big_red.png",
+		"ach_name": "Complete Wave 50",
+		"description": "Finish the game to get Gold!",
+		"id": 19,
+		"points": 50
+	}
+]

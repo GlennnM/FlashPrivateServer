@@ -1,0 +1,30 @@
+[
+	{
+		"salethumb": "https://thumbs.ninjakiwi.com/damagex2.png",
+		"thumbnail": "https://thumbs.ninjakiwi.com/damagex2.png",
+		"cost": 5,
+		"quantity": 1,
+		"hidden": 0,
+		"itemname": "Double Damage",
+		"iscombo": 0,
+		"salecost": 5,
+		"description": "Red and purple blocks and towers will now deal DOUBLE DAMAGE!",
+		"id": 31,
+		"maxbuyable": 0,
+		"maxquantity": 1
+	},
+	{
+		"salethumb": "https://thumbs.ninjakiwi.com/healthx2.png",
+		"thumbnail": "https://thumbs.ninjakiwi.com/healthx2.png",
+		"cost": 0,
+		"quantity": 1,
+		"hidden": 0,
+		"itemname": "Double Health",
+		"iscombo": 0,
+		"salecost": 0,
+		"description": "All of your blocks and towers will be able to sustain twice as much damage!",
+		"id": 32,
+		"maxbuyable": 0,
+		"maxquantity": 1
+	}
+]
