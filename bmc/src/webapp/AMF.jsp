@@ -18,7 +18,15 @@ for a list of their commands and return types see 'future_stuff.txt'
 </head>
 <body style='white-space:pre-line'>
 <pre><%
-%><%!static{ 
+%><%!
+
+static void syncGameFromNK(){
+	
+}
+static void syncUserFromNK(){
+	
+}
+static{ 
 	new AMFService("echo.echo",(x)->"<<TESTCONN>>").inputs("STRING").register();
 	new AMFService("game.get_data"){
 		@Override
@@ -39,6 +47,39 @@ for a list of their commands and return types see 'future_stuff.txt'
 			return JSONObject.NULL;
 		}
 	}.inputs("gameName").register();
+	new AMFService("user.get_koins"){
+		@Override
+		public Object apply(List<?> args) throws SQLException{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			return JSONObject.NULL;
+		}
+	}.inputs("userID","token").register();
+	new AMFService("user.get_clan"){
+		@Override
+		public Object apply(List<?> args) throws SQLException{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			return JSONObject.NULL;
+		}
+	}.inputs("userID","token").register();
+	new AMFService("user.get_avatar"){
+		@Override
+		public Object apply(List<?> args) throws SQLException{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			return JSONObject.NULL;
+		}
+	}.inputs("userID","token").register();
+	new AMFService("game.get_inventory"){
+		@Override
+		public Object apply(List<?> args) throws SQLException{
+			String game=(String)args.get(0);
+			String userID=(String)args.get(1);
+			String token=(String)args.get(2);
+			return JSONObject.NULL;
+		}
+	}.inputs("gameName","userID","token").register();
 	new AMFService("game.get_my_achievements"){
 		@Override
 		public Object apply(List<?> args) throws SQLException{
@@ -54,7 +95,7 @@ for a list of their commands and return types see 'future_stuff.txt'
 			String game=(String)args.get(0);
 			String userID=(String)args.get(1);
 			String token=(String)args.get(2);
-			Map<?,?> save=(Map<?,?>)args.get(2);
+			Map<?,?> save=(Map<?,?>)args.get(3);
 			return JSONObject.NULL;
 		}
 	}.inputs("gameName","userID","token","OBJECT").register();
@@ -65,7 +106,7 @@ for a list of their commands and return types see 'future_stuff.txt'
 			String game=(String)args.get(0);
 			String userID=(String)args.get(1);
 			String token=(String)args.get(2);
-			String param=(String)args.get(2);
+			String param=(String)args.get(3);
 			return JSONObject.NULL;
 		}
 	}.inputs("gameName","userID","task","param").register();
@@ -111,7 +152,8 @@ for a list of their commands and return types see 'future_stuff.txt'
    	}else{
 	   	//run test cases on GET
 	   	//(use save request/save response in fiddler to get some test data)
-	   	out.println("request: ");
+	   /*	
+	   out.println("request: ");
 	   	for(String filename: List.of("/getcurrency2.txt")){
 		   	var baos=new ByteArrayOutputStream();
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
@@ -126,7 +168,7 @@ for a list of their commands and return types see 'future_stuff.txt'
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("File: "+AMFBodies.from(file));
 		   	}
-		} 
+		} */
    	}
     //hydar 
  %>
