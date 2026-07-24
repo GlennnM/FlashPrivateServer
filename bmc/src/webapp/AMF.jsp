@@ -28,9 +28,21 @@ static void syncGameFromNK(){
 static void syncUserFromNK(){
 	
 }
+public static volatile AMFImpl DATA = null;
 public static volatile Context ctx = null;
+static final AtomicLong LAST_SKU_UPDATE = new AtomicLong();
+%>
+<%
+if(DATA==null){
+	synchronized(this){
+		String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
+		String skipScoreUpdate = request.getServletContext().getInitParameter("NO_UPDATE");
+		DATA=new AMFImpl(FileObjectStore.of(Path.of(storeLocation)).bind(request, 30000L));
+	}
+}
+%>
+<%!
 static{ 
-	final AMFImpl DATA = new AMFImpl();
 	new AMFService("echo.echo",(x)->"<<TESTCONN>>").inputs("STRING").register();
 	//this one first, then store/ach
 	//use Hydar object store
@@ -39,7 +51,7 @@ static{
 		public Object apply(List<?> args) throws SQLException{
 			String uid=(String)args.get(0);
 			String game=(String)args.get(1);
-			return DATA.getData(uid, game);
+			return new JSONArray().put(DATA.getData(uid, game));
 		}
 	} 
 	//these represent types, we use descriptive names for strings
@@ -126,13 +138,13 @@ static{
 	new AMFService("game.save_data"){
 		@Override
 		public Object apply(List<?> args) throws SQLException{
-			String game=(String)args.get(0); 
-			String userID=(String)args.get(1);
-			String token=(String)args.get(2);
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			String game=(String)args.get(2); 
 			Map<?,?> save=(Map<?,?>)args.get(3);
-			return JSONObject.NULL;
+			return DATA.saveData(userID, token, game, save);
 		}
-	}.inputs("gameName","userID","token","OBJECT").register();
+	}.inputs("userID","token","gameName","OBJECT").register();
 
 	new AMFService("game.get_server_time"){
 		@Override
