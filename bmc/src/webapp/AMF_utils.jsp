@@ -249,7 +249,7 @@
 		}
 
 		public static AMFType infer(Object o) {
-			if (o == null)
+			if (o == null || o == JSONObject.NULL)
 				return NULL;
 			else if (o instanceof AMFType t)
 				return t;
