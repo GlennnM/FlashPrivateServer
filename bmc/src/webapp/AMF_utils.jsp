@@ -347,13 +347,16 @@
 			if (svc != null && svc.validateList(list)) {
 				try {
 					return new AMFBody(response + "/onResult", "null", svc.apply(list), AMFType.inferCode(ret));
-				} catch (Exception e) {
+				} catch (NKVerifyException e) {
+					return new AMFBody(response + "/onResult", "null", "Invalid token", AMFType.inferCode(ret));
+				}catch (Exception e) {
 					e.printStackTrace();
+					return new AMFBody(response + "/onStatus", "null", "error occurred: "+e.getClass().toString(), AMFType.inferCode(ret));
 				}
 			}
 			//System.out.println(":(");
 			//System.out.println(input.getValue());
-			return new AMFBody(response + "/onResult", "null", null, AMFType.NULL.code);
+			return new AMFBody(response + "/onStatus", "null", "Bad arguments", AMFType.inferCode(ret));
 		}
 		
 		public static AMFService getService(String target){
@@ -386,4 +389,5 @@
 			return true;
 		}
 	}
+	public static class NKVerifyException extends RuntimeException{}
 	%>

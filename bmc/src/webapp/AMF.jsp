@@ -5,7 +5,6 @@
 <%@page import="java.util.HexFormat,java.util.List,org.openamf.io.*,org.openamf.*"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
-<%@ include file="AMF_utils.jsp" %>
 <%@ include file="AMF_impl.jsp" %>
 <%-- 
 WIP AMF gateway. make sure to include AMF_utils.jsp and openamf & json-java JARs. 
@@ -21,13 +20,6 @@ for a list of their commands and return types see 'future_stuff.txt'
 <body style='white-space:pre-line'>
 <pre><%
 %><%!
-
-static void syncGameFromNK(){
-	
-}
-static void syncUserFromNK(){
-	
-}
 public static volatile AMFImpl DATA = null;
 public static volatile Context ctx = null;
 static final AtomicLong LAST_SKU_UPDATE = new AtomicLong();
@@ -70,7 +62,7 @@ static{
 		public Object apply(List<?> args) throws SQLException{
 			String userID=(String)args.get(0);
 			String token=(String)args.get(1);
-			return new JSONObject().put("koins",1d).put("points",0d);
+			return DATA.getKoins(userID, token);
 		}
 	}.inputs("userID","token").register();
 	new AMFService("user.get_clan"){
@@ -135,6 +127,17 @@ static{
 			return DATA.getMyAchievements(game, userID, ctx);
 		}
 	}.inputs("userID","token","gameName").register();
+	new AMFService("user.set_achievement"){
+		@Override
+		public Object apply(List<?> args) throws SQLException{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			String game=(String)args.get(2);
+			double ach_id=(double)args.get(3);
+			double perc=(double)args.get(4);
+			return DATA.setAchievement(userID, token, game, ach_id, perc, ctx);
+		}
+	}.inputs("userID","token","gameName", 0d, 100d, "username").register();
 	new AMFService("game.save_data"){
 		@Override
 		public Object apply(List<?> args) throws SQLException{
@@ -181,6 +184,14 @@ static{
 		}
 	}
 	.inputs("userID","gameName","token","OBJECT")
+	.register();
+	new AMFService("v2.user.get_koins"){
+		@Override
+		public Object apply(List<?> args) throws Exception{
+			return AMFService.getService("user.get_koins").apply(args);
+		}
+	}
+	.inputs("userID","token")
 	.register();
 	new AMFService("v2.game.check_reward"){
 		@Override
