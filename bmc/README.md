@@ -18,6 +18,9 @@ Setting up client (vanilla NK archive):
 
 ### Status
 
+**in progress:** 
+- Save server. More details will be added later; it is not usable or testable yet.
+
 **working:** 
 - handshake (login) - can use NK auth if enabled
 - core data (bloonstones, MK, etc)
