@@ -47,6 +47,8 @@ static class AMFImpl{
 	static final JSONObject nk_store = new JSONObject();
 	static final JSONObject nk_ach = new JSONObject();
 	static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
+	//TODO: when nk back up, check actual sas TD currency id
+	static final Map<String, Integer> currID = Map.of("BTD5", 1, "SAS TD", 3, "Battles", 5, "BSM2", 6, "MonkeyCity", 7);
 	public AMFImpl(ObjectStore store){
 		this.store = store;
 	}
@@ -136,6 +138,29 @@ static class AMFImpl{
 				.put("koins",(double)profile.getInt("nkoins"))
 				.put("points",(double)profile.getInt("ap"));
 	}
+	public JSONObject getBalance(String userID, String token, String game){
+		if(!games.contains(game) || !currID.containsKey(game))
+			return new JSONObject();
+		verifyNK(userID, token);
+		return new JSONObject()
+				.put("currid", currID.get(game))
+				.put("currency",
+					updateProfile(userID, x->x).getJSONObject("currencies").optInt(game)
+				);
+	}
+	public JSONObject getCurrency(String userID, String token, String game, double amount, String source, String message){
+		if(!games.contains(game))
+			return new JSONObject(1).put("bal",0);
+		verifyNK(userID, token);
+		
+		return new JSONObject(1).put("bal",
+			updateProfile(userID, x->{
+				var cur = x.getJSONObject("currencies");
+				cur.put(game, cur.optInt(game) + (int)amount);
+				return x;
+			}).getJSONObject("currencies").optInt(game)
+		);
+	}
 	private void addAP(String userID, int ap){
 		updateProfile(userID, x->x.put("ap",x.getInt("ap")+ap));
 	}
@@ -144,6 +169,8 @@ static class AMFImpl{
 			if(x==null){
 				x = Util.blankProfile(userID);
 			}
+			if(!x.has("currencies"))
+				x.put("currencies", new JSONObject());
 			return update.apply(x);
 		});
 	}
@@ -162,7 +189,7 @@ static class AMFImpl{
 			return x;
 		});
 		if(!success[0])
-			throw new NKVerifyException();//TODO: invalid token error msg
+			throw new NKVerifyException();
 	}
 	public boolean DO_NK_AUTH=false;
 	public boolean isNKToken(String userID, String token){
@@ -280,7 +307,8 @@ static class AMFImpl{
 			.put("timeCreated", System.currentTimeMillis())
 			.put("ap",0)
 			.put("nkoins",0)
-			.put("hcoins",0);
+			.put("hcoins",0)
+			.put("currencies", new JSONObject());
 	 }
 	 public static JSONObject blankSave(){
 		 return new JSONObject()

@@ -101,12 +101,26 @@ static{
 	new AMFService("prem.getBalance"){
 		@Override
 		public Object apply(List<?> args) throws SQLException{
-			String game=(String)args.get(0);
-			String userID=(String)args.get(1);
-			String token=(String)args.get(2);
-			return new JSONObject().put("currency",4608d).put("currid",1d);
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			String game=(String)args.get(2);
+			return DATA.getBalance(userID, token, game);//.put("currency",4608d).put("currid",1d);
 		}
-	}.inputs("gameName","userID","token").register();
+	}.inputs("userID","token","gameName").register();
+	//this can be synced now --> add to user/info
+	new AMFService("prem.getCurrency"){
+		@Override
+		public Object apply(List<?> args) throws SQLException{
+			String userID=(String)args.get(0);
+			String game=(String)args.get(1);
+			String token=(String)args.get(2);
+			double currID=(double)args.get(3);
+			double amount=(double)args.get(4);
+			String source=(String)args.get(5);
+			String message=(String)args.get(6);
+			return DATA.getCurrency(userID, token, game, amount, source, message);//.put("currency",4608d).put("currid",1d);
+		}
+	}.inputs("userID","gameName","token",0.0, 17.0, "10", "0").register();
 	new AMFService("prem.get_game_currency_inventory"){
 		@Override
 		public Object apply(List<?> args) throws SQLException{
@@ -236,7 +250,7 @@ static{
    				out.println("File: "+AMFBodies.from(file));
 		   	}
 		} 
-		for(String filename:List.of("/btd5-myrequest.txt","/btd5-myresponse.txt","/btd5-myresponse-ig.txt","/btd5-request.txt","/btd5-response.txt")){
+		for(String filename:List.of("/battles_response.txt","/btd5-myrequest.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("File: "+AMFBodies.from(file));
 		   	}
