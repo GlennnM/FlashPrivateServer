@@ -95,9 +95,20 @@ static{
 		@Override
 		public Object apply(List<?> args) throws Exception{
 			//reuse v1(todo: simplify for all the v2s with same input/output)
-			return AMFService.getService("game.save_data").apply(args);
+			return new JSONArray();
 		}
 	}.inputs("gameName","userID","token","username").register();
+	new AMFService("prem.buyItems"){
+		@Override
+		public Object apply(List<?> args) throws SQLException{
+			String userID=(String)args.get(0);
+			String game=(String)args.get(1);
+			double currID=(double)args.get(2);
+			String token=(String)args.get(3);
+			List<?> items = (List<?>)args.get(4);
+			return DATA.buyItems(userID, token, game, items, ctx);//.put("currency",4608d).put("currid",1d);
+		}
+	}.inputs("userID","gameName",7.0,"token",List.of(List.of("id","quantity"))).register();
 	new AMFService("prem.getBalance"){
 		@Override
 		public Object apply(List<?> args) throws SQLException{
@@ -127,9 +138,7 @@ static{
 			String game=(String)args.get(0);
 			String userID=(String)args.get(1);
 			String token=(String)args.get(2);
-			return new JSONArray()
-					.put(new JSONObject().put("quantity",24d).put("id",40d))
-					.put(new JSONObject().put("quantity",1d).put("id",38d));
+			return DATA.getNeoInventory(userID, token, game);
 		}
 	}.inputs("gameName","userID","token").register();
 	new AMFService("game.get_my_achievements"){
@@ -207,7 +216,7 @@ static{
 	}
 	.inputs("userID","token")
 	.register();
-	new AMFService("v2.game.check_reward"){
+	new AMFService("game.check_reward"){
 		@Override
 		public Object apply(List<?> args) throws Exception{
 			String userID=(String)args.get(0);
@@ -218,6 +227,59 @@ static{
 		}
 	}
 	.inputs("userID","token",0.0)
+	.register();
+	new AMFService("game.consecutive_logins"){
+		@Override
+		public Object apply(List<?> args) throws Exception{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			String game=(String)args.get(2);
+			//reuse v1(todo: simplify for all the v2s with same input/output)
+			return 1;
+		}
+	}
+	.inputs("userID","token","game")
+	.register();
+					
+	for(String s: List.of("prem.getBalance","user.get_koins", "user.get_clan", "user.get_avatar", "game.get_my_achievements", "game.check_reward","game.get_store")){
+		new AMFService("v2."+s){
+			@Override
+			public Object apply(List<?> args) throws Exception{
+				return AMFService.getService(s).apply(args);
+			}
+		}
+		.inputs(AMFService.getService(s).inputTypes)
+		.register();
+	}
+	new AMFService("v2.user.get_inventory"){
+		@Override
+		public Object apply(List<?> args) throws Exception{
+			String game=(String)args.get(0);
+			String userID=(String)args.get(1);
+			String token=(String)args.get(2);
+			return new JSONObject().put("success",true).put("items",new JSONArray());
+		}
+	}
+	.inputs("game","userID","token","username")
+	.register();
+	new AMFService("v2.prem.buyNeoPremItem"){
+		@Override
+		public Object apply(List<?> args) throws Exception{
+			return null;
+		}
+	}
+	.inputs("userID","token","game",7.0)
+	.register();
+	new AMFService("v2.prem.getNeoPremInventory"){
+		@Override
+		public Object apply(List<?> args) throws Exception{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			String game=(String)args.get(2);
+			return new JSONObject().put("success",true).put("items",DATA.getNeoInventory(userID, token, game));
+		}
+	}
+	.inputs("userID","token","game",7.0)
 	.register();
 }%>
 <%
@@ -250,7 +312,7 @@ static{
    				out.println("File: "+AMFBodies.from(file));
 		   	}
 		} 
-		for(String filename:List.of("/battles_response.txt","/btd5-myrequest.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
+		for(String filename:List.of("/neoprem-resp.txt","/btd5-myrequest.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("File: "+AMFBodies.from(file));
 		   	}

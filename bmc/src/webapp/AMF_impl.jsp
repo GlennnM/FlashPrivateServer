@@ -44,6 +44,7 @@ static{
 <%!
 static class AMFImpl{
 	private final ObjectStore store;
+	static volatile Map<Integer, Integer> neo_store = null;
 	static final JSONObject nk_store = new JSONObject();
 	static final JSONObject nk_ach = new JSONObject();
 	static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
@@ -55,6 +56,27 @@ static class AMFImpl{
 	%>
 	<%-- STORE/ACHIEVEMENTS --%>
 	<%!
+	public int getNeoCost(int id, Context ctx){
+		synchronized(nk_store){//intended
+			if(neo_store == null){
+				for(String g: games){
+					try{
+						Path f = Path.of(ctx.getRealPath("/amf_data/costs.json"));
+						neo_store = 
+								new JSONObject(Files.readString(f))
+								.toMap().entrySet().stream()
+								.collect(
+									Collectors.toMap(x->Integer.parseInt(x.getKey()), x->(int)x.getValue())
+								);
+						
+					}catch(IOException ioe){
+						ioe.printStackTrace();
+					}
+				}
+			}
+		}
+		return neo_store.getOrDefault(id, Integer.MIN_VALUE);
+	}
 	public JSONArray getStore(String game, Context ctx){
 		if(nk_store.isEmpty()){
 			synchronized(nk_store){
@@ -137,6 +159,63 @@ static class AMFImpl{
 		return new JSONObject(2)
 				.put("koins",(double)profile.getInt("nkoins"))
 				.put("points",(double)profile.getInt("ap"));
+	}
+	public Object buyItems(String userID, String token, String game, List<?> items, Context ctx){
+		if(!games.contains(game) || !currID.containsKey(game))
+			return "An error occurred";
+		verifyNK(userID, token);
+		List<Object> res = new ArrayList<>();
+		List<Object> newItems = new ArrayList<>();
+		Map<Integer,Integer> itemsToAdd = new HashMap<>();
+		updateProfile(userID, x->{
+			var cur = x.getJSONObject("currencies");
+			for(var item: items){
+				if(item instanceof List<?> i){
+					int itemID = (int) (double) i.get(0);
+					int quantity = (int) (double) i.get(1);
+					int change = getNeoCost(itemID, ctx) * quantity;
+					int old = cur.optInt(game);
+					if(change == Integer.MIN_VALUE){
+						newItems.add("Selected item does not exist");
+					}else if(old >= change){
+						cur.put(game, cur.optInt(game) - change);
+						itemsToAdd.compute(itemID,(k,v)-> v==null ? quantity : v+quantity);
+						newItems.add(new JSONObject()
+								.put("cost",change)
+								.put("id",itemID)
+								.put("quantity",quantity)
+							);
+					}else {
+						newItems.add("Not enough coins to buy");
+					}
+				}else newItems.add("An error occurred");
+				
+				//results.add(new ArrayList<>(itemsToAdd.keySet()));
+			}//CHECK BSM2 RESP!!!!!
+			res.add(cur.get(game));
+			res.add(newItems);
+			return x;
+		});
+		//an integer is your balance, a list contains all the new items
+		//??????
+		updateSave(userID, game, x->{
+			JSONObject neoInv = x.getJSONObject("neoInventory");
+			itemsToAdd.forEach((k,v)->neoInv.put(""+k, neoInv.optInt(""+k) + v));
+			return x;
+		});
+		return res;
+	}
+	public Object getNeoInventory(String userID, String token, String game){
+		if(!games.contains(game) || !currID.containsKey(game))
+			return "An error occurred";
+		verifyNK(userID, token);
+		List<Object> res = new ArrayList<>();
+		updateSave(userID, game, x->x)
+				.getJSONObject("neoInventory")
+				.toMap()
+				.forEach((k,v)->res.add(new JSONObject(2).put("id",k).put("quantity",v)));
+		IO.println(res);
+		return res;
 	}
 	public JSONObject getBalance(String userID, String token, String game){
 		if(!games.contains(game) || !currID.containsKey(game))
@@ -237,6 +316,7 @@ static class AMFImpl{
 		return store.update(List.of("amf", userID, game, "save"),x->{
 			if(x==null){
 				x = new JSONObject().put("save", Util.blankSave())
+						.put("neoInventory", new JSONObject())
 						.put("inventory", JSONObject.NULL)
 						.put("lastSaved", System.currentTimeMillis());
 			}
