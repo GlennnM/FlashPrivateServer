@@ -49,7 +49,7 @@ static class AMFImpl{
 	static final JSONObject nk_ach = new JSONObject();
 	static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
 	//TODO: when nk back up, check actual sas TD currency id
-	static final Map<String, Integer> currID = Map.of("BTD5", 1, "SAS TD", 3, "Battles", 5, "BSM2", 6, "MonkeyCity", 7);
+	static final Map<String, Integer> currID = Map.of("BTD5", 1, "SAS TD", 3, "Battles", 5, "BSM2", 6, "MonkeyCity", 7, "SAS4", 8);
 	public AMFImpl(ObjectStore store){
 		this.store = store;
 	}
@@ -160,9 +160,9 @@ static class AMFImpl{
 				.put("koins",(double)profile.getInt("nkoins"))
 				.put("points",(double)profile.getInt("ap"));
 	}
-	public Object buyItems(String userID, String token, String game, List<?> items, Context ctx){
+	public List<Object> buyNeoItems(String userID, String token, String game, List<?> items, Context ctx){
 		if(!games.contains(game) || !currID.containsKey(game))
-			return "An error occurred";
+			return List.of("An error occurred");
 		verifyNK(userID, token);
 		List<Object> res = new ArrayList<>();
 		List<Object> newItems = new ArrayList<>();
@@ -205,17 +205,43 @@ static class AMFImpl{
 		});
 		return res;
 	}
-	public Object getNeoInventory(String userID, String token, String game){
+	public List<Object> getNeoInventory(String userID, String token, String game){
 		if(!games.contains(game) || !currID.containsKey(game))
-			return "An error occurred";
+			return List.of("An error occurred");
 		verifyNK(userID, token);
 		List<Object> res = new ArrayList<>();
 		updateSave(userID, game, x->x)
 				.getJSONObject("neoInventory")
 				.toMap()
 				.forEach((k,v)->res.add(new JSONObject(2).put("id",k).put("quantity",v)));
-		IO.println(res);
 		return res;
+	}
+	public JSONObject buyNeoItems_v2(String userID, String token, String game, List<?> items, Context ctx){
+		var res = buyNeoItems(userID, token, game, items, ctx);
+		for(var o: res)
+			if(o instanceof List<?> newItems){
+				for(var item: newItems)
+					if(item instanceof JSONObject j)
+						j.put("uuid","").put("tag","");
+				return new JSONObject(2).put("success",true).put("items",res);
+			}
+
+		return new JSONObject(1).put("success",false);
+	}
+	public boolean consumeNeoPrem_v2(String userID, String token, String game, String uuid){
+		if(!games.contains(game) || !currID.containsKey(game))
+			return false;
+		verifyNK(userID, token);
+		//wipe inv since this only happens in bmc, where the "neo prems" are always consumed instantly
+		updateSave(userID, game, x->x.put("neoInventory", new JSONObject()));
+		return true;
+	}
+	public JSONObject getNeoInventory_v2(String userID, String token, String game){
+		var inv = getNeoInventory(userID, token, game);
+		for(var item: inv)
+			if(item instanceof JSONObject j)
+				j.put("uuid","").put("tag","");
+		return new JSONObject().put("success",true).put("items",inv);
 	}
 	public JSONObject getBalance(String userID, String token, String game){
 		if(!games.contains(game) || !currID.containsKey(game))

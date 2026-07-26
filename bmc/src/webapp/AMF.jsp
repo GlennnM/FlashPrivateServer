@@ -106,7 +106,7 @@ static{
 			double currID=(double)args.get(2);
 			String token=(String)args.get(3);
 			List<?> items = (List<?>)args.get(4);
-			return DATA.buyItems(userID, token, game, items, ctx);//.put("currency",4608d).put("currid",1d);
+			return DATA.buyNeoItems(userID, token, game, items, ctx);//.put("currency",4608d).put("currid",1d);
 		}
 	}.inputs("userID","gameName",7.0,"token",List.of(List.of("id","quantity"))).register();
 	new AMFService("prem.getBalance"){
@@ -241,7 +241,9 @@ static{
 	.inputs("userID","token","game")
 	.register();
 					
-	for(String s: List.of("prem.getBalance","user.get_koins", "user.get_clan", "user.get_avatar", "game.get_my_achievements", "game.check_reward","game.get_store")){
+	for(String s: List.of("prem.getBalance","prem.getCurrency",
+			"user.get_koins", "user.get_clan", "user.get_avatar", "user.set_achievement", 
+			"game.consecutive_logins", "game.get_data", "game.save_data", "game.get_my_achievements", "game.check_reward","game.get_store")){
 		new AMFService("v2."+s){
 			@Override
 			public Object apply(List<?> args) throws Exception{
@@ -251,6 +253,15 @@ static{
 		.inputs(AMFService.getService(s).inputTypes)
 		.register();
 	}
+	new AMFService("v2.game.track"){
+		@Override
+		public Object apply(List<?> args) throws Exception{
+			return null;
+		}
+	}
+	.inputs("userID","game","metric","data",-1.0,"","","unavailable")
+	.register();
+	
 	new AMFService("v2.user.get_inventory"){
 		@Override
 		public Object apply(List<?> args) throws Exception{
@@ -265,10 +276,18 @@ static{
 	new AMFService("v2.prem.buyNeoPremItem"){
 		@Override
 		public Object apply(List<?> args) throws Exception{
-			return null;
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			String game=(String)args.get(2);
+			double currID=(double)args.get(3);
+			String itemID = (String)args.get(4);
+			double quantity=(double)args.get(5);
+			String tag=(String)args.get(6);
+			return DATA.buyNeoItems_v2(userID, token, game, List.of(List.of(Double.parseDouble(itemID), quantity)), ctx);
+			//must contain items, items must contain "uuid" str and "tag" (any)
 		}
 	}
-	.inputs("userID","token","game",7.0)
+	.inputs("userID","token","game",7.0,"1", 5.0,"item")
 	.register();
 	new AMFService("v2.prem.getNeoPremInventory"){
 		@Override
@@ -276,10 +295,22 @@ static{
 			String userID=(String)args.get(0);
 			String token=(String)args.get(1);
 			String game=(String)args.get(2);
-			return new JSONObject().put("success",true).put("items",DATA.getNeoInventory(userID, token, game));
+			return DATA.getNeoInventory_v2(userID, token, game);
 		}
 	}
 	.inputs("userID","token","game",7.0)
+	.register();
+	new AMFService("v2.prem.consumeNeoPremItem"){
+		@Override
+		public Object apply(List<?> args) throws Exception{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			String game=(String)args.get(2);
+			String uuid=(String)args.get(3);
+			return DATA.consumeNeoPrem_v2(userID, token, game, uuid);
+		}
+	}
+	.inputs("userID","token","game","uuid")
 	.register();
 }%>
 <%
