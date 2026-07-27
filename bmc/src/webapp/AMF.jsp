@@ -43,7 +43,8 @@ static{
 		public Object apply(List<?> args) throws SQLException{
 			String uid=(String)args.get(0);
 			String game=(String)args.get(1);
-			return new JSONArray().put(DATA.getData(uid, game));
+			var data = DATA.getData(uid, game);
+			return data == null ? null : new JSONArray().put(data);
 		}
 	} 
 	//these represent types, we use descriptive names for strings
@@ -242,7 +243,7 @@ static{
 	.register();
 					
 	for(String s: List.of("prem.getBalance","prem.getCurrency",
-			"user.get_koins", "user.get_clan", "user.get_avatar", "user.set_achievement", 
+			"user.get_koins", "user.get_avatar", "user.set_achievement", 
 			"game.consecutive_logins", "game.get_data", "game.save_data", "game.get_my_achievements", "game.check_reward","game.get_store")){
 		new AMFService("v2."+s){
 			@Override
@@ -273,6 +274,14 @@ static{
 	}
 	.inputs("game","userID","token","username")
 	.register();
+	//"name" instead of "clan"
+	new AMFService("v2.user.get_clan"){
+		@Override
+		public Object apply(List<?> args) throws SQLException{
+			String userID=(String)args.get(0);
+			return new JSONObject().put("name","White Tigers").put("id",11.0);
+		}
+	}.inputs("userID").register();
 	new AMFService("v2.prem.buyNeoPremItem"){
 		@Override
 		public Object apply(List<?> args) throws Exception{
@@ -333,17 +342,17 @@ static{
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
 		   		byte[] data=file.readAllBytes();
 		   		out.println("File: "+AMFBodies.from(data));
-		   		AMFService.accept(new ByteArrayInputStream(data),baos);
+		   		//AMFService.accept(new ByteArrayInputStream(data),baos);
 		   	}
-		   	out.println("response: ");
-		   	out.println(AMFBodies.from(baos.toByteArray()));
+		   //	out.println("response: ");
+		   	//out.println(AMFBodies.from(baos.toByteArray()));
 	   	}
 		for(String filename:List.of("/4238_.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("File: "+AMFBodies.from(file));
 		   	}
 		} 
-		for(String filename:List.of("/neoprem-resp.txt","/btd5-myrequest.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
+		for(String filename:List.of("/bmc-resp.txt","/mybmc-resp2.txt","/btd5-myrequest.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("File: "+AMFBodies.from(file));
 		   	}

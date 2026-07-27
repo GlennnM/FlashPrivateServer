@@ -20,6 +20,10 @@ should connect to database or maybe object storage for accounts
 for a list of their commands and return types see 'future_stuff.txt'
 --%>
 <%
+//TODO: is desynced from bmc
+//TODO: login/transfer...
+//TODO: sas4 processing forever
+//TODO: consec logins/dailies
 %>
 <%!
 static{
@@ -48,8 +52,7 @@ static class AMFImpl{
 	static final JSONObject nk_store = new JSONObject();
 	static final JSONObject nk_ach = new JSONObject();
 	static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
-	//TODO: when nk back up, check actual sas TD currency id
-	static final Map<String, Integer> currID = Map.of("BTD5", 1, "SAS TD", 3, "Battles", 5, "BSM2", 6, "MonkeyCity", 7, "SAS4", 8);
+	static final Map<String, Integer> currID = Map.of("BTD5", 1, "SAS TD", 2, "Battles", 5, "BSM2", 6, "MonkeyCity", 7, "SAS4", 9);
 	public AMFImpl(ObjectStore store){
 		this.store = store;
 	}
@@ -349,8 +352,8 @@ static class AMFImpl{
 			return update.apply(x);
 		});
 	}
-	public JSONObject getData(String userID, String game){
-		return updateSave(userID, game, x->x).getJSONObject("save");
+	public Object getData(String userID, String game){
+		return game.equals("MonkeyCity") ? null : updateSave(userID, game, x->x).getJSONObject("save");
 	}
 	public Double saveData(String userID, String token, String game, Map<?,?> data){
 		int transid = (int) (double) data.get("transid");//xd

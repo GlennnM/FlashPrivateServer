@@ -136,7 +136,7 @@
 				if (x.getValue() instanceof ArrayList<?>) {
 					sb.append('[');
 					String c = ((ArrayList<?>) (x.getValue())).stream()
-							.map(y -> "" + y + ":" + y.getClass().getCanonicalName()).collect(Collectors.joining(","));
+							.map(y -> "" + y + ":" + (y==null? null: y.getClass().getCanonicalName())).collect(Collectors.joining(","));
 					sb.append(c);
 					sb.append(']');
 				} else if (x.getValue() instanceof String x2)
@@ -185,7 +185,6 @@
 			this.outputStream.writeByte(10);
 			this.outputStream.writeInt(list.size());
 			for (Object object : list) {
-				System.out.println(object.getClass().getCanonicalName());
 				writeData(object);
 			}
 		}
@@ -196,7 +195,11 @@
 		}
 		@Override
 		public void writeData(Object obj) throws IOException {
-			if (obj instanceof Map<?, ?> j)
+			if (obj == null)
+				super.writeData(obj);
+			else if (obj == JSONObject.NULL)
+				super.writeData(null);
+			else if (obj instanceof Map<?, ?> j)
 				writeMapAsObj(j);
 			else if (obj instanceof JSONArray j)
 				writeJSONArray(j);
