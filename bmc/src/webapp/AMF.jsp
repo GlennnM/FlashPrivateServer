@@ -244,7 +244,7 @@ static{
 					
 	for(String s: List.of("prem.getBalance","prem.getCurrency",
 			"user.get_koins", "user.get_avatar", "user.set_achievement", 
-			"game.consecutive_logins", "game.get_data", "game.save_data", "game.get_my_achievements", "game.check_reward","game.get_store")){
+			"game.get_data", "game.save_data", "game.get_my_achievements", "game.check_reward","game.get_store")){
 		new AMFService("v2."+s){
 			@Override
 			public Object apply(List<?> args) throws Exception{
@@ -321,6 +321,31 @@ static{
 	}
 	.inputs("userID","token","game","uuid")
 	.register();
+	new AMFService("v2.game.save_score"){
+		@Override
+		public Object apply(List<?> args) throws Exception{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			double id = (double)args.get(2);
+			double score = (double)args.get(3);
+			String username = (String)args.get(4);
+			return score;
+		}
+	}
+	.inputs("userID","token",469d, 119d, "username")
+	.register();
+	new AMFService("v2.game.consecutive_logins"){
+		@Override
+		public Object apply(List<?> args) throws Exception{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			String game=(String)args.get(2);
+			double rewardID = (double)args.get(3);
+			return 1;
+		}
+	}
+	.inputs("userID","token","gameName",1d)
+	.register();
 }%>
 <%
 	if(ctx==null)
@@ -352,7 +377,7 @@ static{
    				out.println("File: "+AMFBodies.from(file));
 		   	}
 		} 
-		for(String filename:List.of("/bmc-resp.txt","/mybmc-resp2.txt","/btd5-myrequest.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
+		for(String filename:List.of("/sas4-proc-resp2.txt","/sas4-proc-myresp.txt","/btd5-myrequest.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("File: "+AMFBodies.from(file));
 		   	}

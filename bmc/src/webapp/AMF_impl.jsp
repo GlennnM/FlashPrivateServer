@@ -22,8 +22,8 @@ for a list of their commands and return types see 'future_stuff.txt'
 <%
 //TODO: is desynced from bmc
 //TODO: login/transfer...
-//TODO: sas4 processing forever
 //TODO: consec logins/dailies
+//TODO: better b64 storage
 %>
 <%!
 static{
