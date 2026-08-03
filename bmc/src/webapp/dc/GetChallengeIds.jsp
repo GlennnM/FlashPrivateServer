@@ -78,7 +78,7 @@ if(offset!=0){
 			String id = q.substring(start,q.indexOf("\"",start));
 			if(event.getMonthValue() == 5 && event.getYear() == 2026 && (event.getDayOfMonth() == 28 || event.getDayOfMonth() == 29)){
 				id = lastId;
-			}if(event.getMonthValue() == 7 && event.getYear() == 2026 && (event.getDayOfMonth() >=18 && event.getDayOfMonth() <= 21)){
+			}if(event.getMonthValue() == 7 && event.getYear() == 2026 && (event.getDayOfMonth() >=18 && event.getDayOfMonth() <= 27)){
 				id = lastId;
 			}
 			//System.err.printf("%d %d %d %s\n", event.getMonthValue(), event.getDayOfMonth(), event.getYear(), id);

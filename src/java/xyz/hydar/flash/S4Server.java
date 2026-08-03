@@ -1295,9 +1295,9 @@ public class S4Server extends ServerContext{
 	public static final short[] EVENT_MAPS={1092,1093,1094,1095,1096,1099,1100,1111,1113,1114,1115,1116,1117,1118,1119,1019};
 	public static final short[][] EVENT_MAP_SETS = { EVENT_MAPS,
 			{ 1092, 1093, 1094, 1095, 1099, 1100, 1113, 1114, 1116, 1117, 1118, 1119, 1019},
-			{ 1092, 1093, 1095, 1099, 1113, 1114, 1116, 1117, 1119, 1019 }, { 1092, 1093, 1099, 1116, 1019 },
+			{ 1092, 1093, 1095, 1099, 1100, 1113, 1114, 1116, 1117, 1119, 1019 }, { 1092, 1093, 1019 },
 			{ 1092, 1094, 1095, 1099, 1100, 1114, 1119} };
-	public static final String[] EVENT_MAP_DESC={"All","All except Ice(8),VIP(5),Highway(11)","1, 2, 4, 6, 9, 10, 12, 13, 15, 16","Ons(1), Vac(2), PO(6), Crash Site(12), Ice2(16)","??? VS maps or something"};
+	public static final String[] EVENT_MAP_DESC={"All","All except Ice(8),VIP(5),Highway(11)","1, 2, 4, 6, 7, 9, 10, 12, 13, 15, 16","Ons(1), Vac(2), Ice2(16)","??? VS maps or something"};
 	private static final ZoneId MINUS8=ZoneId.of("GMT-8");
 	private static final LocalDateTime FEB_16_2022;
 	private static final int MIN_PORT=CONFIG.sas4Ports.min();
