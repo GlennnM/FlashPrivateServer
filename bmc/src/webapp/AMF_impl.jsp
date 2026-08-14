@@ -1,3 +1,4 @@
+<%@page import="java.util.regex.Pattern"%>
 <%@page import="java.net.http.HttpClient.Redirect"%>
 <%@page import="java.net.http.HttpResponse.BodyHandlers"%>
 <%@page import="java.net.http.HttpResponse"%>
@@ -50,7 +51,11 @@ static class AMFImpl{
 	private final ObjectStore store;
 	static volatile Map<Integer, Integer> neo_store = null;
 	static final JSONObject nk_store = new JSONObject();
+	static final JSONObject nk_store_map = new JSONObject();
 	static final JSONObject nk_ach = new JSONObject();
+	static final Pattern avatars = Pattern.compile("[\\w\\-.]*");
+	static final List<String> clans = List.of("Black Cobras","Blue Wolves", "Dark Matter","Falcons","Iron Phoenix","Night Jackals","Red Storm","Scorpions","Shining Blade","The Watchers","Thunderbolts","White Tigers","XIII");
+			
 	static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
 	static final Map<String, Integer> currID = Map.of("BTD5", 1, "SAS TD", 2, "Battles", 5, "BSM2", 6, "MonkeyCity", 7, "SAS4", 9);
 	public AMFImpl(ObjectStore store){
@@ -95,6 +100,20 @@ static class AMFImpl{
 		}
 		return nk_store.getJSONArray(game);
 	}
+	public JSONObject getStoreMap(String game, Context ctx){
+		if(nk_store_map.isEmpty()){
+			synchronized(nk_store_map){
+				for(String g: games){
+					nk_store_map.put(g, Util.jStream(getStore(game, ctx))
+						.collect(
+							Collectors.toMap(x->x.get("id"),x->x)
+						)
+					);
+				}
+			}
+		}
+		return nk_store_map.getJSONObject(game);
+	}
 	public JSONArray getAchievements(String game, Context ctx){
 		if(nk_ach.isEmpty()){
 			synchronized(nk_ach){
@@ -119,7 +138,7 @@ static class AMFImpl{
 			x.put("perc",(double) perc)
 				.put("credited",perc>100)
 				.put("userid",Double.parseDouble(userID));
-		}
+		}IO.println(j);
 		return j;
 	}
 	public JSONArray setAchievement(String userID, String token, String game, double ach_id, double perc, Context ctx){
@@ -158,11 +177,12 @@ static class AMFImpl{
 	<%!
 	public JSONObject getKoins(String userID, String token){
 		verifyNK(userID, token);//so invalid token warning can happen early
-		JSONObject profile = updateProfile(userID, x->x);
+		JSONObject profile = getProfile(userID);
 		return new JSONObject(2)
 				.put("koins",(double)profile.getInt("nkoins"))
 				.put("points",(double)profile.getInt("ap"));
 	}
+	
 	public List<Object> buyNeoItems(String userID, String token, String game, List<?> items, Context ctx){
 		if(!games.contains(game) || !currID.containsKey(game))
 			return List.of("An error occurred");
@@ -208,12 +228,43 @@ static class AMFImpl{
 		});
 		return res;
 	}
+
+
+	public List<Object> getInventory(String userID, String token, String game, Context context){
+		verifyNK(userID, token);//so invalid token warning can happen early
+		if(!games.contains(game) || !currID.containsKey(game))
+			return List.of("An error occurred");
+		verifyNK(userID, token);
+		List<Object> res = new ArrayList<>();
+		//get items from store table
+		var store = getStoreMap(game, context);
+		
+		var inv = getSave(userID, game)
+				.optJSONObject("inventory");
+		if (inv == null || inv == JSONObject.NULL) return List.of();
+		inv.toMap()
+		.forEach((k,v)->
+			res.add(
+				new JSONObject(store.getJSONObject(k).toString())
+					.put("quantity",v)
+				)
+		);
+		return res;
+	}
+	public void importInventory(String userID, String token, String game, JSONObject inventory){
+		verifyNK(userID, token);//so invalid token warning can happen early
+		updateSave(userID, game, x->{
+			inventory.keySet().stream().mapToInt(q->Integer.parseInt(q) + inventory.getInt(q)).sum();
+			x.put("inventory", inventory);
+			return x;
+		});
+	}
 	public List<Object> getNeoInventory(String userID, String token, String game){
 		if(!games.contains(game) || !currID.containsKey(game))
 			return List.of("An error occurred");
 		verifyNK(userID, token);
 		List<Object> res = new ArrayList<>();
-		updateSave(userID, game, x->x)
+		getSave(userID, game)
 				.getJSONObject("neoInventory")
 				.toMap()
 				.forEach((k,v)->res.add(new JSONObject(2).put("id",k).put("quantity",v)));
@@ -253,8 +304,33 @@ static class AMFImpl{
 		return new JSONObject()
 				.put("currid", currID.get(game))
 				.put("currency",
-					updateProfile(userID, x->x).getJSONObject("currencies").optInt(game)
+					getProfile(userID).getJSONObject("currencies").optInt(game)
 				);
+	}
+	public JSONObject getClan(String userID){
+		int clan = getProfile(userID).optInt("clan", 11);
+		return new JSONObject(2).put("clan",clans.get(clan)).put("id",clan);
+	}
+	public JSONObject getClanV2(String userID){
+		int clan = getProfile(userID).optInt("clan", 11);
+		return new JSONObject(2).put("name",clans.get(clan)).put("id",clan);
+	}
+	public JSONObject getAvatar(String userID){
+		return new JSONObject(1).put("avatar",
+				getProfile(userID).optString("avatar", "nk-monkey.png")
+			);
+	}
+	public Object setClan(String userID, String token, int clan){
+		verifyNK(userID, token);
+		updateProfile(userID,x->x.put("clan",clan));
+		return null;
+	}
+	public Object setAvatar(String userID, String token, String avatar){
+		verifyNK(userID, token);
+		if(!avatars.matcher(avatar).matches())
+			return null;
+		updateProfile(userID,x->x.put("avatar",avatar));
+		return null;
 	}
 	public JSONObject getCurrency(String userID, String token, String game, double amount, String source, String message){
 		if(!games.contains(game))
@@ -279,7 +355,8 @@ static class AMFImpl{
 			}
 			if(!x.has("currencies"))
 				x.put("currencies", new JSONObject());
-			return update.apply(x);
+			var res = update.apply(x);
+			return res == FileObjectStore.UNCHANGED ? x : res;
 		});
 	}
 	public void verifyNK(String userID, String token){
@@ -341,25 +418,32 @@ static class AMFImpl{
 	<%!
 	private JSONObject updateSave(String userID, String game, UnaryOperator<JSONObject> update){
 		if(!games.contains(game))
-			return new JSONObject().put("save",Util.blankSave());
+			return new JSONObject().put("save",JSONObject.NULL);
 		return store.update(List.of("amf", userID, game, "save"),x->{
 			if(x==null){
-				x = new JSONObject().put("save", Util.blankSave())
+				x = new JSONObject().put("save", JSONObject.NULL)
 						.put("neoInventory", new JSONObject())
 						.put("inventory", JSONObject.NULL)
 						.put("lastSaved", System.currentTimeMillis());
 			}
-			return update.apply(x);
+			var res = update.apply(x);
+			return res == FileObjectStore.UNCHANGED ? x : res;
 		});
 	}
-	public Object getData(String userID, String game){
-		return game.equals("MonkeyCity") ? null : updateSave(userID, game, x->x).getJSONObject("save");
+	public JSONObject getProfile(String userID){
+		return updateProfile(userID, x->FileObjectStore.UNCHANGED);
+	}
+	public JSONObject getSave(String userID, String game){
+		return updateSave(userID, game, x->FileObjectStore.UNCHANGED);
+	}
+	public Object getSaveData(String userID, String game){
+		return game.equals("MonkeyCity") ? null : getSave(userID, game).get("save");
 	}
 	public Double saveData(String userID, String token, String game, Map<?,?> data){
 		int transid = (int) (double) data.get("transid");//xd
 		verifyNK(userID, token);
 		return updateSave(userID, game, x->{
-			if(transid > (int)x.getJSONObject("save").optDouble("transid", -1d)){
+			if(x.get("save")==null || x.get("save") == JSONObject.NULL || transid > (int)x.getJSONObject("save").optDouble("transid", -1d)){
 				x.put("save", new JSONObject(data))
 					.put("lastSaved", System.currentTimeMillis());
 			}

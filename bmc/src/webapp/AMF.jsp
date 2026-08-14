@@ -43,8 +43,8 @@ static{
 		public Object apply(List<?> args) throws SQLException{
 			String uid=(String)args.get(0);
 			String game=(String)args.get(1);
-			var data = DATA.getData(uid, game);
-			return data == null ? null : new JSONArray().put(data);
+			var data = DATA.getSaveData(uid, game);
+			return (data == null || data == JSONObject.NULL) ? null : new JSONArray().put(data);
 		}
 	} 
 	//these represent types, we use descriptive names for strings
@@ -70,7 +70,7 @@ static{
 		@Override
 		public Object apply(List<?> args) throws SQLException{
 			String userID=(String)args.get(0);
-			return new JSONObject().put("clan","White Tigers").put("id",11.0);
+			return DATA.getClan(userID);
 		}
 	}.inputs("userID").register();
 	new AMFService("user.get_avatar"){
@@ -78,10 +78,39 @@ static{
 		public Object apply(List<?> args) throws SQLException{
 			String userID=(String)args.get(0);
 			String token=(String)args.get(1);
-			return new JSONObject().put("avatar","nk_monkey.png");
+			return DATA.getAvatar(userID);
 			
 		}
 	}.inputs("userID","token").register();
+	new AMFService("hydar.set_clan"){
+		@Override
+		public Object apply(List<?> args) throws SQLException{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			int clan = (int)(double)args.get(2);
+			return DATA.setClan(userID, token, clan);
+		}
+	}.inputs("userID","token",11.0).register();
+	new AMFService("hydar.set_avatar"){
+		@Override
+		public Object apply(List<?> args) throws SQLException{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			String avatar = (String)args.get(2);
+			return DATA.setAvatar(userID, token, avatar);
+		}
+	}.inputs("userID","token","avatar").register();
+	new AMFService("hydar.set_inventory"){
+		@Override
+		public Object apply(List<?> args) throws SQLException{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			String gameName = (String)args.get(2);
+			JSONObject inventory = (JSONObject)args.get(3);
+			DATA.importInventory(userID, token, gameName, inventory);
+			return 1;
+		}
+	}.inputs("userID","token","gameName","OBJECT").register();
 	new AMFService("user.get_inventory"){
 		@Override
 		public Object apply(List<?> args) throws SQLException{
@@ -89,13 +118,12 @@ static{
 			String userID=(String)args.get(1);
 			String token=(String)args.get(2);
 			String username=(String)args.get(3);
-			return new JSONArray();
+			return DATA.getInventory(userID, token, game,ctx);
 		}
 	}.inputs("gameName","userID","token","username").register();
 	new AMFService("game.get_inventory"){
 		@Override
 		public Object apply(List<?> args) throws Exception{
-			//reuse v1(todo: simplify for all the v2s with same input/output)
 			return new JSONArray();
 		}
 	}.inputs("gameName","userID","token","username").register();
@@ -241,10 +269,22 @@ static{
 	}
 	.inputs("userID","token","game")
 	.register();
-					
+	new AMFService("game.save_score"){
+		@Override
+		public Object apply(List<?> args) throws Exception{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			double id = (double)args.get(2);
+			double score = (double)args.get(3);
+			String username = (String)args.get(4);
+			return score;
+		}
+	}
+	.inputs("userID","token",469d, 119d, "username")
+	.register();
 	for(String s: List.of("prem.getBalance","prem.getCurrency",
 			"user.get_koins", "user.get_avatar", "user.set_achievement", 
-			"game.get_data", "game.save_data", "game.get_my_achievements", "game.check_reward","game.get_store")){
+			"game.get_data", "game.save_data", "game.get_my_achievements", "game.check_reward","game.get_store", "game.save_score")){
 		new AMFService("v2."+s){
 			@Override
 			public Object apply(List<?> args) throws Exception{
@@ -269,7 +309,7 @@ static{
 			String game=(String)args.get(0);
 			String userID=(String)args.get(1);
 			String token=(String)args.get(2);
-			return new JSONObject().put("success",true).put("items",new JSONArray());
+			return new JSONObject().put("success",true).put("items",DATA.getInventory(userID, token, game, ctx));
 		}
 	}
 	.inputs("game","userID","token","username")
@@ -279,7 +319,7 @@ static{
 		@Override
 		public Object apply(List<?> args) throws SQLException{
 			String userID=(String)args.get(0);
-			return new JSONObject().put("name","White Tigers").put("id",11.0);
+			return DATA.getClanV2(userID);
 		}
 	}.inputs("userID").register();
 	new AMFService("v2.prem.buyNeoPremItem"){
@@ -321,19 +361,7 @@ static{
 	}
 	.inputs("userID","token","game","uuid")
 	.register();
-	new AMFService("v2.game.save_score"){
-		@Override
-		public Object apply(List<?> args) throws Exception{
-			String userID=(String)args.get(0);
-			String token=(String)args.get(1);
-			double id = (double)args.get(2);
-			double score = (double)args.get(3);
-			String username = (String)args.get(4);
-			return score;
-		}
-	}
-	.inputs("userID","token",469d, 119d, "username")
-	.register();
+	
 	new AMFService("v2.game.consecutive_logins"){
 		@Override
 		public Object apply(List<?> args) throws Exception{
@@ -377,7 +405,7 @@ static{
    				out.println("File: "+AMFBodies.from(file));
 		   	}
 		} 
-		for(String filename:List.of("/sas4-proc-resp2.txt","/sas4-proc-myresp.txt","/btd5-myrequest.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
+		for(String filename:List.of("/myach.txt","/servertimeandscores.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("File: "+AMFBodies.from(file));
 		   	}
