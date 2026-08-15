@@ -106,7 +106,7 @@ static{
 			String userID=(String)args.get(0);
 			String token=(String)args.get(1);
 			String gameName = (String)args.get(2);
-			JSONObject inventory = (JSONObject)args.get(3);
+			Map<?,?> inventory = (Map<?,?>)args.get(3);
 			DATA.importInventory(userID, token, gameName, inventory);
 			return 1;
 		}
@@ -237,14 +237,6 @@ static{
 	}
 	.inputs("userID","gameName","token","OBJECT")
 	.register();
-	new AMFService("v2.user.get_koins"){
-		@Override
-		public Object apply(List<?> args) throws Exception{
-			return AMFService.getService("user.get_koins").apply(args);
-		}
-	}
-	.inputs("userID","token")
-	.register();
 	new AMFService("game.check_reward"){
 		@Override
 		public Object apply(List<?> args) throws Exception{
@@ -283,7 +275,7 @@ static{
 	.inputs("userID","token",469d, 119d, "username")
 	.register();
 	for(String s: List.of("prem.getBalance","prem.getCurrency",
-			"user.get_koins", "user.get_avatar", "user.set_achievement", 
+			"user.get_koins", "user.get_avatar", "user.set_achievement",
 			"game.get_data", "game.save_data", "game.get_my_achievements", "game.check_reward","game.get_store", "game.save_score")){
 		new AMFService("v2."+s){
 			@Override
@@ -405,7 +397,7 @@ static{
    				out.println("File: "+AMFBodies.from(file));
 		   	}
 		} 
-		for(String filename:List.of("/myach.txt","/servertimeandscores.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
+		for(String filename:List.of("/8676_.txt","/servertimeandscores.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("File: "+AMFBodies.from(file));
 		   	}

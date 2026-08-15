@@ -22,7 +22,7 @@ for a list of their commands and return types see 'future_stuff.txt'
 --%>
 <%
 //TODO: is desynced from bmc
-//TODO: login/transfer...
+//TODO: hydar account
 //TODO: consec logins/dailies
 //TODO: better b64 storage
 %>
@@ -56,7 +56,7 @@ static class AMFImpl{
 	static final Pattern avatars = Pattern.compile("[\\w\\-.]*");
 	static final List<String> clans = List.of("Black Cobras","Blue Wolves", "Dark Matter","Falcons","Iron Phoenix","Night Jackals","Red Storm","Scorpions","Shining Blade","The Watchers","Thunderbolts","White Tigers","XIII");
 			
-	static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
+	static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress: Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
 	static final Map<String, Integer> currID = Map.of("BTD5", 1, "SAS TD", 2, "Battles", 5, "BSM2", 6, "MonkeyCity", 7, "SAS4", 9);
 	public AMFImpl(ObjectStore store){
 		this.store = store;
@@ -90,7 +90,7 @@ static class AMFImpl{
 			synchronized(nk_store){
 				for(String g: games){
 					try{
-						Path f = Path.of(ctx.getRealPath("/amf_data/store/" + g +".json"));
+						Path f = Path.of(ctx.getRealPath("/amf_data/store/" + g.replace(":","") +".json"));
 						nk_store.put(g, new JSONArray(Files.readString(f)));
 					}catch(IOException ioe){
 						ioe.printStackTrace();
@@ -119,7 +119,7 @@ static class AMFImpl{
 			synchronized(nk_ach){
 				for(String g: games){
 					try{
-						Path f = Path.of(ctx.getRealPath("/amf_data/ach/" + g +".json"));
+						Path f = Path.of(ctx.getRealPath("/amf_data/ach/" + g.replace(":","") +".json"));
 						nk_ach.put(g, new JSONArray(Files.readString(f)));
 					}catch(IOException ioe){
 						ioe.printStackTrace();
@@ -138,7 +138,7 @@ static class AMFImpl{
 			x.put("perc",(double) perc)
 				.put("credited",perc>100)
 				.put("userid",Double.parseDouble(userID));
-		}IO.println(j);
+		}//IO.println(j);
 		return j;
 	}
 	public JSONArray setAchievement(String userID, String token, String game, double ach_id, double perc, Context ctx){
@@ -251,10 +251,10 @@ static class AMFImpl{
 		);
 		return res;
 	}
-	public void importInventory(String userID, String token, String game, JSONObject inventory){
+	public void importInventory(String userID, String token, String game, Map<?,?> inventory){
 		verifyNK(userID, token);//so invalid token warning can happen early
 		updateSave(userID, game, x->{
-			inventory.keySet().stream().mapToInt(q->Integer.parseInt(q) + inventory.getInt(q)).sum();
+			inventory.keySet().stream().mapToInt(q->Integer.parseInt((String)q) + (int)(double)inventory.get(q)).sum();
 			x.put("inventory", inventory);
 			return x;
 		});

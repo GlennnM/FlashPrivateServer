@@ -31,7 +31,7 @@
 		private AMFBodies(AMFMessage msg) {
 			super(IntStream.range(0,msg.getBodyCount())
 					.mapToObj(msg::getBodyAt)
-					.sorted(Comparator.comparing(AMFBody::getTarget))
+					.sorted(Comparator.comparing(AMFBody::getResponse))
 					.toList());
 		}
 
