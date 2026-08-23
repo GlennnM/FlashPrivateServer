@@ -51,10 +51,10 @@ static class AMFImpl{
 	private final ObjectStore store;
 	static volatile Map<Integer, Integer> neo_store = null;
 	static final JSONObject nk_store = new JSONObject();
-	static final JSONObject nk_store_map = new JSONObject();
+	static volatile Map<String, Map<Integer, JSONObject>> nk_store_map = null;
 	static final JSONObject nk_ach = new JSONObject();
 	static final Pattern avatars = Pattern.compile("[\\w\\-.]*");
-	static final List<String> clans = List.of("Black Cobras","Blue Wolves", "Dark Matter","Falcons","Iron Phoenix","Night Jackals","Red Storm","Scorpions","Shining Blade","The Watchers","Thunderbolts","White Tigers","XIII");
+	static final List<String> clans = List.of("Black Cobras","Blue Wolves", "Dark Matter","Falcons","Iron Phoenix","Night Jackals","Red Storm","Scorpions","Shining Blade","The Watchers","Thunderbolts","White Tigers","XIII","Scorpions","Scorpions","Scorpions");
 			
 	static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress: Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
 	static final Map<String, Integer> currID = Map.of("BTD5", 1, "SAS TD", 2, "Battles", 5, "BSM2", 6, "MonkeyCity", 7, "SAS4", 9);
@@ -67,19 +67,17 @@ static class AMFImpl{
 	public int getNeoCost(int id, Context ctx){
 		synchronized(nk_store){//intended
 			if(neo_store == null){
-				for(String g: games){
-					try{
-						Path f = Path.of(ctx.getRealPath("/amf_data/costs.json"));
-						neo_store = 
-								new JSONObject(Files.readString(f))
-								.toMap().entrySet().stream()
-								.collect(
-									Collectors.toMap(x->Integer.parseInt(x.getKey()), x->(int)x.getValue())
-								);
-						
-					}catch(IOException ioe){
-						ioe.printStackTrace();
-					}
+				try{
+					Path f = Path.of(ctx.getRealPath("/amf_data/costs.json"));
+					neo_store = 
+							new JSONObject(Files.readString(f))
+							.toMap().entrySet().stream()
+							.collect(
+								Collectors.toMap(x->Integer.parseInt(x.getKey()), x->(int)x.getValue())
+							);
+					
+				}catch(IOException ioe){
+					ioe.printStackTrace();
 				}
 			}
 		}
@@ -100,19 +98,21 @@ static class AMFImpl{
 		}
 		return nk_store.getJSONArray(game);
 	}
-	public JSONObject getStoreMap(String game, Context ctx){
-		if(nk_store_map.isEmpty()){
-			synchronized(nk_store_map){
-				for(String g: games){
-					nk_store_map.put(g, Util.jStream(getStore(game, ctx))
-						.collect(
-							Collectors.toMap(x->x.get("id"),x->x)
-						)
+	public Map<Integer, JSONObject> getStoreMap(String game, Context ctx){
+		if(nk_store_map == null){
+			synchronized(nk_ach){
+				Map<String, Map<Integer,JSONObject>> tmpMap = new HashMap<>();
+				for(var g: games)
+					tmpMap.put(g, 
+						Util.jStream(getStore(g, ctx))
+							.collect(
+								Collectors.toMap(x->x.getInt("id"),x->x)
+							)
 					);
-				}
+				nk_store_map = Map.copyOf(tmpMap);
 			}
 		}
-		return nk_store_map.getJSONObject(game);
+		return nk_store_map.get(game);
 	}
 	public JSONArray getAchievements(String game, Context ctx){
 		if(nk_ach.isEmpty()){
@@ -245,7 +245,7 @@ static class AMFImpl{
 		inv.toMap()
 		.forEach((k,v)->
 			res.add(
-				new JSONObject(store.getJSONObject(k).toString())
+				new JSONObject(store.get(Integer.parseInt(k)).toString())
 					.put("quantity",v)
 				)
 		);
@@ -439,11 +439,26 @@ static class AMFImpl{
 	public Object getSaveData(String userID, String game){
 		return game.equals("MonkeyCity") ? null : getSave(userID, game).get("save");
 	}
+	public Double setSaveOffset(String userID, String token, String game, int nkid){
+		verifyNK(userID, token);
+		return updateSave(userID, game, x->{
+			//account for nk only increasing id by 1 on resync
+			int hTID = (int)x.getJSONObject("save").optDouble("transid");
+			int hOffset = hTID - nkid;
+			x.getJSONObject("save").put("transid", nkid);
+			if(hOffset!=0)
+				x.put("offset", hTID - nkid);
+			return x;
+		}).getJSONObject("save").getDouble("transid");
+	}
 	public Double saveData(String userID, String token, String game, Map<?,?> data){
 		int transid = (int) (double) data.get("transid");//xd
 		verifyNK(userID, token);
 		return updateSave(userID, game, x->{
-			if(x.get("save")==null || x.get("save") == JSONObject.NULL || transid > (int)x.getJSONObject("save").optDouble("transid", -1d)){
+			int hTID = (int)x.getJSONObject("save").optDouble("transid", -1d);
+			int hOffset = x.optInt("offset");
+			//TODO: does hOffset need to be used at all? the client will use the lower one
+			if(x.get("save")==null || x.get("save") == JSONObject.NULL || transid > (hTID /*+ hOffset*/)){
 				x.put("save", new JSONObject(data))
 					.put("lastSaved", System.currentTimeMillis());
 			}

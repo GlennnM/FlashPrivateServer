@@ -111,6 +111,17 @@ static{
 			return 1;
 		}
 	}.inputs("userID","token","gameName","OBJECT").register();
+	new AMFService("hydar.set_save_offset"){
+		@Override
+		public Object apply(List<?> args) throws SQLException{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			String gameName = (String)args.get(2);
+			int nkid = (int)(double)args.get(3);
+			DATA.setSaveOffset(userID, token, gameName, nkid);
+			return 1;
+		}
+	}.inputs("userID","token","gameName",1.0).register();
 	new AMFService("user.get_inventory"){
 		@Override
 		public Object apply(List<?> args) throws SQLException{
@@ -397,7 +408,7 @@ static{
    				out.println("File: "+AMFBodies.from(file));
 		   	}
 		} 
-		for(String filename:List.of("/8676_.txt","/servertimeandscores.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
+		for(String filename:List.of("/bsm2q.txt","/bsm2r.txt","/4892_.txt","/19621_.txt","/19621_.txt","/resyncq.txt","/resyncr.txt","/servertimeandscores.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("File: "+AMFBodies.from(file));
 		   	}
