@@ -1,3 +1,7 @@
+<%@page import="java.io.InputStream"%>
+<%@page import="java.io.ByteArrayOutputStream"%>
+<%@page import="xyz.hydar.bmc.AMFService"%>
+<%@page import="java.util.concurrent.atomic.AtomicLong"%>
 <%@page import="java.nio.charset.StandardCharsets"%>
 <%@page import="java.io.FileInputStream"%>
 <%@page import="java.sql.SQLException"%>
@@ -29,7 +33,7 @@ if(DATA==null){
 	synchronized(this){
 		String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
 		String skipScoreUpdate = request.getServletContext().getInitParameter("NO_UPDATE");
-		DATA=new AMFImpl(FileObjectStore.of(Path.of(storeLocation)).bind(request, 30000L));
+		DATA=new AMFImpl(FileObjectStore.of(Path.of(storeLocation)).bind(30000L));
 	}
 }
 %>
@@ -61,7 +65,7 @@ static{
 	new AMFService("user.get_koins"){
 		@Override
 		public Object apply(List<?> args) throws SQLException{
-			String userID=(String)args.get(0);
+			String userID=(String)args.get(0); 
 			String token=(String)args.get(1);
 			return DATA.getKoins(userID, token);
 		}
@@ -69,7 +73,7 @@ static{
 	new AMFService("user.get_clan"){
 		@Override
 		public Object apply(List<?> args) throws SQLException{
-			String userID=(String)args.get(0);
+			String userID=(String)args.get(0);  
 			return DATA.getClan(userID);
 		}
 	}.inputs("userID").register();
@@ -294,7 +298,7 @@ static{
 				return AMFService.getService(s).apply(args);
 			}
 		}
-		.inputs(AMFService.getService(s).inputTypes)
+		.inputs(AMFService.getService(s).getInputTypes())
 		.register();
 	}
 	new AMFService("v2.game.track"){
@@ -402,7 +406,7 @@ static{
 		   	}
 		   //	out.println("response: ");
 		   	//out.println(AMFBodies.from(baos.toByteArray()));
-	   	}
+	   	} 
 		for(String filename:List.of("/4238_.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("File: "+AMFBodies.from(file));

@@ -1,0 +1,1 @@
+javac src/java/xyz/hydar/bmc/*.java -d classes

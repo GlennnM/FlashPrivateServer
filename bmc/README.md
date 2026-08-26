@@ -3,9 +3,10 @@
 Requires JDK 17+ and git. Use git bash or powershell if on windows.
 
 1. `git clone https://github.com/GlennnM/FlashPrivateServer ; cd FlashPrivateServer/bmc`
-2. `git clone https://github.com/GlennnM/Hydar-Web-Server ; cd Hydar-Web-Server`
-3. `cp -R ../lib .`
-4. (WINDOWS) `./compile_hydar.bat ../flash.properties`<br>
+2. (WINDOWS) `./compile_bmc.bat` (OTHER) `./compile_bmc.sh`
+3. `git clone https://github.com/GlennnM/Hydar-Web-Server ; cd Hydar-Web-Server`
+4. `cp -R ../lib . ; cp -R ../classes .`
+5. (WINDOWS) `./compile_hydar.bat ../flash.properties`<br>
  (OTHER) `./compile_hydar.sh ../flash.properties`
 
 Setting up client ([FPS 4.0+ client](https://github.com/GlennnM/FlashPrivateServer/releases/latest))

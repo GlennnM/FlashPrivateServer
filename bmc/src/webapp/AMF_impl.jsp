@@ -1,3 +1,19 @@
+<%@page import="java.util.Set"%>
+<%@page import="java.util.stream.Collectors"%>
+<%@page import="java.nio.file.Files"%>
+<%@page import="java.util.concurrent.atomic.LongAdder"%>
+<%@page import="java.util.function.UnaryOperator"%>
+<%@page import="xyz.hydar.bmc.Util"%>
+<%@page import="xyz.hydar.bmc.AMFService.NKVerifyException"%>
+<%@page import="xyz.hydar.bmc.ByteAMF"%>
+<%@page import="xyz.hydar.bmc.AMFBodies"%>
+<%@page import="xyz.hydar.bmc.FileObjectStore"%>
+<%@page import="java.util.HashMap"%>
+<%@page import="java.util.ArrayList"%>
+<%@page import="java.util.Map"%>
+<%@page import="java.nio.file.Path"%>
+<%@page import="java.io.IOException"%>
+<%@page import="xyz.hydar.bmc.ObjectStore"%>
 <%@page import="java.util.regex.Pattern"%>
 <%@page import="java.net.http.HttpClient.Redirect"%>
 <%@page import="java.net.http.HttpResponse.BodyHandlers"%>
@@ -13,8 +29,6 @@
 <%@page import="java.util.HexFormat,org.json.*,java.util.List,org.openamf.io.*,org.openamf.*"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
-<%@ include file="AMF_utils.jsp" %>
-<%@ include file="ObjectStore.jsp" %>
 <%-- 
 WIP AMF gateway. make sure to include AMF_utils.jsp and openamf & json-java JARs. 
 should connect to database or maybe object storage for accounts
@@ -469,64 +483,5 @@ static class AMFImpl{
 }
  %>
  <%!
- public static class Util{
-	 public static String hash(String input){
-		 try{
-			 MessageDigest md = MessageDigest.getInstance("SHA3-256");
-			 byte[] encodedhash = md.digest(input.getBytes(UTF_8));
-			 return Base64.getEncoder().encodeToString(encodedhash);
-		 }catch(NoSuchAlgorithmException nsae){
-			 throw new RuntimeException(nsae); 
-		 }
-	 }
-	 public static Iterable<Integer> jIterI(JSONArray array) {
-		return (() -> Spliterators.iterator(jStreamI(array).spliterator()));
-	}
-
-	public static Iterable<String> jIterS(JSONArray array) {
-		return (() -> Spliterators.iterator(jStreamS(array).spliterator()));
-	}
-
-	public static Iterable<JSONObject> jIter(JSONArray array) {
-		return (() -> Spliterators.iterator(jStream(array).spliterator()));
-	}
-
-	public static Stream<JSONObject> jStream(JSONArray array) {
-		return IntStream.range(0, array.length()).mapToObj(array::getJSONObject);
-	}
-
-	public static IntStream jStreamI(JSONArray array) {
-		return IntStream.range(0, array.length()).map(array::getInt);
-	}
-
-	public static Stream<String> jStreamS(JSONArray array) {
-		return IntStream.range(0, array.length()).mapToObj(array::getString);
-	}
-	 public static JSONObject blankProfile(String userID){
-		 return new JSONObject()
-			.put("hydarUsername","hydar")
-			.put("nkUsername","hydar")
-			.put("userID",JSONObject.NULL)
-			.put("hydarUserID",JSONObject.NULL)
-			.put("nkToken",JSONObject.NULL)
-			.put("hydarToken",JSONObject.NULL)
-			.put("avatar","nk-monkey.png")
-			.put("clan",11)
-			.put("timeCreated", System.currentTimeMillis())
-			.put("ap",0)
-			.put("nkoins",0)
-			.put("hcoins",0)
-			.put("currencies", new JSONObject());
-	 }
-	 public static JSONObject blankSave(){
-		 return new JSONObject()
-			.put("gcash",JSONObject.NULL)
-			.put("data",new JSONObject())
-			.put("transid",-1)
-			.put("active",1.0d)
-			.put("glevel",JSONObject.NULL)
-			.put("gxp",JSONObject.NULL)
-			.put("gnum",JSONObject.NULL);
-	 }
- }
+ 
  %>

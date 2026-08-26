@@ -1,3 +1,5 @@
+<%@page import="xyz.hydar.bmc.FileObjectStore"%>
+<%@page import="xyz.hydar.bmc.ObjectStore"%>
 <%@page import="java.util.zip.DeflaterOutputStream"%>
 <%@page import="java.nio.charset.StandardCharsets"%>
 <%@page import="java.util.zip.InflaterInputStream"%>
@@ -46,9 +48,8 @@
 <%@page import="static java.nio.charset.StandardCharsets.UTF_8"%>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
 	pageEncoding="ISO-8859-1"%>
-<%@ page
+<%@ page 
 	import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
-<%@ include file="ObjectStore.jsp" %>
 <%-- BMC DATA --%>
 <%!
 static{

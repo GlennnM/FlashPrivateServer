@@ -1,3 +1,7 @@
+<%@page import="xyz.hydar.bmc.AMFBodies"%>
+<%@page import="org.openamf.AMFBody"%>
+<%@page import="org.openamf.AMFMessage"%>
+<%@page import="xyz.hydar.bmc.ByteAMF"%>
 <%@page import="java.util.concurrent.atomic.AtomicLong"%>
 <%@page import="java.util.concurrent.ConcurrentHashMap"%>
 <%@page import="java.util.Objects"%>
@@ -13,7 +17,6 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
     pageEncoding="ISO-8859-1"%> 
 <%@ page import="javax.sql.*,javax.naming.InitialContext,javax.servlet.http.*,javax.servlet.*"%>
-<%@ include file="AMF_utils.jsp" %>
 <%@ include file="Create_SKU.jsp" %>
 <%@ include file="BMC_Data.jsp" %>
 <%! 
@@ -26,7 +29,7 @@ if(DATA==null){
 	synchronized(this){
 		String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
 		String skipScoreUpdate = request.getServletContext().getInitParameter("NO_UPDATE");
-		DATA=new BMCData(FileObjectStore.of(Path.of(storeLocation)).bind(request, 30000L)).skipScoreUpdate(skipScoreUpdate);
+		DATA=new BMCData(FileObjectStore.of(Path.of(storeLocation)).bind(30000L)).skipScoreUpdate(skipScoreUpdate);
 		var prevSessions = DATA.store.get("monkeyCity/sessions");
 		if(prevSessions != null)
 			prevSessions.toMap().forEach((k,v) -> SESSIONS.put(Integer.parseInt(k), v.toString()));
