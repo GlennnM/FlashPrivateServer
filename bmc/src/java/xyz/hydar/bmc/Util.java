@@ -1,5 +1,9 @@
 package xyz.hydar.bmc;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -7,10 +11,6 @@ import java.util.Spliterators;
 import java.util.concurrent.ThreadFactory;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import static java.nio.charset.StandardCharsets.UTF_8;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -94,4 +94,5 @@ public class Util{
 			.put("gxp",JSONObject.NULL)
 			.put("gnum",JSONObject.NULL);
 	 }
+	
 }

@@ -1,3 +1,4 @@
+<%@page import="xyz.hydar.bmc.Profile"%>
 <%@page import="xyz.hydar.bmc.AMFBodies"%>
 <%@page import="org.openamf.AMFBody"%>
 <%@page import="org.openamf.AMFMessage"%>
@@ -26,10 +27,12 @@ static final AtomicLong LAST_SKU_UPDATE = new AtomicLong();
 %>
 <%
 if(DATA==null){
-	synchronized(this){
+	synchronized(Profile.class){
 		String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
 		String skipScoreUpdate = request.getServletContext().getInitParameter("NO_UPDATE");
-		DATA=new BMCData(FileObjectStore.of(Path.of(storeLocation)).bind(30000L)).skipScoreUpdate(skipScoreUpdate);
+		var store = FileObjectStore.of(Path.of(storeLocation)).bind(30000L);
+		Profile.setStore(store);
+		DATA=new BMCData(store).skipScoreUpdate(skipScoreUpdate);
 		var prevSessions = DATA.store.get("monkeyCity/sessions");
 		if(prevSessions != null)
 			prevSessions.toMap().forEach((k,v) -> SESSIONS.put(Integer.parseInt(k), v.toString()));
@@ -76,42 +79,7 @@ if(request.getMethod().equals("POST")){
 		sid = System.currentTimeMillis();
 		//TODO: new idea - just store a hash of the token, give each token hash a different save
 		if(!("false".equals(request.getServletContext().getInitParameter("DO_NK_AUTH")))){
-			HttpClient client = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
-			AMFMessage nkAuth = new AMFMessage();
-			var serializer = ByteAMF.serializer();
-			boolean hadAch = !DATA.store.has("monkeyCity",""+userID,"achievements");
-			if(hadAch){
-				nkAuth.addBody(new AMFBody("game.get_my_achievements", "/1", List.of(userID, token, "MonkeyCity"), AMFBody.DATA_TYPE_ARRAY));
-			}
-			nkAuth.addBody(new AMFBody("user.get_koins", "/2", List.of(userID, token), AMFBody.DATA_TYPE_ARRAY));
-			
-					
-			serializer.serialize(nkAuth);
-			byte[] amfPayload = serializer.get();
-			HttpRequest req = HttpRequest.newBuilder()
-					.header("Content-Type", "x-amf")
-					.POST(BodyPublishers.ofByteArray(amfPayload))
-					.uri(URI.create("https://mynk.ninjakiwi.com/gateway"))
-					.build();
-			HttpResponse<byte[]> amfResponse = client.send(req, BodyHandlers.ofByteArray());
-			
-			
-			if(amfResponse.statusCode() != 200)
-				throw new RuntimeException("Auth failure "+amfResponse.statusCode());
-			AMFBodies bodies = AMFBodies.from(amfResponse.body());
-			//System.out.println(bodies);
-			AMFBody b = bodies.iterator().next(); 
-			if(b.getTarget().contains("onStatus") )
-				throw new RuntimeException("Auth failure 500");
-			if(hadAch)//koins would give an object(Map)
-				DATA.saveAchIfNew(userID, new JSONArray((List<?>)(b.getValue())));
-			b = bodies.iterator().next(); 
-			if(b.getTarget().contains("onStatus") 
-			|| !(b.getValue() instanceof Map<?,?> koin) 
-			|| !koin.containsKey("koins"))
-				throw new RuntimeException("Auth failure 500");
-			
-			
+			Profile.verifyNK(""+userID, token);
 		} else {
 			System.err.println("WARNING: AUTH SKIPPED!!!");
 		}

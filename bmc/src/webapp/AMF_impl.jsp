@@ -1,3 +1,5 @@
+<%@page import="xyz.hydar.bmc.AMFService"%>
+<%@page import="xyz.hydar.bmc.Profile"%>
 <%@page import="java.util.Set"%>
 <%@page import="java.util.stream.Collectors"%>
 <%@page import="java.nio.file.Files"%>
@@ -191,7 +193,7 @@ static class AMFImpl{
 	<%!
 	public JSONObject getKoins(String userID, String token){
 		verifyNK(userID, token);//so invalid token warning can happen early
-		JSONObject profile = getProfile(userID);
+		JSONObject profile = Profile.get(userID);
 		return new JSONObject(2)
 				.put("koins",(double)profile.getInt("nkoins"))
 				.put("points",(double)profile.getInt("ap"));
@@ -204,7 +206,7 @@ static class AMFImpl{
 		List<Object> res = new ArrayList<>();
 		List<Object> newItems = new ArrayList<>();
 		Map<Integer,Integer> itemsToAdd = new HashMap<>();
-		updateProfile(userID, x->{
+		Profile.update(userID, x->{
 			var cur = x.getJSONObject("currencies");
 			for(var item: items){
 				if(item instanceof List<?> i){
@@ -318,32 +320,32 @@ static class AMFImpl{
 		return new JSONObject()
 				.put("currid", currID.get(game))
 				.put("currency",
-					getProfile(userID).getJSONObject("currencies").optInt(game)
+					Profile.get(userID).getJSONObject("currencies").optInt(game)
 				);
 	}
 	public JSONObject getClan(String userID){
-		int clan = getProfile(userID).optInt("clan", 11);
+		int clan = Profile.get(userID).optInt("clan", 11);
 		return new JSONObject(2).put("clan",clans.get(clan)).put("id",clan);
 	}
 	public JSONObject getClanV2(String userID){
-		int clan = getProfile(userID).optInt("clan", 11);
+		int clan = Profile.get(userID).optInt("clan", 11);
 		return new JSONObject(2).put("name",clans.get(clan)).put("id",clan);
 	}
 	public JSONObject getAvatar(String userID){
 		return new JSONObject(1).put("avatar",
-				getProfile(userID).optString("avatar", "nk-monkey.png")
+				Profile.get(userID).optString("avatar", "nk-monkey.png")
 			);
 	}
 	public Object setClan(String userID, String token, int clan){
 		verifyNK(userID, token);
-		updateProfile(userID,x->x.put("clan",clan));
+		Profile.update(userID,x->x.put("clan",clan));
 		return null;
 	}
 	public Object setAvatar(String userID, String token, String avatar){
 		verifyNK(userID, token);
 		if(!avatars.matcher(avatar).matches())
 			return null;
-		updateProfile(userID,x->x.put("avatar",avatar));
+		Profile.update(userID,x->x.put("avatar",avatar));
 		return null;
 	}
 	public JSONObject getCurrency(String userID, String token, String game, double amount, String source, String message){
@@ -352,7 +354,7 @@ static class AMFImpl{
 		verifyNK(userID, token);
 		
 		return new JSONObject(1).put("bal",
-			updateProfile(userID, x->{
+			Profile.update(userID, x->{
 				var cur = x.getJSONObject("currencies");
 				cur.put(game, cur.optInt(game) + (int)amount);
 				return x;
@@ -360,72 +362,14 @@ static class AMFImpl{
 		);
 	}
 	private void addAP(String userID, int ap){
-		updateProfile(userID, x->x.put("ap",x.getInt("ap")+ap));
-	}
-	private JSONObject updateProfile(String userID, UnaryOperator<JSONObject> update){
-		return store.update(List.of("amf", userID, "info"),x->{
-			if(x==null){
-				x = Util.blankProfile(userID);
-			}
-			if(!x.has("currencies"))
-				x.put("currencies", new JSONObject());
-			var res = update.apply(x);
-			return res == FileObjectStore.UNCHANGED ? x : res;
-		});
-	}
-	public void verifyNK(String userID, String token){
-		
-		String hash = Util.hash(token);
-		boolean[] success = {false};
-		updateProfile(userID, x->{
-			if(x.get("nkToken") == JSONObject.NULL || !hash.equals(x.getString("nkToken"))){
-				if(isNKToken(userID, token)){ 
-					x.put("nkToken", Util.hash(token));
-					success[0] = true;
-				}
-			}else
-				success[0] = true;
-			return x;
-		});
-		if(!success[0])
-			throw new NKVerifyException();
+		Profile.update(userID, x->x.put("ap",x.getInt("ap")+ap));
 	}
 	public boolean DO_NK_AUTH=false;
-	public boolean isNKToken(String userID, String token){
-		if(!DO_NK_AUTH)
-			return token.length() > 30;
-		try{
-			HttpClient client = HttpClient.newBuilder().followRedirects(Redirect.NORMAL).build();
-			AMFMessage nkAuth = new AMFMessage();
-			var serializer = ByteAMF.serializer();
-			nkAuth.addBody(new AMFBody("user.get_koins", "/2", List.of(userID, token), AMFBody.DATA_TYPE_ARRAY));
-			serializer.serialize(nkAuth);
-			byte[] amfPayload = serializer.get();
-			HttpRequest req = HttpRequest.newBuilder()
-					.header("Content-Type", "x-amf")
-					.POST(BodyPublishers.ofByteArray(amfPayload))
-					.uri(URI.create("https://mynk.ninjakiwi.com/gateway"))
-					.build();
-			HttpResponse<byte[]> amfResponse = client.send(req, BodyHandlers.ofByteArray());
-			
-			
-			if(amfResponse.statusCode() != 200)
-				return false;
-			AMFBodies bodies = AMFBodies.from(amfResponse.body());
-			AMFBody b = bodies.iterator().next(); 
-			if(b.getTarget().contains("onStatus") )
-				return false;
-			b = bodies.iterator().next(); 
-			if(b.getTarget().contains("onStatus") 
-			|| !(b.getValue() instanceof Map<?,?> koin) 
-			|| !koin.containsKey("koins"))
-				return false;
-		}catch(Exception e){
-			e.printStackTrace();
-			return false;
-		}
-		return true;
+	public void verifyNK(String userID, String token){
+		if(DO_NK_AUTH) Profile.verifyNK(userID, token);
+		else if(token.length()<30)throw new AMFService.NKVerifyException();
 	}
+	
 
 	%>
 	<%-- SAVE --%>
@@ -443,9 +387,6 @@ static class AMFImpl{
 			var res = update.apply(x);
 			return res == FileObjectStore.UNCHANGED ? x : res;
 		});
-	}
-	public JSONObject getProfile(String userID){
-		return updateProfile(userID, x->FileObjectStore.UNCHANGED);
 	}
 	public JSONObject getSave(String userID, String game){
 		return updateSave(userID, game, x->FileObjectStore.UNCHANGED);

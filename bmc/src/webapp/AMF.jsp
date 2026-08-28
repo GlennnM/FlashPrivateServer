@@ -1,3 +1,4 @@
+<%@page import="xyz.hydar.bmc.Profile"%>
 <%@page import="java.io.InputStream"%>
 <%@page import="java.io.ByteArrayOutputStream"%>
 <%@page import="xyz.hydar.bmc.AMFService"%>
@@ -30,10 +31,12 @@ static final AtomicLong LAST_SKU_UPDATE = new AtomicLong();
 %>
 <%
 if(DATA==null){
-	synchronized(this){
+	synchronized(Profile.class){
 		String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
 		String skipScoreUpdate = request.getServletContext().getInitParameter("NO_UPDATE");
-		DATA=new AMFImpl(FileObjectStore.of(Path.of(storeLocation)).bind(30000L));
+		var store = FileObjectStore.of(Path.of(storeLocation)).bind(30000L);
+		Profile.setStore(store);
+		DATA=new AMFImpl(store);
 	}
 }
 %>

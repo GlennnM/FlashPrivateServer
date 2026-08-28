@@ -1,4 +1,5 @@
 
+<%@page import="xyz.hydar.bmc.Profile"%>
 <%@page import="java.time.Instant"%>
 <%@page import="java.nio.file.attribute.FileTime"%>
 <%@ include file="BMC_Data.jsp" %>
@@ -16,6 +17,7 @@ if(store==null)
 	
 		String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
 		store = FileObjectStore.of(Path.of(storeLocation));
+		Profile.store = store;
 		keys = store.list();
 	}catch(IOException ioe){
 		throw new RuntimeException(ioe);
