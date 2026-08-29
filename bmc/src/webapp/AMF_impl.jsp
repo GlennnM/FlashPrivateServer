@@ -1,3 +1,4 @@
+<%@page import="java.util.Objects"%>
 <%@page import="xyz.hydar.bmc.AMFService"%>
 <%@page import="xyz.hydar.bmc.Profile"%>
 <%@page import="java.util.Set"%>
@@ -410,11 +411,14 @@ static class AMFImpl{
 		int transid = (int) (double) data.get("transid");//xd
 		verifyNK(userID, token);
 		return updateSave(userID, game, x->{
-			int hTID = (int)x.getJSONObject("save").optDouble("transid", -1d);
+			var save = x.getJSONObject("save");
+			int hTID = (int)save.optDouble("transid", -1d);
 			int hOffset = x.optInt("offset");
 			//TODO: does hOffset need to be used at all? the client will use the lower one
-			if(x.get("save")==null || x.get("save") == JSONObject.NULL || transid > (hTID /*+ hOffset*/)){
-				x.put("save", new JSONObject(data))
+			if((save==null || save == JSONObject.NULL || transid >= (hTID /*+ hOffset*/)) 
+					//&& !Objects.equals(save.get("data"), data.get("data"))
+					){
+				x.put("save", new JSONObject(data).put("transid", Math.max(transid, hTID+1)))
 					.put("lastSaved", System.currentTimeMillis());
 			}
 			return x;
