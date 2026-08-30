@@ -38,7 +38,6 @@ should connect to database or maybe object storage for accounts
 for a list of their commands and return types see 'future_stuff.txt'
 --%>
 <%
-//TODO: is desynced from bmc
 //TODO: hydar account
 //TODO: consec logins/dailies
 //TODO: better b64 storage

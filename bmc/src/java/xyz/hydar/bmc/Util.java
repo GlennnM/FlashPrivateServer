@@ -16,8 +16,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Util{
-	public static final ThreadFactory TFAC;
-	//'conditional compile' for 19+
+	public static final ThreadFactory TFAC;//'conditional compile' for 19+
 	static {
 		ThreadFactory tmp;
 		try {
@@ -68,22 +67,6 @@ public class Util{
 	public static Stream<String> jStreamS(JSONArray array) {
 		return IntStream.range(0, array.length()).mapToObj(array::getString);
 	}
-	 public static JSONObject blankProfile(String userID){
-		 return new JSONObject()
-			.put("hydarUsername","hydar")
-			.put("nkUsername","hydar")
-			.put("userID",JSONObject.NULL)
-			.put("hydarUserID",JSONObject.NULL)
-			.put("nkToken",JSONObject.NULL)
-			.put("hydarToken",JSONObject.NULL)
-			.put("avatar","nk-monkey.png")
-			.put("clan",11)
-			.put("timeCreated", System.currentTimeMillis())
-			.put("ap",0)
-			.put("nkoins",0)
-			.put("hcoins",0)
-			.put("currencies", new JSONObject());
-	 }
 	 public static JSONObject blankSave(){
 		 return new JSONObject()
 			.put("gcash",JSONObject.NULL)
