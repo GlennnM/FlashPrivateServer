@@ -1,11 +1,13 @@
 
+<%@page import="org.json.JSONObject"%>
+<%@page import="java.io.IOException"%>
+<%@page import="java.nio.file.Path"%>
+<%@page import="java.util.List"%>
+<%@page import="xyz.hydar.bmc.FileObjectStore"%>
+<%@page import="java.util.stream.Collectors"%>
 <%@page import="xyz.hydar.bmc.Profile"%>
 <%@page import="java.time.Instant"%>
 <%@page import="java.nio.file.attribute.FileTime"%>
-<%@ include file="BMC_Data.jsp" %>
-<!DOCTYPE html>
-<html>
-<head>
 <%!
 static volatile FileObjectStore store;
 static volatile List<String> keys;
@@ -38,6 +40,17 @@ if(store==null)
 String username = request.getParameter("username");
 String userID = request.getParameter("userID");
 String token = request.getParameter("token");
+boolean loggedIn = userID != null;
+if(loggedIn){
+	//TODO: do this
+	//Profile.verifyNK(userID, token);
+	//--> display message about invalid token, allow logout incase it's hydar token
+}
+var profile = loggedIn ? Profile.get(userID) : null;
+boolean isHydarLogin = loggedIn && token.startsWith("hyd");
+boolean hasHydarID = loggedIn && profile.get("hydarUserID") != JSONObject.NULL;
+boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
+
 // display NK status
 // display which games are active using hydar server
 // display hydar status
@@ -60,7 +73,7 @@ String token = request.getParameter("token");
 //--> log in to hydar
 //--> register a hydar
 //--> log out of hydar(client only?)
-//--> 
+//--> add hydar login to nk
 //--> change username(3,4,5)
 //--> change password(3,4,5)
 //--> change clan/avatar, add friends... (5.1 or smth probably)
@@ -68,7 +81,13 @@ String token = request.getParameter("token");
 
 //placeholder stuff from index.jsp
 %>
-
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Login - Hydar</title>
+<link rel="icon" href="/favicon.ico"/>
+<link rel="shorcut icon" href="/favicon.ico"/>
 
 <style>
 			#overlay{
@@ -97,139 +116,161 @@ String token = request.getParameter("token");
 </style>
 			
 <script>
-class Viewer{
-	Viewer(){
-		this.keys = {};
-		this.kd=this.keydown.bind(this);
-		this.ku=this.keyup.bind(this);
-		window.addEventListener('keydown',this.kd);
-		window.addEventListener('keyup',this.ku);
-	}
-	keydown(e) {
-		this.keys[e.keyCode] = true;
-	}
-	keyup(e) {
-		//escape
-		if(this.keys[27]){
-			this.hidePopups();
-		}
-		this.keys[e.keyCode] = false;
-	}
-	editThing(e){
-		if(e=="NEW"){
-			this.willRefresh=true;
-			e = document.getElementById("newNameArea").value;
-		}
-		this.editingThing=e;
-		document.getElementById("editTextName").innerText = e;
-		fetch("", {
-			 method: "POST",
-			  headers: {
-			    "Content-Type": "application/x-www-form-urlencoded",
-			  },
-			  body: new URLSearchParams({ op: "get", key: e }),
-		}).then(r=>{
-			if (!r.ok) {
-		      throw new Error(`error ${r.status}`);
-		    }
-			return r.json();
-		}).then(json=>{
-			document.getElementById("overlay").hidden=null;
-			document.getElementById("popup").hidden=null;
-			document.getElementById("editTextArea").value=JSON.stringify(json,null,2);
-		});
-		
-	}
-
-	deleteThing(e){
-		fetch("", {
-			 method: "POST",
-			  headers: {
-			    "Content-Type": "application/x-www-form-urlencoded",
-			  },
-			  body: new URLSearchParams({ op: "delete", key: e }),
-		}).then(r=>{
-			if (!r.ok) {
-		      throw new Error(`error ${r.status}`);
-		    }
+function fetchThing(){
+	fetch("", {
+		 method: "POST",
+		  headers: {
+		    "Content-Type": "application/x-www-form-urlencoded",
+		  },
+		  body: new URLSearchParams({ op: "put", key: this.editingThing, data: document.getElementById("editTextArea").value}),
+	}).then(x=>{
+		if(this.willRefresh && x.ok)
 			location.reload();
-		})
-		
-	}
-	editTextSave(){
-		try{
-			let obj = JSON.parse( document.getElementById("editTextArea").value);
-			if (obj===null || typeof obj !== 'object' || Array.isArray(obj)){
-		      throw new Error('Must be an object{}');
-		    }
-		}catch(e){
-			document.getElementById("editTextName").innerText = e;
-			return;
-		}
-		fetch("", {
-			 method: "POST",
-			  headers: {
-			    "Content-Type": "application/x-www-form-urlencoded",
-			  },
-			  body: new URLSearchParams({ op: "put", key: this.editingThing, data: document.getElementById("editTextArea").value}),
-		}).then(x=>{
-			if(this.willRefresh && x.ok)
-				location.reload();
-			this.editTextDiscard();
-		});
-	}
-	
-	editTextDiscard(){
-		this.willRefresh=false;
-		this.editingThing=null;
-		this.hidePopups();
-	}
-	hidePopups(){
-		this.willRefresh=false;
-		document.getElementById("overlay").hidden=1;
-		[...document.getElementsByClassName("popup")].forEach(x=>x.hidden=1);
-	}
-	
+		this.editTextDiscard();
+	});
 }
-var v = new Viewer();
-let keys = <%=new JSONArray(keys)%>;
 </script>
 </head>
-<body style='font-family:Calibri,Arial'>
-<div id="overlay" hidden=1></div>
-<div id="popup" class="popup" hidden=1>
-	<h1>Edit <a id="editTextName">thing</a>:
-		<a href='#' onclick="v.editTextDiscard()" style="float:right;padding-left:10px">[Discard]</a>
-		<a href='#' onclick="v.editTextSave()" style="float:right">[Save]</a>	
-	</h1>
-	<textarea id="editTextArea" style="width:100%;height:100%;font-size:32"></textarea>
+<style> 
+	body{
+		background-image:url('https://hydar.xyz/images/hydarface.png');
+		background-repeat:no-repeat;
+		background-attachment:fixed;
+		background-size:100% 150%;
+		background-color:rgb(51, 57, 63);
+		background-position: 0% 50%;
+	}
+</style>
+<style>
+	.images{
+		height:140%;
+		width:calc(100% + 20px);
+		position:absolute;
+		overflow:hidden;
+		top:-40%;
+		left:-20px;
+		opacity:40%;
+	}
+	.textbox{
+		position: absolute;
+		top:50%;
+		left:50%;
+	}
+	.textboxmove{
+		background:rgb(51, 57, 63);
+		width:550px;
+		height:480px;
+		display:block;
+		position: absolute;
+		top:-210px;
+		left:-235px;
+		box-shadow:0 0 10px rgba(0,0,0,20);
+	}
+	.hydarlogo{
+		position:absolute;
+		top:calc(50% - 160px);
+		left:calc(50% - 220px);
+		opacity:100%;
+	}
+	.button3{
+			dsiplay:inline-block;
+			background-color:rgb(41, 47, 53);
+			color:white;border:none;
+			padding:8px 12px; 
+			position:relative; 
+			left:0px;
+			top:4px;
+			border-radius:8px;
+		}
+	.button3:hover{
+		background-color:rgb(61, 97, 183);
+		cursor:pointer;
+	}
+	input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 50px rgb(71, 77, 83) inset;
+    -webkit-text-fill-color: White;
+	}
+	
+	input:-webkit-autofill:focus {
+	    -webkit-box-shadow: 0 0 0 50px rgb(71, 77, 83) inset;
+	    -webkit-text-fill-color: White;
+	} 
+</style>
+<body>
+<div class = "textbox"><div class = "textboxmove">
+
+<div class = "hydarlogo" style = "color:rgb(255,255,255);font-family:calibri, arial;text-align:left;font-size:12px;left:0px">
+<img src="https://hydar.xyz/images/hydar.png" alt="hydar" style="position:absolute;left:20px;top:-50px">
+<br>
+<p style = "position:absolute;left:20px;top:330px;right:200px;width:250px">
+<%if(loggedIn){ %>
+	 Games synced:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") != null).collect(Collectors.joining(", "))%><br><%
+	%> Not synced/never played:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") == null).collect(Collectors.joining(", "))%><br>
+
+<%}%>
+</p>
 </div>
-<div  id='entities'>
 
+<%
+//Files.writeString(Path.of(request.getServletContext().getResource("/log.txt").toURI()),"juydar");
+out.print("<p style = \"color:rgb(255,255,255); font-family:calibri, arial; font-size:20px; z-index:1; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 220px);\">");
+%>
+<b>
+Flash Private Server</b><br><br>
+NK:&nbsp;<%= loggedIn ? (hasNKID ? (isHydarLogin ? "Exists, but Hydar login in use instead" : username) : "Not available") : "Not logged in" %>
+<br>	
+Hydar:&nbsp;<%= loggedIn ? (hasHydarID ? (isHydarLogin ? username : "Linked with NK, Hydar username: ") : "Linked with NK, no username yet") : "Not logged in" %>
+<br>
+Save status:&nbsp;Saving to&nbsp;(<%=loggedIn ? (isHydarLogin ? "Hydar" : "both") : "none" %>).
+<br>
+<%
 
-</div>
-<script>
+%>
+<%if(!loggedIn){ %>
+<br>
+<form method="post" action="Verify.jsp"  >
+<p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 70px);">
 
-for(let key of [...keys, "NEW"]){
-	let thing=document.createElement("div");
-	
-	let e_=key;
-	let del=document.createElement("a");
-	del.href='#';
-	del.innerText="[DELETE]";
-	del.onclick=()=>v.deleteThing(e_);
-	
-	let edit=document.createElement("a");
-	edit.href='#';
-	edit.innerText = key+"[EDIT]";
-	edit.onclick=()=>v.editThing(e_);
-	
-	thing.appendChild(edit);
-	thing.appendChild(del);
-	document.getElementById("entities").appendChild(thing);
-}
-</script>
+Hydar login<br>	
+<input  type="text" name="username" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
+ 
 
-New thing name:<br><textarea id="newNameArea" style="width:250;height:100%;font-size:32"></textarea>	
+<input type="password" name="password" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px; position:relative;top:4px;" placeholder = "Password">
+<input type="submit" name="submit" value = "Go" class= "button3"><br><br>
+</form>
+<br>
+<br>
+<form method="post" action="Verify.jsp"  >
+<p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; top:calc(50% + 20px);">
+
+-or-
+<br>
+Register new Hydar account*:
+<br>
+<input  type="text" name="username" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
+ 
+
+<input type="password" name="password" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px; position:relative;top:4px;" placeholder = "Password">
+<input type="submit" name="submit" value = "Go" class= "button3"><br><br>
+*A new Hydar account will not be able to use saves from NK servers!!! This option is only recommended if NK's save servers do not work.
+</form>
+<%}else if(!isHydarLogin){ %>
+<form method="post" action="Verify.jsp"  >
+<p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 50px);">
+
+<br>
+Add Hydar credentials to your NK account:
+<br>
+<input  type="text" name="username" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
+ 
+
+<input type="password" name="password" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px; position:relative;top:4px;" placeholder = "Password">
+<input type="submit" name="submit" value = "Go" class= "button3"><br><br>
+</form>
+</div></div>
+<%}%>
+
 </body>
 </html>
+
+

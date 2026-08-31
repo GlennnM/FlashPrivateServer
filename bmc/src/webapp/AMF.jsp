@@ -136,7 +136,7 @@ static{
 			String userID=(String)args.get(1);
 			String token=(String)args.get(2);
 			String username=(String)args.get(3);
-			return DATA.getInventory(userID, token, game,ctx);
+			return DATA.getInventory(userID, token, game, username, ctx);
 		}
 	}.inputs("gameName","userID","token","username").register();
 	new AMFService("game.get_inventory"){
@@ -319,7 +319,8 @@ static{
 			String game=(String)args.get(0);
 			String userID=(String)args.get(1);
 			String token=(String)args.get(2);
-			return new JSONObject().put("success",true).put("items",DATA.getInventory(userID, token, game, ctx));
+			String username=(String)args.get(2);
+			return new JSONObject().put("success",true).put("items",DATA.getInventory(userID, token, game, username, ctx));
 		}
 	}
 	.inputs("game","userID","token","username")

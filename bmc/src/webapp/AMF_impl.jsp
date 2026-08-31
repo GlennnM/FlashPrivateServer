@@ -64,15 +64,12 @@ static{
 %>
 <%!
 static class AMFImpl{
+	public static boolean DO_NK_AUTH=true;
 	private final ObjectStore store;
 	static volatile Map<Integer, Integer> neo_store = null;
 	static final JSONObject nk_store = new JSONObject();
 	static volatile Map<String, Map<Integer, JSONObject>> nk_store_map = null;
 	static final JSONObject nk_ach = new JSONObject();
-	static final Pattern avatars = Pattern.compile("[\\w\\-.]*");
-	static final List<String> clans = List.of("Black Cobras","Blue Wolves", "Dark Matter","Falcons","Iron Phoenix","Night Jackals","Red Storm","Scorpions","Shining Blade","The Watchers","Thunderbolts","White Tigers","XIII","Scorpions","Scorpions","Scorpions");
-			
-	static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress: Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
 	static final Map<String, Integer> currID = Map.of("BTD5", 1, "SAS TD", 2, "Battles", 5, "BSM2", 6, "MonkeyCity", 7, "SAS4", 9);
 	public AMFImpl(ObjectStore store){
 		this.store = store;
@@ -102,7 +99,7 @@ static class AMFImpl{
 	public JSONArray getStore(String game, Context ctx){
 		if(nk_store.isEmpty()){
 			synchronized(nk_store){
-				for(String g: games){
+				for(String g: Profile.games){
 					try{
 						Path f = Path.of(ctx.getRealPath("/amf_data/store/" + g.replace(":","") +".json"));
 						nk_store.put(g, new JSONArray(Files.readString(f)));
@@ -118,7 +115,7 @@ static class AMFImpl{
 		if(nk_store_map == null){
 			synchronized(nk_ach){
 				Map<String, Map<Integer,JSONObject>> tmpMap = new HashMap<>();
-				for(var g: games)
+				for(var g: Profile.games)
 					tmpMap.put(g, 
 						Util.jStream(getStore(g, ctx))
 							.collect(
@@ -133,7 +130,7 @@ static class AMFImpl{
 	public JSONArray getAchievements(String game, Context ctx){
 		if(nk_ach.isEmpty()){
 			synchronized(nk_ach){
-				for(String g: games){
+				for(String g:  Profile.games){
 					try{
 						Path f = Path.of(ctx.getRealPath("/amf_data/ach/" + g.replace(":","") +".json"));
 						nk_ach.put(g, new JSONArray(Files.readString(f)));
@@ -158,7 +155,7 @@ static class AMFImpl{
 		return j;
 	}
 	public JSONArray setAchievement(String userID, String token, String game, double ach_id, double perc, Context ctx){
-		if(!games.contains(game))
+		if(!Profile.games.contains(game))
 			return null;
 		verifyNK(userID, token);
 		JSONArray j = getAchievements(game, ctx);
@@ -200,7 +197,7 @@ static class AMFImpl{
 	}
 	
 	public List<Object> buyNeoItems(String userID, String token, String game, List<?> items, Context ctx){
-		if(!games.contains(game) || !currID.containsKey(game))
+		if(! Profile.games.contains(game) || !currID.containsKey(game))
 			return List.of("An error occurred");
 		verifyNK(userID, token);
 		List<Object> res = new ArrayList<>();
@@ -231,7 +228,7 @@ static class AMFImpl{
 				
 				//results.add(new ArrayList<>(itemsToAdd.keySet()));
 			}//CHECK BSM2 RESP!!!!!
-			res.add(cur.get(game));
+			res.add(cur.opt(game));
 			res.add(newItems);
 			return x;
 		});
@@ -246,11 +243,13 @@ static class AMFImpl{
 	}
 
 
-	public List<Object> getInventory(String userID, String token, String game, Context context){
+	public List<Object> getInventory(String userID, String token, String game, String username,  Context context){
 		verifyNK(userID, token);//so invalid token warning can happen early
-		if(!games.contains(game) || !currID.containsKey(game))
+		if(! Profile.games.contains(game) || !currID.containsKey(game))
 			return List.of("An error occurred");
-		verifyNK(userID, token);
+		Profile.update(userID, x->{
+			return token.startsWith("hyd") ? x : x.put("nkUsername", username);
+		});
 		List<Object> res = new ArrayList<>();
 		//get items from store table
 		var store = getStoreMap(game, context);
@@ -276,7 +275,7 @@ static class AMFImpl{
 		});
 	}
 	public List<Object> getNeoInventory(String userID, String token, String game){
-		if(!games.contains(game) || !currID.containsKey(game))
+		if(! Profile.games.contains(game) || !currID.containsKey(game))
 			return List.of("An error occurred");
 		verifyNK(userID, token);
 		List<Object> res = new ArrayList<>();
@@ -299,7 +298,7 @@ static class AMFImpl{
 		return new JSONObject(1).put("success",false);
 	}
 	public boolean consumeNeoPrem_v2(String userID, String token, String game, String uuid){
-		if(!games.contains(game) || !currID.containsKey(game))
+		if(! Profile.games.contains(game) || !currID.containsKey(game))
 			return false;
 		verifyNK(userID, token);
 		//wipe inv since this only happens in bmc, where the "neo prems" are always consumed instantly
@@ -314,7 +313,7 @@ static class AMFImpl{
 		return new JSONObject().put("success",true).put("items",inv);
 	}
 	public JSONObject getBalance(String userID, String token, String game){
-		if(!games.contains(game) || !currID.containsKey(game))
+		if(! Profile.games.contains(game) || !currID.containsKey(game))
 			return new JSONObject();
 		verifyNK(userID, token);
 		return new JSONObject()
@@ -325,11 +324,11 @@ static class AMFImpl{
 	}
 	public JSONObject getClan(String userID){
 		int clan = Profile.get(userID).optInt("clan", 11);
-		return new JSONObject(2).put("clan",clans.get(clan)).put("id",clan);
+		return new JSONObject(2).put("clan",Profile.clans.get(clan)).put("id",clan);
 	}
 	public JSONObject getClanV2(String userID){
 		int clan = Profile.get(userID).optInt("clan", 11);
-		return new JSONObject(2).put("name",clans.get(clan)).put("id",clan);
+		return new JSONObject(2).put("name",Profile.clans.get(clan)).put("id",clan);
 	}
 	public JSONObject getAvatar(String userID){
 		return new JSONObject(1).put("avatar",
@@ -349,7 +348,7 @@ static class AMFImpl{
 		return null;
 	}
 	public JSONObject getCurrency(String userID, String token, String game, double amount, String source, String message){
-		if(!games.contains(game))
+		if(! Profile.games.contains(game))
 			return new JSONObject(1).put("bal",0);
 		verifyNK(userID, token);
 		
@@ -364,7 +363,6 @@ static class AMFImpl{
 	private void addAP(String userID, int ap){
 		Profile.update(userID, x->x.put("ap",x.getInt("ap")+ap));
 	}
-	public boolean DO_NK_AUTH=false;
 	public void verifyNK(String userID, String token){
 		if(DO_NK_AUTH) Profile.verifyNK(userID, token);
 		else if(token.length()<30)throw new AMFService.NKVerifyException();
@@ -375,7 +373,7 @@ static class AMFImpl{
 	<%-- SAVE --%>
 	<%!
 	private JSONObject updateSave(String userID, String game, UnaryOperator<JSONObject> update){
-		if(!games.contains(game))
+		if(! Profile.games.contains(game))
 			return new JSONObject().put("save",JSONObject.NULL);
 		return store.update(List.of("amf", userID, game, "save"),x->{
 			if(x==null){
@@ -398,7 +396,7 @@ static class AMFImpl{
 		verifyNK(userID, token);
 		return updateSave(userID, game, x->{
 			//account for nk only increasing id by 1 on resync
-			int hTID = (int)x.getJSONObject("save").optDouble("transid");
+			int hTID = (int)x.optJSONObject("save", new JSONObject()).optDouble("transid");
 			int hOffset = hTID - nkid;
 			x.getJSONObject("save").put("transid", nkid);
 			if(hOffset!=0)
@@ -410,7 +408,7 @@ static class AMFImpl{
 		int transid = (int) (double) data.get("transid");//xd
 		verifyNK(userID, token);
 		return updateSave(userID, game, x->{
-			var save = x.getJSONObject("save");
+			var save = x.optJSONObject("save", new JSONObject());
 			int hTID = (int)save.optDouble("transid", -1d);
 			int hOffset = x.optInt("offset");
 			//TODO: does hOffset need to be used at all? the client will use the lower one
