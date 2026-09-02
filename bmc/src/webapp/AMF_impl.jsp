@@ -342,7 +342,7 @@ static class AMFImpl{
 	}
 	public Object setAvatar(String userID, String token, String avatar){
 		verifyNK(userID, token);
-		if(!avatars.matcher(avatar).matches())
+		if(!Profile.avatars.matcher(avatar).matches())
 			return null;
 		Profile.update(userID,x->x.put("avatar",avatar));
 		return null;

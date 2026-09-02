@@ -11,6 +11,7 @@
 <%!
 static volatile FileObjectStore store;
 static volatile List<String> keys;
+static final String miniHydar = "<img src = https://hydar.xyz/images/notifhydar.png style='width:20px;height:20px;'>";
 %>
 
 <%
@@ -49,7 +50,10 @@ if(loggedIn){
 var profile = loggedIn ? Profile.get(userID) : null;
 boolean isHydarLogin = loggedIn && token.startsWith("hyd");
 boolean hasHydarID = loggedIn && profile.get("hydarUserID") != JSONObject.NULL;
+String hydarUsername = hasHydarID ? profile.getString("hydarUsername") : null;
 boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
+
+
 
 // display NK status
 // display which games are active using hydar server
@@ -78,7 +82,8 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 //--> change password(3,4,5)
 //--> change clan/avatar, add friends... (5.1 or smth probably)
 //TODO: for friends support, intercept BMC friends api req
-
+//TODO: settings ui stuff
+//TODO: email for resetting password??
 //placeholder stuff from index.jsp
 %>
 <!DOCTYPE html>
@@ -88,7 +93,61 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 <title>Login - Hydar</title>
 <link rel="icon" href="/favicon.ico"/>
 <link rel="shorcut icon" href="/favicon.ico"/>
-
+<%
+if(request.getMethod().equals("POST")){
+	String op = request.getParameter("op");
+	switch(op){
+	case "login":
+		var login = Profile.login(request.getParameter("loginU"), request.getParameter("loginP"));
+		%>
+		<script>
+		let login = <%=login%>;
+		window.nkarchive.sendUserData(login);
+		login.userID = login.id;
+		window.location = "?"+new URLSearchParams(login).toString();
+		</script>
+		<%
+		//window.nkarchive.sendUserData(flashvars);
+		break;
+	case "register":
+		var reg = Profile.registerNew(request.getParameter("loginU"), request.getParameter("loginP"));
+		%>
+		<script>
+		let login = <%=reg%>;
+		window.nkarchive.sendUserData(login);
+		login.userID = login.id;
+		window.location = "?"+new URLSearchParams(login).toString();
+		</script>
+		<%
+		break;
+	case "link":
+		var link = Profile.linkNewNK(request.getParameter("loginU"), request.getParameter("loginP"), userID, token);
+		%>
+		<script>
+		let usp = window.location.search;
+		usp.op="";
+		windows.location="?"+usp;
+		</script>
+		<%
+		break;
+	case "changeUsername":
+		Profile.changeUsername(username, token, request.getParameter("loginU"));
+		break;
+	case "changePassword":
+		var newToken = Profile.changePassword(userID, request.getParameter("loginP"), token, request.getParameter("newP"));
+		break;
+	case "changeClan":
+		Profile.changeClan(userID, token, Integer.parseInt(request.getParameter("clan")));
+		break;
+	case "changeAvatar":
+		Profile.changeAvatar(userID, token, request.getParameter("avatar"));
+		break;
+	case "addFriend":
+	//	Profile.changeAvatar(userID, token, request.getParameter("addFriend"));
+		break;
+	}
+}
+%>
 <style>
 			#overlay{
 			    position   : absolute;
@@ -202,8 +261,9 @@ function fetchThing(){
 <div class = "hydarlogo" style = "color:rgb(255,255,255);font-family:calibri, arial;text-align:left;font-size:12px;left:0px">
 <img src="https://hydar.xyz/images/hydar.png" alt="hydar" style="position:absolute;left:20px;top:-50px">
 <br>
-<p style = "position:absolute;left:20px;top:330px;right:200px;width:250px">
+<p style = "position:absolute;left:20px;top:280px;right:200px;width:250px">
 <%if(loggedIn){ %>
+<a href="https://ninjakiwi.com/flash/logout" style="font-size:24px">Log out...</a><br>
 	 Games synced:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") != null).collect(Collectors.joining(", "))%><br><%
 	%> Not synced/never played:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") == null).collect(Collectors.joining(", "))%><br>
 
@@ -219,53 +279,58 @@ out.print("<p style = \"color:rgb(255,255,255); font-family:calibri, arial; font
 Flash Private Server</b><br><br>
 NK:&nbsp;<%= loggedIn ? (hasNKID ? (isHydarLogin ? "Exists, but Hydar login in use instead" : username) : "Not available") : "Not logged in" %>
 <br>	
-Hydar:&nbsp;<%= loggedIn ? (hasHydarID ? (isHydarLogin ? username : "Linked with NK, Hydar username: ") : "Linked with NK, no username yet") : "Not logged in" %>
+<%=miniHydar%>:&nbsp;<%= loggedIn ? (hasHydarID ? (isHydarLogin ? username : "NK login linked to <br>" + miniHydar  + hydarUsername) : "Linked with NK, no username yet") : "Not logged in" %>
 <br>
-Save status:&nbsp;Saving to&nbsp;(<%=loggedIn ? (isHydarLogin ? "Hydar" : "both") : "none" %>).
+Save status:&nbsp;Saving to&nbsp;<%=loggedIn ? (isHydarLogin ? miniHydar : "both") : "none" %>.
 <br>
 <%
 
 %>
 <%if(!loggedIn){ %>
 <br>
-<form method="post" action="Verify.jsp"  >
+<form method="post" action=""  >
 <p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 70px);">
 
 Hydar login<br>	
-<input  type="text" name="username" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
+<input  type="text" name="loginU" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
  
 
-<input type="password" name="password" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px; position:relative;top:4px;" placeholder = "Password">
-<input type="submit" name="submit" value = "Go" class= "button3"><br><br>
+<input type="password" name="loginP" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px; position:relative;top:4px;" placeholder = "Password">
+<input type="submit" name="submit" value = "Go" class= "button3">
+<input type="text" hidden=1 name="op" value = "login">
+<br><br>
 </form>
 <br>
 <br>
-<form method="post" action="Verify.jsp"  >
+<form method="post" action=""  >
 <p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; top:calc(50% + 20px);">
 
 -or-
 <br>
 Register new Hydar account*:
 <br>
-<input  type="text" name="username" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
+<input  type="text" name="loginU" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
  
 
-<input type="password" name="password" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px; position:relative;top:4px;" placeholder = "Password">
+<input type="password" name="loginP" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px; position:relative;top:4px;" placeholder = "Password">
 <input type="submit" name="submit" value = "Go" class= "button3"><br><br>
+
+<input type="text" hidden=1 name="op" value = "register">
 *A new Hydar account will not be able to use saves from NK servers!!! This option is only recommended if NK's save servers do not work.
 </form>
-<%}else if(!isHydarLogin){ %>
-<form method="post" action="Verify.jsp"  >
+<%}else if(!hasHydarID){ %>
+<form method="post" action=""  >
 <p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 50px);">
 
 <br>
 Add Hydar credentials to your NK account:
 <br>
-<input  type="text" name="username" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
+<input  type="text" name="loginU" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
  
 
-<input type="password" name="password" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px; position:relative;top:4px;" placeholder = "Password">
+<input type="password" name="loginP" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px; position:relative;top:4px;" placeholder = "Password">
 <input type="submit" name="submit" value = "Go" class= "button3"><br><br>
+<input type="text" hidden=1 name="op" value = "link">
 </form>
 </div></div>
 <%}%>

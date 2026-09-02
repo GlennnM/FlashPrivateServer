@@ -11,6 +11,7 @@ import java.security.SecureRandom;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
@@ -24,8 +25,12 @@ import xyz.hydar.bmc.AMFService.NKVerifyException;
 
 public class Profile {
 	public static volatile ObjectStore store;
-	static final Pattern usernames = Pattern.compile("[\\w\\-_ ]*");
-
+	public static final Pattern usernames = Pattern.compile("[\\w\\-_][\\w\\-_ ]{0,18}[\\w\\-_]");
+	public static final Pattern avatars = Pattern.compile("[\\w\\-.]{1,20}");
+	public static final List<String> clans = List.of("Black Cobras","Blue Wolves", "Dark Matter","Falcons","Iron Phoenix","Night Jackals","Red Storm","Scorpions","Shining Blade","The Watchers","Thunderbolts","White Tigers","XIII","Scorpions","Scorpions","Scorpions");
+	
+	public static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress: Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
+	
 	static final SecureRandom rng=new SecureRandom();
 	public static void setStore(ObjectStore store) {
 		Profile.store = store;
@@ -80,8 +85,8 @@ public class Profile {
 
 	 public static JSONObject blank(String userID){
 		 return new JSONObject()
-			.put("hydarUsername","hydar")
-			.put("nkUsername","hydar")
+			.put("hydarUsername",JSONObject.NULL)
+			.put("nkUsername",JSONObject.NULL)
 			.put("userID",JSONObject.NULL)
 			.put("hydarUserID",JSONObject.NULL)
 			.put("nkToken",JSONObject.NULL)
@@ -95,12 +100,6 @@ public class Profile {
 			.put("currencies", new JSONObject())
 			.put("following", new JSONArray())
 			.put("friends", new JSONArray());
-	 }
-	 public static JSONObject linkExistingNK(String nkUserID, String token, String hydarUserID, String hydarToken) {
-		 verifyNK(nkUserID, token);
-		 //problem: they will have different UIDs
-		 //solution: don't allow this at all
-		 return null;
 	 }
 	 public static JSONObject linkNewNK(String username, String password, String nkUserID, String token) {
 		//if we don't save NK token, how does game determine which one to use???
@@ -119,7 +118,7 @@ public class Profile {
 				x.put(username, nkUserID);
 				success.setOpaque(true);
 				return x;
-		}).optString("username");
+		});
 		 if(!success.getOpaque())throw new NKVerifyException();
 		 //set uid in index to nkuserid
 		 var profile = update(nkUserID, x->{
@@ -129,7 +128,7 @@ public class Profile {
 					 .put("hydarUsername", username);
 		 });
 		 return new JSONObject()
-				 .put("userID", profile.get("hydarUserID"))
+				 .put("id", profile.get("hydarUserID"))
 				 .put("token", profile.get("hydarToken"))
 				 .put("username", profile.get("hydarUsername")); 
 	 }
@@ -147,7 +146,7 @@ public class Profile {
 			
 			success.setOpaque(true);
 			return x;
-		 }).optString("username");
+		 }).optString(username);
 		 if(!success.getOpaque())throw new NKVerifyException();
 		 var profile = update(uid, x->{
 			 return x.put("hydarUserID", uid)
@@ -156,19 +155,65 @@ public class Profile {
 					 .put("hydarUsername", username);
 		 });
 		 return new JSONObject()
-				 .put("userID", profile.get("hydarUserID"))
+				 .put("id", profile.get("hydarUserID"))
 				 .put("token", profile.get("hydarToken"))
 				 .put("username", profile.get("hydarUsername"));
 	 }
+	 public static boolean addFriend(String password, String token, String newPassword) {
+		 //TODO: how get from username to an ID if not on hydar?
+		 //-->when getInventory called, create thing, then change profile methods to use other methods of verifying hydar
+		 //-->no, just require hydar login to add friend
+		 return true;
+	 }
+	 //remove ava and clan sync(not needed now)
+	 public static boolean changeClan(String userID, String token, int newClan) {
+		 verifyNK(userID, token);
+		 if(newClan>=0 && newClan<17) {
+			update(userID, x->x.put("clan", newClan));
+		 	return true;
+		 }
+		 return false;
+	 }
+
+	 public static boolean changeAvatar(String userID, String token, String avatar) {
+		 verifyNK(userID, token);
+		 if(avatars.matcher(avatar).matches()) {
+			update(userID, x->x.put("avatar", avatar));
+		 	return true;
+		 }
+		 return false;
+	 }
+	 public static String changePassword(String userID, String password, String token, String newPassword) {
+		 if(password.length()<8)throw new NKVerifyException();
+		 verifyNK(userID, token);
+		 //on client: if token same -> failed
+		 return update(userID, x->{
+			 var hydarPW = x.optString("password");
+			 var newPW = Util.hash(x.getString("hydarUsername")+password);
+			 if(hydarPW==null || !hydarPW.equals(newPW))
+				 return x;
+			 return x.put("password", newPW)
+					 .put("hydarToken", newToken());
+		 }).getString("hydarToken");
+	 }
+	 public static boolean changeUsername(String username, String token, String newUsername) {
+		 var uid = updateIndex(x->x).optString(username);
+		 if(username == null || !isValid(newUsername) || !token.startsWith("hyd"))throw new NKVerifyException();
+		 verifyNK(uid, token);
+		 update(uid, x->{
+			 return x.put("hydarUsername", newUsername);
+		 });
+		 return false;
+	 }
 	 public static JSONObject login(String username, String password) {
-		 var uid = updateIndex(x->x).optString("username");
+		 var uid = updateIndex(x->x).optString(username);
 		 if(username == null)throw new NKVerifyException();
 		 var profile = get(uid);
 		 var hydarPW = profile.optString("password");
 		 if(hydarPW == null || !hydarPW.equals(Util.hash(username+password)))
 			 throw new NKVerifyException();
 		 return new JSONObject()
-				 .put("userID", profile.get("hydarUserID"))
+				 .put("id", profile.get("hydarUserID"))
 				 .put("token", profile.get("hydarToken"))
 				 .put("username", profile.get("hydarUsername"));
 		 
@@ -183,6 +228,8 @@ public class Profile {
 		 return usernames.matcher(username).matches() && username.length() < 20;
 	 }
 	 public static JSONObject updateIndex(UnaryOperator<JSONObject> update) {
+		 //separate index for NK, otherwise someone could take your ign?
+		 //solution: no adding NK acc as friend, since those usernames can be changed anyways
 		return store.update("usernames", x->{
 			 if(x==null)x= new JSONObject();
 			 return update.apply(x);
@@ -198,7 +245,8 @@ public class Profile {
 			update(userID, x->{
 				if(x.get("nkToken") == JSONObject.NULL || !hash.equals(x.getString("nkToken"))){
 					if(!token.startsWith("hyd") && isNKToken(userID, token)){ 
-						x.put("nkToken", Util.hash(token));
+						x.put("nkToken", Util.hash(token))
+							.put("userID", userID);
 						success[0] = true;
 					}else if(isHydarToken(userID, token)) {
 						success[0] = true;
