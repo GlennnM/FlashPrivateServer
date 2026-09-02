@@ -5,13 +5,13 @@
 <%@page import="java.util.List"%>
 <%@page import="xyz.hydar.bmc.FileObjectStore"%>
 <%@page import="java.util.stream.Collectors"%>
-<%@page import="xyz.hydar.bmc.Profile"%>
+<%@page import="xyz.hydar.bmc.Profile"%>	
 <%@page import="java.time.Instant"%>
 <%@page import="java.nio.file.attribute.FileTime"%>
 <%!
 static volatile FileObjectStore store;
 static volatile List<String> keys;
-static final String miniHydar = "<img src = https://hydar.xyz/images/notifhydar.png style='width:20px;height:20px;'>";
+static final String miniHydar = "<img src = https://hydar.xyz/images/notifhydar.png style='width:20px;height:20px;' alt='Hydar'>";
 %>
 
 <%
@@ -82,8 +82,12 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 //--> change password(3,4,5)
 //--> change clan/avatar, add friends... (5.1 or smth probably)
 //TODO: for friends support, intercept BMC friends api req
-//TODO: settings ui stuff
+//TODO: settings ui stuff, add friend form, friend backend too
 //TODO: email for resetting password??
+//TODO: show AP, clan, avatar
+//TODO: regular logout became bugged, doesn't work w/o steam open, automatically ignore nk server if hydar-only login
+//TODO: show save failed status?
+//TODO: error messages(exceptions from profile.java)
 //placeholder stuff from index.jsp
 %>
 <!DOCTYPE html>
@@ -267,7 +271,11 @@ function fetchThing(){
 	 Games synced:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") != null).collect(Collectors.joining(", "))%><br><%
 	%> Not synced/never played:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") == null).collect(Collectors.joining(", "))%><br>
 
-<%}%>
+<%}else{%>
+*A new Hydar account will not be able to use saves from NK servers!!!
+This option is only recommended if NK's save servers do not work.<br><br>
+If you log in with NK (via main Archive menu), saves will go to both servers, and you add Hydar login to that linked account from here.
+<%} %>
 </p>
 </div>
 
@@ -277,11 +285,13 @@ out.print("<p style = \"color:rgb(255,255,255); font-family:calibri, arial; font
 %>
 <b>
 Flash Private Server</b><br><br>
-NK:&nbsp;<%= loggedIn ? (hasNKID ? (isHydarLogin ? "Exists, but Hydar login in use instead" : username) : "Not available") : "Not logged in" %>
+<b style='color:red'>NK</b>:&nbsp;<%= loggedIn ? (hasNKID ? (isHydarLogin ? 
+			"Linked, but "+miniHydar+" in use instead"+"<br><i style='font-size:9pt'>("+miniHydar+" doesn't store your NK token or password, so you<br>can't save to NK with only a "+miniHydar+" login. To save to NK, log out from "+miniHydar+" below, then log in with NK.)</i>" : username) 
+		: "N/A ("+miniHydar+"-only account)") : "Not logged in" %>
 <br>	
-<%=miniHydar%>:&nbsp;<%= loggedIn ? (hasHydarID ? (isHydarLogin ? username : "NK login linked to <br>" + miniHydar  + hydarUsername) : "Linked with NK, no username yet") : "Not logged in" %>
+<%=miniHydar%>:&nbsp;<%= loggedIn ? (hasHydarID ? hydarUsername : "Linked with NK, no username yet") : "Not logged in" %>
 <br>
-Save status:&nbsp;Saving to&nbsp;<%=loggedIn ? (isHydarLogin ? miniHydar : "both") : "none" %>.
+Saving to&nbsp;<%=loggedIn ? (isHydarLogin ? miniHydar + " only" : "both") : "none" %>.
 <br>
 <%
 
@@ -316,7 +326,6 @@ Register new Hydar account*:
 <input type="submit" name="submit" value = "Go" class= "button3"><br><br>
 
 <input type="text" hidden=1 name="op" value = "register">
-*A new Hydar account will not be able to use saves from NK servers!!! This option is only recommended if NK's save servers do not work.
 </form>
 <%}else if(!hasHydarID){ %>
 <form method="post" action=""  >

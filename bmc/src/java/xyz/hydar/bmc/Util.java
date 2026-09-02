@@ -63,7 +63,13 @@ public class Util{
 	public static IntStream jStreamI(JSONArray array) {
 		return IntStream.range(0, array.length()).map(array::getInt);
 	}
-
+	public static void sleep(long millis) {
+		try {
+			Thread.sleep(millis);
+		}catch(InterruptedException ie) {
+			Thread.currentThread().interrupt();
+		}
+	}
 	public static Stream<String> jStreamS(JSONArray array) {
 		return IntStream.range(0, array.length()).mapToObj(array::getString);
 	}

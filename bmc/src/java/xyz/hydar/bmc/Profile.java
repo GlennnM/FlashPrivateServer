@@ -62,9 +62,8 @@ public class Profile {
 						.POST(BodyPublishers.ofByteArray(amfPayload))
 						.uri(URI.create("https://mynk.ninjakiwi.com/gateway"))
 						.build();
+				Thread.sleep(2000);
 				HttpResponse<byte[]> amfResponse = client.send(req, BodyHandlers.ofByteArray());
-				
-				
 				if(amfResponse.statusCode() != 200)
 					return false;
 				AMFBodies bodies = AMFBodies.from(amfResponse.body());
@@ -136,6 +135,7 @@ public class Profile {
 		 var success = new AtomicBoolean();
 		 if(!isValid(username))throw new NKVerifyException();
 		 if(password.length()<8)throw new NKVerifyException();
+		 Util.sleep(1500);
 		 var uid = updateIndex(x->{
 			if(x.has(username))
 				return x;
@@ -210,6 +210,7 @@ public class Profile {
 		 if(username == null)throw new NKVerifyException();
 		 var profile = get(uid);
 		 var hydarPW = profile.optString("password");
+		 Util.sleep(500);
 		 if(hydarPW == null || !hydarPW.equals(Util.hash(username+password)))
 			 throw new NKVerifyException();
 		 return new JSONObject()
