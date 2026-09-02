@@ -265,16 +265,16 @@ function fetchThing(){
 <div class = "hydarlogo" style = "color:rgb(255,255,255);font-family:calibri, arial;text-align:left;font-size:12px;left:0px">
 <img src="https://hydar.xyz/images/hydar.png" alt="hydar" style="position:absolute;left:20px;top:-50px">
 <br>
-<p style = "position:absolute;left:20px;top:280px;right:200px;width:250px">
+<p style = "position:absolute;left:20px;top:250px;right:200px;width:250px">
 <%if(loggedIn){ %>
 <a href="https://ninjakiwi.com/flash/logout" style="font-size:24px">Log out...</a><br>
 	 Games synced:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") != null).collect(Collectors.joining(", "))%><br><%
 	%> Not synced/never played:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") == null).collect(Collectors.joining(", "))%><br>
 
 <%}else{%>
-*A new Hydar account will not be able to use saves from NK servers!!!
+*A new <%=miniHydar%> account will not be able to use saves from NK servers!!!
 This option is only recommended if NK's save servers do not work.<br><br>
-If you log in with NK (via main Archive menu), saves will go to both servers, and you add Hydar login to that linked account from here.
+If you log in with NK (via main Archive menu), saves will go to both servers, and you can add a <%=miniHydar%> login to that linked account from here.
 <%} %>
 </p>
 </div>
@@ -301,7 +301,7 @@ Saving to&nbsp;<%=loggedIn ? (isHydarLogin ? miniHydar + " only" : "both") : "no
 <form method="post" action=""  >
 <p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 70px);">
 
-Hydar login<br>	
+<%=miniHydar%> login<br>	
 <input  type="text" name="loginU" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
  
 
@@ -317,7 +317,7 @@ Hydar login<br>
 
 -or-
 <br>
-Register new Hydar account*:
+Register new <%=miniHydar%> account*:
 <br>
 <input  type="text" name="loginU" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
  
@@ -332,7 +332,7 @@ Register new Hydar account*:
 <p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 50px);">
 
 <br>
-Add Hydar credentials to your NK account:
+Add <%=miniHydar%> credentials to your NK account:
 <br>
 <input  type="text" name="loginU" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
  
