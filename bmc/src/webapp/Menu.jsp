@@ -1,4 +1,5 @@
 
+<%@page import="java.util.function.Consumer"%>
 <%@page import="xyz.hydar.bmc.AMFService.NKVerifyException"%>
 <%@page import="org.json.JSONObject"%>
 <%@page import="java.io.IOException"%>
@@ -13,9 +14,20 @@
 static volatile FileObjectStore store;
 static volatile List<String> keys;
 static final String miniHydar = "<img src = https://hydar.xyz/images/notifhydar.png style='width:20px;height:20px;' alt='Hydar'>";
+
 %>
 
 <%
+Consumer<Object> popup = (msg)->{
+	%><script>
+	document.addEventListener("DOMContentLoaded",()=>{
+		document.getElementById("popup").hidden = null;
+		//document.getElementById("overlay").hidden = null;
+		document.getElementById("popup").innerText += ("<%= msg %>");
+		setTimeout(hidePopups, 10000);
+	});
+	</script><%
+};
 //--> web with nodejs in?? params that are obtained through node????
 //--> in-client webpage that sends api calls --> more secure
 //-->-->counterpoint: nk uses webpage
@@ -44,9 +56,11 @@ String userID = request.getParameter("userID");
 String token = request.getParameter("token");
 boolean loggedIn = userID != null;
 if(loggedIn){
-	//TODO: do this
-	//Profile.verifyNK(userID, token);
-	//--> display message about invalid token, allow logout incase it's hydar token
+	try{
+		Profile.verifyNK(userID, token);
+	}catch(Exception e){
+		popup.accept("Invalid token found!! Try logging in again.");
+	}
 }
 var profile = loggedIn ? Profile.get(userID) : null;
 boolean isHydarLogin = loggedIn && token.startsWith("hyd");
@@ -84,11 +98,9 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 //--> change clan/avatar, add friends... (5.1 or smth probably)
 //TODO: for friends support, intercept BMC friends api req
 //TODO: settings ui stuff, add friend form, friend backend too
-//TODO: email for resetting password??
+//TODO: smtp for reset
 //TODO: show AP, clan, avatar
-//TODO: regular logout became bugged, doesn't work w/o steam open, automatically ignore nk server if hydar-only login
 //TODO: show save failed status?
-//TODO: error messages(exceptions from profile.java)
 //placeholder stuff from index.jsp
 %>
 <!DOCTYPE html>
@@ -133,7 +145,7 @@ if(request.getMethod().equals("POST")){
 			<script>
 			let usp = window.location.search;
 			usp.op="";
-			windows.location="?"+usp;
+			window.location="?"+usp;
 			</script>
 			<%
 			break;
@@ -154,18 +166,9 @@ if(request.getMethod().equals("POST")){
 			break;
 		}
 	}catch(Exception e){
-		%><script>
-		document.addEventListener("DOMContentLoaded",()=>{
-			document.getElementById("popup").hidden = null;
-			//document.getElementById("overlay").hidden = null;
-			document.getElementById("popup").innerText = ("<%= 
-					e instanceof NKVerifyException ? 
-					e.getMessage().replaceAll("[^\\w -]", "").toLowerCase() :
-					e.getClass()
-				%>");
-			setTimeout(hidePopups, 10000);
-		});
-		</script><%
+		popup.accept(e instanceof NKVerifyException ? 
+				e.getMessage().replaceAll("[^\\w -]", "").toLowerCase() :
+				e.getClass());
 	}
 }
 %>

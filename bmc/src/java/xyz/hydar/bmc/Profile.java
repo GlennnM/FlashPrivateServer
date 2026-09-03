@@ -135,6 +135,7 @@ public class Profile {
 	 }
 	 public static JSONObject registerNew(String username, String email, String password, String password2) {
 		 var success = new AtomicBoolean();
+		 //TODO: make email unique
 		 if(!isValid(username))throw new NKVerifyException("Username contains bad characters or length");
 		 if(password.length()<8)throw new NKVerifyException("Password must be at least 8 characters");
 		 if(!password.equals(password2))throw new NKVerifyException("Passwords do not match");
