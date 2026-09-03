@@ -100,29 +100,31 @@ public class Profile {
 			.put("following", new JSONArray())
 			.put("friends", new JSONArray());
 	 }
-	 public static JSONObject linkNewNK(String username, String password, String nkUserID, String token) {
+	 public static JSONObject linkNewNK(String username, String email, String password,String password2, String nkUserID, String token) {
 		//if we don't save NK token, how does game determine which one to use???
 		 //--> always use hashed NK token
 		 //--> logging out of linked NK account will also log you out of hydar account
 		 //--> logging in from hydar will use the hydar token, and not log you in on NK
 		 verifyNK(nkUserID, token);
-		 if(!isValid(username))throw new NKVerifyException();
-		 if(password.length()<8)throw new NKVerifyException();
+		 if(!isValid(username))throw new NKVerifyException("Username contains bad characters or length");
+		 if(password.length()<8)throw new NKVerifyException("Password must be at least 8 characters");
+		 if(!password.equals(password2))throw new NKVerifyException("Passwords do not match");
 		 var success = new AtomicBoolean();
 		 updateIndex(x->{
 				if(x.has(username))
-					return x;
+					throw new NKVerifyException("Username taken");
 				if(x.toMap().values().stream().anyMatch(nkUserID::equals))
-					return x;
+					throw new NKVerifyException("Already linked");
 				x.put(username, nkUserID);
 				success.setOpaque(true);
 				return x;
 		});
-		 if(!success.getOpaque())throw new NKVerifyException();
+		 if(!success.getOpaque())throw new NKVerifyException("Link failure");
 		 //set uid in index to nkuserid
 		 var profile = update(nkUserID, x->{
 			 return x.put("hydarUserID", nkUserID)
 					 .put("password", Util.hash(username+password))
+					 .putOpt("email", (email!=null && email.trim().length() != 0) ? email : null)
 					 .put("hydarToken", newToken())
 					 .put("hydarUsername", username);
 		 });
@@ -131,14 +133,15 @@ public class Profile {
 				 .put("token", profile.get("hydarToken"))
 				 .put("username", profile.get("hydarUsername")); 
 	 }
-	 public static JSONObject registerNew(String username, String password) {
+	 public static JSONObject registerNew(String username, String email, String password, String password2) {
 		 var success = new AtomicBoolean();
-		 if(!isValid(username))throw new NKVerifyException();
-		 if(password.length()<8)throw new NKVerifyException();
+		 if(!isValid(username))throw new NKVerifyException("Username contains bad characters or length");
+		 if(password.length()<8)throw new NKVerifyException("Password must be at least 8 characters");
+		 if(!password.equals(password2))throw new NKVerifyException("Passwords do not match");
 		 Util.sleep(1500);
 		 var uid = updateIndex(x->{
 			if(x.has(username))
-				return x;
+				throw new NKVerifyException("Username taken");
 			long maxUID = x.toMap().values().stream()
 					.mapToLong(id->Long.parseLong((String)id)).max().orElse((int)1E8);
 			maxUID = Math.max((int)1E8, maxUID);
@@ -150,6 +153,7 @@ public class Profile {
 		 if(!success.getOpaque())throw new NKVerifyException();
 		 var profile = update(uid, x->{
 			 return x.put("hydarUserID", uid)
+					 .putOpt("email", (email!=null && email.trim().length() != 0) ? email : null)
 					 .put("password", Util.hash(username+password))
 					 .put("hydarToken", newToken())
 					 .put("hydarUsername", username);
@@ -184,7 +188,7 @@ public class Profile {
 		 return false;
 	 }
 	 public static String changePassword(String userID, String password, String token, String newPassword) {
-		 if(password.length()<8)throw new NKVerifyException();
+		 if(password.length()<8)throw new NKVerifyException("Password must have at least 8 characters");
 		 verifyNK(userID, token);
 		 //on client: if token same -> failed
 		 return update(userID, x->{
@@ -207,12 +211,12 @@ public class Profile {
 	 }
 	 public static JSONObject login(String username, String password) {
 		 var uid = updateIndex(x->x).optString(username);
-		 if(username == null)throw new NKVerifyException();
+		 if(username == null)throw new NKVerifyException("User or password incorrect");
 		 var profile = get(uid);
 		 var hydarPW = profile.optString("password");
 		 Util.sleep(500);
 		 if(hydarPW == null || !hydarPW.equals(Util.hash(username+password)))
-			 throw new NKVerifyException();
+			 throw new NKVerifyException("User or password incorrect");
 		 return new JSONObject()
 				 .put("id", profile.get("hydarUserID"))
 				 .put("token", profile.get("hydarToken"))
@@ -257,6 +261,6 @@ public class Profile {
 				return x;
 			});
 			if(!success[0])
-				throw new NKVerifyException();
+				throw new NKVerifyException("Invalid token");
 		}
 }

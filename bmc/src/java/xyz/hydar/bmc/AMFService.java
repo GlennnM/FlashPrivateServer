@@ -20,7 +20,15 @@ public class AMFService {
 	private static Map<String, AMFService> services = new HashMap<>();
 	private Function<List<?>, ?> svc = null;
 
-	public static class NKVerifyException extends RuntimeException{private static final long serialVersionUID = -6378961186468259857L;}
+	public static class NKVerifyException extends RuntimeException{
+		public NKVerifyException() {
+			super();
+		}
+		public NKVerifyException(String msg) {
+			super(msg);
+		}
+		private static final long serialVersionUID = -6378961186468259857L;
+	}
 	public AMFService inputs(List<?> list) {
 		inputTypes = list.stream().map(AMFType::fromPattern).toList();
 		return this;

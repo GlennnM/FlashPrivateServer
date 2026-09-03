@@ -1,4 +1,5 @@
 
+<%@page import="xyz.hydar.bmc.AMFService.NKVerifyException"%>
 <%@page import="org.json.JSONObject"%>
 <%@page import="java.io.IOException"%>
 <%@page import="java.nio.file.Path"%>
@@ -100,58 +101,76 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 <%
 if(request.getMethod().equals("POST")){
 	String op = request.getParameter("op");
+	try{
 	switch(op){
-	case "login":
-		var login = Profile.login(request.getParameter("loginU"), request.getParameter("loginP"));
-		%>
-		<script>
-		let login = <%=login%>;
-		window.nkarchive.sendUserData(login);
-		login.userID = login.id;
-		window.location = "?"+new URLSearchParams(login).toString();
-		</script>
-		<%
-		//window.nkarchive.sendUserData(flashvars);
-		break;
-	case "register":
-		var reg = Profile.registerNew(request.getParameter("loginU"), request.getParameter("loginP"));
-		%>
-		<script>
-		let login = <%=reg%>;
-		window.nkarchive.sendUserData(login);
-		login.userID = login.id;
-		window.location = "?"+new URLSearchParams(login).toString();
-		</script>
-		<%
-		break;
-	case "link":
-		var link = Profile.linkNewNK(request.getParameter("loginU"), request.getParameter("loginP"), userID, token);
-		%>
-		<script>
-		let usp = window.location.search;
-		usp.op="";
-		windows.location="?"+usp;
-		</script>
-		<%
-		break;
-	case "changeUsername":
-		Profile.changeUsername(username, token, request.getParameter("loginU"));
-		break;
-	case "changePassword":
-		var newToken = Profile.changePassword(userID, request.getParameter("loginP"), token, request.getParameter("newP"));
-		break;
-	case "changeClan":
-		Profile.changeClan(userID, token, Integer.parseInt(request.getParameter("clan")));
-		break;
-	case "changeAvatar":
-		Profile.changeAvatar(userID, token, request.getParameter("avatar"));
-		break;
-	case "addFriend":
-	//	Profile.changeAvatar(userID, token, request.getParameter("addFriend"));
-		break;
+	
+		case "login":
+			var login = Profile.login(request.getParameter("loginU"), request.getParameter("loginP"));
+			%>
+			<script>
+			let login = <%=login%>;
+			window.nkarchive.sendUserData(login);
+			login.userID = login.id;
+			window.location = "?"+new URLSearchParams(login).toString();
+			</script>
+			<%
+			//window.nkarchive.sendUserData(flashvars);
+			break;
+		case "register":
+			var reg = Profile.registerNew(request.getParameter("loginU"), request.getParameter("email"),request.getParameter("loginP"), request.getParameter("loginP2"));
+			%>
+			<script>
+			let login = <%=reg%>;
+			window.nkarchive.sendUserData(login);
+			login.userID = login.id;
+			window.location = "?"+new URLSearchParams(login).toString();
+			</script>
+			<%
+			break;
+		case "link":
+			var link = Profile.linkNewNK(request.getParameter("loginU"), request.getParameter("email"), request.getParameter("loginP"), request.getParameter("loginP2"), userID, token);
+			%>
+			<script>
+			let usp = window.location.search;
+			usp.op="";
+			windows.location="?"+usp;
+			</script>
+			<%
+			break;
+		case "changeUsername":
+			Profile.changeUsername(username, token, request.getParameter("loginU"));
+			break;
+		case "changePassword":
+			var newToken = Profile.changePassword(userID, request.getParameter("loginP"), token, request.getParameter("newP"));
+			break;
+		case "changeClan":
+			Profile.changeClan(userID, token, Integer.parseInt(request.getParameter("clan")));
+			break;
+		case "changeAvatar":
+			Profile.changeAvatar(userID, token, request.getParameter("avatar"));
+			break;
+		case "addFriend":
+		//	Profile.changeAvatar(userID, token, request.getParameter("addFriend"));
+			break;
+		}
+	}catch(Exception e){
+		%><script>
+		document.addEventListener("DOMContentLoaded",()=>{
+			document.getElementById("popup").hidden = null;
+			//document.getElementById("overlay").hidden = null;
+			document.getElementById("popup").innerText = ("<%= 
+					e instanceof NKVerifyException ? 
+					e.getMessage().replaceAll("[^\\w -]", "").toLowerCase() :
+					e.getClass()
+				%>");
+			setTimeout(hidePopups, 10000);
+		});
+		</script><%
 	}
 }
 %>
+
+
 <style>
 			#overlay{
 			    position   : absolute;
@@ -160,37 +179,33 @@ if(request.getMethod().equals("POST")){
 			    width      : 100%;
 			    height     : 100%;
 			    background : #000;
-			    opacity    : 0.6;
+			    opacity    : 0.0;
 			    filter     : alpha(opacity=60);
 			    z-index    : 5
 			}
 			.popup{
 				position:absolute;
-				top:50%;
+				top:25%;
 				left:50%;
-				width:854px;  
-				height:480px;  
-			    background : white;
-			    opacity    : 1;
-				margin-left:-477px; 
-				margin-top:-240px;
+				width:450px;  
+				height:30px;  
+			    background : red;
+			    opacity    : 0.4;
+				margin-left:-180px; 
+				text-align: center;
+				 font-style: italic;
+				font-family:calibri, arial;
+				 font-size:20px;
+				
+				margin-top:-60px;
 			    z-index    : 10
 			}
 </style>
 			
 <script>
-function fetchThing(){
-	fetch("", {
-		 method: "POST",
-		  headers: {
-		    "Content-Type": "application/x-www-form-urlencoded",
-		  },
-		  body: new URLSearchParams({ op: "put", key: this.editingThing, data: document.getElementById("editTextArea").value}),
-	}).then(x=>{
-		if(this.willRefresh && x.ok)
-			location.reload();
-		this.editTextDiscard();
-	});
+function hidePopups(){
+	//document.getElementById("overlay").hidden=1;
+	[...document.getElementsByClassName("popup")].forEach(x=>x.hidden=1);
 }
 </script>
 </head>
@@ -205,61 +220,82 @@ function fetchThing(){
 	}
 </style>
 <style>
-	.images{
-		height:140%;
-		width:calc(100% + 20px);
-		position:absolute;
-		overflow:hidden;
-		top:-40%;
-		left:-20px;
-		opacity:40%;
-	}
-	.textbox{
-		position: absolute;
-		top:50%;
-		left:50%;
-	}
-	.textboxmove{
-		background:rgb(51, 57, 63);
-		width:550px;
-		height:480px;
-		display:block;
-		position: absolute;
-		top:-210px;
-		left:-235px;
-		box-shadow:0 0 10px rgba(0,0,0,20);
-	}
-	.hydarlogo{
-		position:absolute;
-		top:calc(50% - 160px);
-		left:calc(50% - 220px);
-		opacity:100%;
-	}
-	.button3{
-			dsiplay:inline-block;
-			background-color:rgb(41, 47, 53);
-			color:white;border:none;
-			padding:8px 12px; 
-			position:relative; 
-			left:0px;
-			top:4px;
-			border-radius:8px;
-		}
-	.button3:hover{
-		background-color:rgb(61, 97, 183);
-		cursor:pointer;
-	}
-	input:-webkit-autofill {
-    -webkit-box-shadow: 0 0 0 50px rgb(71, 77, 83) inset;
-    -webkit-text-fill-color: White;
-	}
-	
-	input:-webkit-autofill:focus {
-	    -webkit-box-shadow: 0 0 0 50px rgb(71, 77, 83) inset;
-	    -webkit-text-fill-color: White;
-	} 
+.images {
+	height: 140%;
+	width: calc(100% + 20px);
+	position: absolute;
+	overflow: hidden;
+	top: -40%;
+	left: -20px;
+	opacity: 40%;
+}
+
+.textbox {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+}
+
+.textboxmove {
+	background: rgb(51, 57, 63);
+	width: 550px;
+	height: 480px;
+	display: block;
+	position: absolute;
+	top: -210px;
+	left: -235px;
+	box-shadow: 0 0 10px rgba(0, 0, 0, 20);
+}
+
+.hydarlogo {
+	position: absolute;
+	top: calc(50% - 160px);
+	left: calc(50% - 220px);
+	opacity: 100%;
+}
+
+.button3 {
+	dsiplay: inline-block;
+	background-color: rgb(41, 47, 53);
+	color: white;
+	border: none;
+	padding: 8px 12px;
+	position: relative;
+	left: 0px;
+	top: 4px;
+	border-radius: 8px;
+}
+
+.button3:hover {
+	background-color: rgb(61, 97, 183);
+	cursor: pointer;
+}
+
+input {
+	background-color: rgb(71, 77, 83);
+	color: white;
+	border: none;
+	padding: 8px 10px;
+	border-radius: 8px;
+	position:relative;
+}
+
+input:-webkit-autofill {
+	-webkit-box-shadow: 0 0 0 50px rgb(71, 77, 83) inset;
+	-webkit-text-fill-color: White;
+}
+
+input:-webkit-autofill:focus {
+	-webkit-box-shadow: 0 0 0 50px rgb(71, 77, 83) inset;
+	-webkit-text-fill-color: White;
+}
 </style>
 <body>
+<div id="overlay" hidden=1 onclick= 'hidePopups'></div>
+
+<div id="popup" class="popup" hidden=1>
+	
+</div>
 <div class = "textbox"><div class = "textboxmove">
 
 <div class = "hydarlogo" style = "color:rgb(255,255,255);font-family:calibri, arial;text-align:left;font-size:12px;left:0px">
@@ -302,10 +338,10 @@ Saving to&nbsp;<%=loggedIn ? (isHydarLogin ? miniHydar + " only" : "both") : "no
 <p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 70px);">
 
 <%=miniHydar%> login<br>	
-<input  type="text" name="loginU" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
+<input  type="text" name="loginU" size = "20px" style="" placeholder = "Username" autofocus><br>
  
 
-<input type="password" name="loginP" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px; position:relative;top:4px;" placeholder = "Password">
+<input type="password" name="loginP" size = "20px" style="top:4px;" placeholder = "Password">
 <input type="submit" name="submit" value = "Go" class= "button3">
 <input type="text" hidden=1 name="op" value = "login">
 <br><br>
@@ -319,13 +355,15 @@ Saving to&nbsp;<%=loggedIn ? (isHydarLogin ? miniHydar + " only" : "both") : "no
 <br>
 Register new <%=miniHydar%> account*:
 <br>
-<input  type="text" name="loginU" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
+<input  type="text" name="loginU" size = "20px" style="" placeholder = "Username" autofocus><br>
  
+<input type="text" name="email" size = "20px" style="top:4px;" placeholder = "Email (recovery only)"><br>
 
-<input type="password" name="loginP" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px; position:relative;top:4px;" placeholder = "Password">
-<input type="submit" name="submit" value = "Go" class= "button3"><br><br>
+<input type="password" name="loginP" size = "20px" style="top:8px;" placeholder = "Password"><br> 
+<input type="password" name="loginP2" size = "20px" style="top:12px;" placeholder = "Confirm password">
+<input type="submit" name="submit" value = "Go" class= "button3" style="top:12px"><br><br>
 
-<input type="text" hidden=1 name="op" value = "register">
+<input type="hidden" name="op" value = "register">
 </form>
 <%}else if(!hasHydarID){ %>
 <form method="post" action=""  >
@@ -334,12 +372,15 @@ Register new <%=miniHydar%> account*:
 <br>
 Add <%=miniHydar%> credentials to your NK account:
 <br>
-<input  type="text" name="loginU" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px;" placeholder = "Username" autofocus><br>
+<input  type="text" name="loginU" size = "20px" style="" placeholder = "Username" autofocus><br>
  
+<input type="text" name="email" size = "20px" style="top:4px;" placeholder = "Email (recovery only)"><br>
 
-<input type="password" name="loginP" size = "20px" style="background-color:rgb(71, 77, 83);color:white;border:none;padding:8px 10px;border-radius:8px; position:relative;top:4px;" placeholder = "Password">
-<input type="submit" name="submit" value = "Go" class= "button3"><br><br>
-<input type="text" hidden=1 name="op" value = "link">
+<input type="password" name="loginP" size = "20px" style="top:8px;" placeholder = "Password"><br>
+<input type="password" name="loginP2" size = "20px" style="top:12px;" placeholder = "Confirm password">
+
+<input type="submit" name="submit" value = "Go" class= "button3" style="top:12px"><br><br>
+<input type="hidden" name="op" value = "link">
 </form>
 </div></div>
 <%}%>
