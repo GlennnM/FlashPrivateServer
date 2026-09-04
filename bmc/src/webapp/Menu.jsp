@@ -14,7 +14,7 @@
 static volatile FileObjectStore store;
 static volatile List<String> keys;
 static final String miniHydar = "<img src = https://hydar.xyz/images/notifhydar.png style='width:20px;height:20px;' alt='Hydar'>";
-
+static final int tab = 0;
 %>
 
 <%
@@ -107,74 +107,34 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 <html>
 <head>
 <meta charset="ISO-8859-1">
-<title>Login - Hydar</title>
+<title>Flash Private Server</title>
 <link rel="icon" href="/favicon.ico"/>
 <link rel="shorcut icon" href="/favicon.ico"/>
-<%
-if(request.getMethod().equals("POST")){
-	String op = request.getParameter("op");
-	try{
-	switch(op){
-	
-		case "login":
-			var login = Profile.login(request.getParameter("loginU"), request.getParameter("loginP"));
-			%>
-			<script>
-			let login = <%=login%>;
-			window.nkarchive.sendUserData(login);
-			login.userID = login.id;
-			window.location = "?"+new URLSearchParams(login).toString();
-			</script>
-			<%
-			//window.nkarchive.sendUserData(flashvars);
-			break;
-		case "register":
-			var reg = Profile.registerNew(request.getParameter("loginU"), request.getParameter("email"),request.getParameter("loginP"), request.getParameter("loginP2"));
-			%>
-			<script>
-			let login = <%=reg%>;
-			window.nkarchive.sendUserData(login);
-			login.userID = login.id;
-			window.location = "?"+new URLSearchParams(login).toString();
-			</script>
-			<%
-			break;
-		case "link":
-			var link = Profile.linkNewNK(request.getParameter("loginU"), request.getParameter("email"), request.getParameter("loginP"), request.getParameter("loginP2"), userID, token);
-			%>
-			<script>
-			let usp = window.location.search;
-			usp.op="";
-			window.location="?"+usp;
-			</script>
-			<%
-			break;
-		case "changeUsername":
-			Profile.changeUsername(username, token, request.getParameter("loginU"));
-			break;
-		case "changePassword":
-			var newToken = Profile.changePassword(userID, request.getParameter("loginP"), token, request.getParameter("newP"));
-			break;
-		case "changeClan":
-			Profile.changeClan(userID, token, Integer.parseInt(request.getParameter("clan")));
-			break;
-		case "changeAvatar":
-			Profile.changeAvatar(userID, token, request.getParameter("avatar"));
-			break;
-		case "addFriend":
-		//	Profile.changeAvatar(userID, token, request.getParameter("addFriend"));
-			break;
-		}
-	}catch(Exception e){
-		popup.accept(e instanceof NKVerifyException ? 
-				e.getMessage().replaceAll("[^\\w -]", "").toLowerCase() :
-				e.getClass());
-	}
-}
-%>
+
 
 
 <style>
+			.header{
+				color:gray; 
+				font-size:18px; 
+				font-family:calibri, arial; 
+				text-align:center;
+				position:relative;
+				font-weight:bold;
+				font-style:italic;
+				text-decoration: none;
+				left:0px;top:-3px;
+				display:grid;
+				grid-template-columns: 1fr 10px 1fr 10px 1.5fr 10px 1.2fr 10px 1fr;
+				
+			}
+			a{
+				text-decoration: none;
+				color:inherit
+			}
+			a:hover{
+				font-size:20px
+			}
 			#overlay{
 			    position   : absolute;
 			    top        : 0;
@@ -300,13 +260,23 @@ input:-webkit-autofill:focus {
 	
 </div>
 <div class = "textbox"><div class = "textboxmove">
-
+<div class = "header" >
+<a href="" <%if(tab==0){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; menu</a> 
+/
+<a href="" <%if(tab==1){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; profile</a> 
+/
+<a href="" <%if(tab==2){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; leaderboard</a>
+/
+ <a href="" <%if(tab==3){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; settings</a>
+/
+  <a href="" <%if(tab==4){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; about</a>
+</div>
 <div class = "hydarlogo" style = "color:rgb(255,255,255);font-family:calibri, arial;text-align:left;font-size:12px;left:0px">
 <img src="https://hydar.xyz/images/hydar.png" alt="hydar" style="position:absolute;left:20px;top:-50px">
 <br>
 <p style = "position:absolute;left:20px;top:250px;right:200px;width:250px">
 <%if(loggedIn){ %>
-<a href="https://ninjakiwi.com/flash/logout" style="font-size:24px">Log out...</a><br>
+<a href="https://ninjakiwi.com/flash/logout" style="font-size:24px;color:blue;text-decoration: underline;">Log out...</a><br>
 	 Games synced:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") != null).collect(Collectors.joining(", "))%><br><%
 	%> Not synced/never played:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") == null).collect(Collectors.joining(", "))%><br>
 
@@ -318,10 +288,8 @@ If you log in with NK (via main Archive menu), saves will go to both servers, an
 </p>
 </div>
 
-<%
-//Files.writeString(Path.of(request.getServletContext().getResource("/log.txt").toURI()),"juydar");
-out.print("<p style = \"color:rgb(255,255,255); font-family:calibri, arial; font-size:20px; z-index:1; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 220px);\">");
-%>
+<p style = "color:rgb(255,255,255); font-family:calibri, arial; font-size:20px; z-index:1; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 220px);">
+
 <b>
 Flash Private Server</b><br><br>
 <b style='color:red'>NK</b>:&nbsp;<%= loggedIn ? (hasNKID ? (isHydarLogin ? 
@@ -389,6 +357,68 @@ Add <%=miniHydar%> credentials to your NK account:
 <%}%>
 
 </body>
+<%
+if(request.getMethod().equals("POST")){
+	String op = request.getParameter("op");
+	try{
+	switch(op){
+	
+		case "login":
+			var login = Profile.login(request.getParameter("loginU"), request.getParameter("loginP"));
+			%>
+			<script>
+			let login = <%=login%>;
+			window.nkarchive.sendUserData(login);
+			login.userID = login.id;
+			window.location = "?"+new URLSearchParams(login).toString();
+			</script>
+			<%
+			//window.nkarchive.sendUserData(flashvars);
+			break;
+		case "register":
+			var reg = Profile.registerNew(request.getParameter("loginU"), request.getParameter("email"),request.getParameter("loginP"), request.getParameter("loginP2"));
+			%>
+			<script>
+			let login = <%=reg%>;
+			window.nkarchive.sendUserData(login);
+			login.userID = login.id;
+			window.location = "?"+new URLSearchParams(login).toString();
+			</script>
+			<%
+			break;
+		case "link":
+			var link = Profile.linkNewNK(request.getParameter("loginU"), request.getParameter("email"), request.getParameter("loginP"), request.getParameter("loginP2"), userID, token);
+			%>
+			<script>
+			let usp = window.location.search;
+			usp.op="";
+			window.location="?"+usp;
+			</script>
+			<%
+			break;
+		case "changeUsername":
+			Profile.changeUsername(username, token, request.getParameter("loginU"));
+			break;
+		case "changePassword":
+			var newToken = Profile.changePassword(userID, request.getParameter("loginP"), token, request.getParameter("newP"));
+			break;
+		case "changeClan":
+			Profile.changeClan(userID, token, Integer.parseInt(request.getParameter("clan")));
+			break;
+		case "changeAvatar":
+			Profile.changeAvatar(userID, token, request.getParameter("avatar"));
+			break;
+		case "addFriend":
+		//	Profile.changeAvatar(userID, token, request.getParameter("addFriend"));
+			break;
+		}
+	}catch(Exception e){
+		popup.accept(e instanceof NKVerifyException ? 
+				e.getMessage().replaceAll("[^\\w -]", "").toLowerCase() :
+				e.getClass());
+	}
+}
+%>
 </html>
 
 
