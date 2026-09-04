@@ -5,7 +5,8 @@
 <b>
 Flash Private Server</b><br><br>
 <b style='color:red'>NK</b>:&nbsp;<%= loggedIn ? (hasNKID ? (isHydarLogin ? 
-			"Linked, but "+miniHydar+" in use instead"+"<br><i style='font-size:9pt'>("+miniHydar+" doesn't store your NK token or password, so you<br>can't save to NK with only a "+miniHydar+" login. To save to NK, log out from "+miniHydar+" below, then log in with NK.)</i>" : username) 
+			"Linked, but "+miniHydar+" in use instead"+"<br><i style='font-size:9pt'>("+miniHydar+" doesn't store your NK token or password, so you<br>can't save to NK with only a "+miniHydar+" login. To save to NK, log out from "+miniHydar+" below, then log in with NK.)</i>" 
+			: username) 
 		: "N/A ("+miniHydar+"-only account)") : "Not logged in" %>
 <br>	
 <%=miniHydar%>:&nbsp;<%= loggedIn ? (hasHydarID ? hydarUsername : "Linked with NK, no username yet") : "Not logged in" %>
@@ -21,7 +22,7 @@ Saving to&nbsp;<%=loggedIn ? (isHydarLogin ? miniHydar + " only" : "both") : "no
 <p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 70px);">
 
 <%=miniHydar%> login<br>	
-<input  type="text" name="loginU" size = "20px" style="" placeholder = "Username" autofocus><br>
+<input id="loginU" type="text" name="loginU" size = "20px" style="" placeholder = "Username" autofocus><br>
  
 
 <input type="password" name="loginP" size = "20px" style="top:4px;" placeholder = "Password">
@@ -38,9 +39,9 @@ Saving to&nbsp;<%=loggedIn ? (isHydarLogin ? miniHydar + " only" : "both") : "no
 <br>
 Register new <%=miniHydar%> account*:
 <br>
-<input  type="text" name="loginU" size = "20px" style="" placeholder = "Username" autofocus><br>
+<input  id="loginU2" type="text" name="loginU" size = "20px" style="" placeholder = "Username" autofocus><br>
  
-<input type="text" name="email" size = "20px" style="top:4px;" placeholder = "Email (recovery only)"><br>
+<input  id="email" type="text" name="email" size = "20px" style="top:4px;" placeholder = "Email (recovery only)"><br>
 
 <input type="password" name="loginP" size = "20px" style="top:8px;" placeholder = "Password"><br> 
 <input type="password" name="loginP2" size = "20px" style="top:12px;" placeholder = "Confirm password">
@@ -55,9 +56,9 @@ Register new <%=miniHydar%> account*:
 <br>
 Add <%=miniHydar%> credentials to your NK account:
 <br>
-<input  type="text" name="loginU" size = "20px" style="" placeholder = "Username" autofocus><br>
+<input id="loginU" type="text" name="loginU" size = "20px" style="" placeholder = "Username" autofocus><br>
  
-<input type="text" name="email" size = "20px" style="top:4px;" placeholder = "Email (recovery only)"><br>
+<input id="email" type="text" name="email" autocomplete="email" size = "20px" style="top:4px;" placeholder = "Email (recovery only)"><br>
 
 <input type="password" name="loginP" size = "20px" style="top:8px;" placeholder = "Password"><br>
 <input type="password" name="loginP2" size = "20px" style="top:12px;" placeholder = "Confirm password">
@@ -65,6 +66,7 @@ Add <%=miniHydar%> credentials to your NK account:
 <input type="submit" name="submit" value = "Go" class= "button3" style="top:12px"><br><br>
 <input type="hidden" name="op" value = "link">
 </form>
+
 </div></div>
 <%}%>
 
@@ -76,6 +78,7 @@ if(request.getMethod().equals("POST")){
 	switch(op){
 	
 		case "login":
+			toJS.accept(request.getParameter("loginU"), 1);
 			var login = Profile.login(request.getParameter("loginU"), request.getParameter("loginP"));
 			%>
 			<script>
@@ -88,7 +91,10 @@ if(request.getMethod().equals("POST")){
 			//window.nkarchive.sendUserData(flashvars);
 			break;
 		case "register":
+			toJS.accept(request.getParameter("loginU"), 3);
+			toJS.accept(request.getParameter("email"), 4);
 			var reg = Profile.registerNew(request.getParameter("loginU"), request.getParameter("email"),request.getParameter("loginP"), request.getParameter("loginP2"));
+
 			%>
 			<script>
 			let login = <%=reg%>;
@@ -99,7 +105,10 @@ if(request.getMethod().equals("POST")){
 			<%
 			break; 
 		case "link":
+			toJS.accept(request.getParameter("loginU"), 1);
+			toJS.accept(request.getParameter("email"), 2);
 			var link = Profile.linkNewNK(request.getParameter("loginU"), request.getParameter("email"), request.getParameter("loginP"), request.getParameter("loginP2"), userID, token);
+
 			%>
 			<script>
 			let usp = window.location.search;
@@ -128,6 +137,18 @@ if(request.getMethod().equals("POST")){
 		popup.accept(e instanceof NKVerifyException ? 
 				e.getMessage().replaceAll("[^\\w -]", "").toLowerCase() :
 				e.getClass());
+		%>
+			<script>
+			if(window["jsp1"])
+				$("loginU").value=jsp1;
+			if(window["jsp2"])
+				$("email").value=jsp2;
+			if(window["jsp3"])
+				$("loginU2").value=jsp3;
+			if(window["jsp4"])
+				$("email").value=jsp4;
+			</script>	
+		<%		
 	}
 }
 %>

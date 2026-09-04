@@ -1,5 +1,6 @@
 package xyz.hydar.bmc;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -7,6 +8,8 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpClient.Redirect;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.HexFormat;
@@ -14,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
@@ -32,7 +36,8 @@ public class Profile {
 			3400,3700,4000,4400,4800,5200,5600,6000,6500,7000,7500,8500,9700,11000,12700,14500,16500,18500,20500,22500,24500,26500,
 			28500,30500,32500,34500,36500,38500,40500,42500,44500,46500,48500,50500,53000,55500,58000};
 	public static final List<String> clans = List.of("Black Cobras","Blue Wolves", "Dark Matter","Falcons","Iron Phoenix","Night Jackals","Red Storm","Scorpions","Shining Blade","The Watchers","Thunderbolts","White Tigers","XIII","Scorpions","Scorpions","Scorpions");
-	
+
+	static final JSONObject nk_ach = new JSONObject();
 	public static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress: Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
 	
 	static final SecureRandom rng=new SecureRandom();
@@ -270,5 +275,68 @@ public class Profile {
 			});
 			if(!success[0])
 				throw new NKVerifyException("Invalid token");
+		}
+
+		public static JSONArray getAchievements(String game, Path dataPath){
+			if(nk_ach.isEmpty()){
+				synchronized(nk_ach){
+					for(String g:  Profile.games){
+						try{
+							Path f = dataPath.resolve(g.replace(":","") +".json");
+							nk_ach.put(g, new JSONArray(Files.readString(f)));
+						}catch(IOException ioe){
+							ioe.printStackTrace();
+						}
+					}
+				}
+			}
+			return nk_ach.getJSONArray(game);
+		}
+		public static JSONArray getMyAchievements(String game, String userID, Path dataPath){
+			if(!Profile.games.contains(game))
+				return null;
+			JSONArray j = new JSONArray(getAchievements(game, dataPath).toString());
+			JSONObject myAch = store.get("amf", userID, game, "ach");
+			
+			for(var x: Util.jIter(j)){
+				int perc = myAch==null ? 0 : myAch.optInt(""+x.getInt("id"));
+				x.put("perc",(double) perc)
+					.put("credited",perc>100)
+					.put("userid",Double.parseDouble(userID));
+			}//IO.println(j);
+			return j;
+		}
+		public static JSONArray setAchievement(String userID, String token, String game, double ach_id, double perc, Path dataPath){
+			if(!Profile.games.contains(game))
+				return null;
+			verifyNK(userID, token);
+			JSONArray j = getAchievements(game, dataPath);
+			int achID = (int)ach_id;
+			var ach = Util.jStream(j).filter(x->x.getInt("id") == achID).findFirst().orElse(null);
+			if(ach == null)
+				return null;
+			JSONArray ret = new JSONArray().put(achID);
+			LongAdder ap = new LongAdder();
+			store.update(List.of("amf", userID, game, "ach"),x->{
+				if(x==null){
+					x = new JSONObject();
+				}
+				int oldPerc = (int) x.optDouble(""+achID,0d);
+				int newPerc = Math.max(oldPerc, (int) perc);
+				ret.put((double)newPerc);
+				if(newPerc > 0)
+					x.put(""+achID, newPerc);
+				ret.put((oldPerc < 100 && newPerc >= 100) ? "u" : "n");
+				if(oldPerc < 100 && newPerc >= 100){
+					ap.add(ach.getInt("points"));
+				}
+				return x;
+			});
+			if(ap.sum()>0)
+				addAP(userID, (int)ap.sum());
+			return ret;
+		}
+		private static void addAP(String userID, int ap){
+			Profile.update(userID, x->x.put("ap",x.getInt("ap")+ap));
 		}
 }

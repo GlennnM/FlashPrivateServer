@@ -1,9 +1,13 @@
 
+<%@page import="java.net.URLEncoder"%>
+<%@page import="java.util.Base64"%>
+<%@page import="java.util.function.BiConsumer"%>
 <%@page import="java.util.function.Consumer"%>
 <%@page import="xyz.hydar.bmc.AMFService.NKVerifyException"%>
 <%@page import="org.json.JSONObject"%>
 <%@page import="java.io.IOException"%>
 <%@page import="java.nio.file.Path"%>
+<%@page import = "static java.nio.charset.StandardCharsets.UTF_8" %>
 <%@page import="java.util.List"%>
 <%@page import="xyz.hydar.bmc.FileObjectStore"%>
 <%@page import="java.util.stream.Collectors"%>
@@ -19,6 +23,13 @@ static final int tab=0;
 %>
 
 <%
+BiConsumer<String,Integer> toJS = (x, v)->{
+	if(v<0)v=0;
+	%><script>
+	window["jsp<%=v%>"] = decodeURIComponent("<%=URLEncoder.encode(x, UTF_8)%>");
+	</script>
+	<%
+};
 Consumer<Object> popup = (msg)->{
 	%><script>
 	document.addEventListener("DOMContentLoaded",()=>{
@@ -273,6 +284,9 @@ input:-webkit-autofill:focus {
   <a href="Menu.jsp" <%if(tab==4){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; about</a>
 </div>
 <script>
+function $(x){
+	return document.getElementById(x);
+}
 [...document.getElementById("header").children].forEach(x=>x.href+=window.location.search);
 </script>
 

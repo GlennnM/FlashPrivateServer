@@ -127,63 +127,6 @@ static class AMFImpl{
 		}
 		return nk_store_map.get(game);
 	}
-	public JSONArray getAchievements(String game, Context ctx){
-		if(nk_ach.isEmpty()){
-			synchronized(nk_ach){
-				for(String g:  Profile.games){
-					try{
-						Path f = Path.of(ctx.getRealPath("/amf_data/ach/" + g.replace(":","") +".json"));
-						nk_ach.put(g, new JSONArray(Files.readString(f)));
-					}catch(IOException ioe){
-						ioe.printStackTrace();
-					}
-				}
-			}
-		}
-		return nk_ach.getJSONArray(game);
-	}
-	public JSONArray getMyAchievements(String game, String userID, Context ctx){
-		JSONArray j = new JSONArray(getAchievements(game, ctx).toString());
-		JSONObject myAch = store.get("amf", userID, game, "ach");
-		
-		for(var x: Util.jIter(j)){
-			int perc = myAch==null ? 0 : myAch.optInt(""+x.getInt("id"));
-			x.put("perc",(double) perc)
-				.put("credited",perc>100)
-				.put("userid",Double.parseDouble(userID));
-		}//IO.println(j);
-		return j;
-	}
-	public JSONArray setAchievement(String userID, String token, String game, double ach_id, double perc, Context ctx){
-		if(!Profile.games.contains(game))
-			return null;
-		verifyNK(userID, token);
-		JSONArray j = getAchievements(game, ctx);
-		int achID = (int)ach_id;
-		var ach = Util.jStream(j).filter(x->x.getInt("id") == achID).findFirst().orElse(null);
-		if(ach == null)
-			return null;
-		JSONArray ret = new JSONArray().put(achID);
-		LongAdder ap = new LongAdder();
-		store.update(List.of("amf", userID, game, "ach"),x->{
-			if(x==null){
-				x = new JSONObject();
-			}
-			int oldPerc = (int) x.optDouble(""+achID,0d);
-			int newPerc = Math.max(oldPerc, (int) perc);
-			ret.put((double)newPerc);
-			if(newPerc > 0)
-				x.put(""+achID, newPerc);
-			ret.put((oldPerc < 100 && newPerc >= 100) ? "u" : "n");
-			if(oldPerc < 100 && newPerc >= 100){
-				ap.add(ach.getInt("points"));
-			}
-			return x;
-		});
-		if(ap.sum()>0)
-			addAP(userID, (int)ap.sum());
-		return ret;
-	}
 
 	%>
 	<%-- PROFILE --%>
@@ -360,14 +303,21 @@ static class AMFImpl{
 			}).getJSONObject("currencies").optInt(game)
 		);
 	}
-	private void addAP(String userID, int ap){
-		Profile.update(userID, x->x.put("ap",x.getInt("ap")+ap));
-	}
 	public void verifyNK(String userID, String token){
 		if(DO_NK_AUTH) Profile.verifyNK(userID, token);
 		else if(token.length()<30)throw new AMFService.NKVerifyException();
 	}
-	
+
+	public static JSONArray setAchievement(String userID, String token, String game, double ach_id, double perc, Context ctx){
+		if(!Profile.games.contains(game))return null;
+		Path achDataPath = Path.of(ctx.getRealPath("/amf_data/ach"));
+		return Profile.setAchievement(userID, token, game, ach_id, perc, achDataPath);
+	}
+	public static JSONArray getMyAchievements(String game, String userID,Context ctx){
+		if(!Profile.games.contains(game))return null;
+		Path achDataPath = Path.of(ctx.getRealPath("/amf_data/ach"));
+		return Profile.getMyAchievements(game, userID, achDataPath);
+	}
 
 	%>
 	<%-- SAVE --%>
