@@ -111,7 +111,6 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 //TODO: for friends support, intercept BMC friends api req
 //TODO: settings ui stuff, add friend form, friend backend too
 //TODO: smtp for reset
-//TODO: show AP, clan, avatar
 //TODO: show save failed status?
 //placeholder stuff from index.jsp
 %>

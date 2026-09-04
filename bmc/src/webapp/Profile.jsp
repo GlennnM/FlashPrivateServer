@@ -72,8 +72,8 @@ for(String game: Profile.games){
 </p>
 <p style = "color:rgb(255,255,255); font-family:calibri, arial; font-size:20px; z-index:1; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 220px);">
 
-<%}else{ %>
-<b>Not logged in...</b>
-<%}%>
 </p>
+<%}else{ %>
+<b style = "color:rgb(255,255,255); font-family:calibri, arial; font-size:20px;">Not logged in...</b>
+<%}%>
 </html>
