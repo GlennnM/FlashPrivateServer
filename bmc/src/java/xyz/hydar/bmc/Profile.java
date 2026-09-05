@@ -3,10 +3,10 @@ package xyz.hydar.bmc;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.net.http.HttpClient.Redirect;
+import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -291,6 +291,11 @@ public class Profile {
 				}
 			}
 			return nk_ach.getJSONArray(game);
+		}
+		public static JSONObject getAchProgress(String game, String userID) {
+			if(!Profile.games.contains(game))
+				return null;
+			return store.get("amf", userID, game, "ach");
 		}
 		public static JSONArray getMyAchievements(String game, String userID, Path dataPath){
 			if(!Profile.games.contains(game))
