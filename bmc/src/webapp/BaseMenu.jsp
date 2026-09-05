@@ -17,7 +17,12 @@
 <%!
 static volatile FileObjectStore store;
 static volatile List<String> keys;
-static final String miniHydar = "<img src = https://hydar.xyz/images/notifhydar.png style='width:20px;height:20px;' alt='Hydar'>";
+static final String aHydar(int size){
+	return "<img src = https://hydar.xyz/images/notifhydar.png style='width:%dpx;height:%dpx;' alt='Hydar'>".formatted(size,size);
+	
+}
+static final String miniHydar = aHydar(20);
+static final String miniHydar2 = aHydar(15);
 static final boolean bigHydar = true;
 static final int tab=0;
 %>
@@ -71,7 +76,8 @@ if(loggedIn){
 	try{
 		Profile.verifyNK(userID, token);
 	}catch(Exception e){
-		popup.accept("Invalid token found!! Try logging in again.");
+		e.printStackTrace();
+		popup.accept(e instanceof NKVerifyException? "Invalid token found!! Try logging in again." : e.getClass());
 	}
 }
 var profile = loggedIn ? Profile.get(userID) : null;
@@ -125,6 +131,11 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 
 
 <style>
+			.inline20{
+			vertical-align: middle;
+			height:20px;
+			width:20px;
+			}
 			.header{
 				color:gray; 
 				font-size:18px; 
@@ -159,18 +170,16 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 			}
 			.popup{
 				position:absolute;
-				top:25%;
+				top:19%;
 				left:50%;
 				width:450px;  
-				height:30px;  
-			    background : red;
-			    opacity    : 0.4;
+			    background : salmon;
+			    opacity    : 0.9;
 				margin-left:-180px; 
 				text-align: center;
 				 font-style: italic;
 				font-family:calibri, arial;
 				 font-size:20px;
-				
 				margin-top:-60px;
 			    z-index    : 10
 			}
@@ -180,6 +189,11 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 function hidePopups(){
 	//document.getElementById("overlay").hidden=1;
 	[...document.getElementsByClassName("popup")].forEach(x=>x.hidden=1);
+}
+function redirParam(x,v) {
+    var searchParams = new URLSearchParams(window.location.search);
+    v ? searchParams.set(x,v) : searchParams.delete(x);
+    window.location.search = searchParams.toString();
 }
 </script>
 </head>

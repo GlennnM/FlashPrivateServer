@@ -103,7 +103,7 @@ public class Profile {
 			.put("hydarUserID",JSONObject.NULL)
 			.put("nkToken",JSONObject.NULL)
 			.put("hydarToken",JSONObject.NULL)
-			.put("avatar","nk-monkey.png")
+			.put("avatar","nk_monkey.png")
 			.put("clan",11)
 			.put("timeCreated", System.currentTimeMillis())
 			.put("ap",0)
@@ -336,7 +336,10 @@ public class Profile {
 		public static JSONObject getAchProgress(String game, String userID) {
 			if(!Profile.games.contains(game))
 				return null;
-			return store.get("amf", userID, game, "ach");
+			var ret = store.get("amf", userID, game, "ach");
+			if(ret==null)
+				return new JSONObject(0);
+			return ret;
 		}
 		public static JSONArray getMyAchievements(String game, String userID, Path dataPath){
 			if(!Profile.games.contains(game))

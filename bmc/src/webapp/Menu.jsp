@@ -135,7 +135,7 @@ if(request.getMethod().equals("POST")){
 		}
 	}catch(Exception e){
 		popup.accept(e instanceof NKVerifyException ? 
-				e.getMessage().replaceAll("[^\\w -]", "").toLowerCase() :
+				e.getMessage().replaceAll("[^\\w -,]", "").toLowerCase() :
 				e.getClass());
 		%>
 			<script>
