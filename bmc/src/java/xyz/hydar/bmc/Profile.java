@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -176,11 +177,50 @@ public class Profile {
 				 .put("token", profile.get("hydarToken"))
 				 .put("username", profile.get("hydarUsername"));
 	 }
-	 public static boolean addFriend(String password, String token, String newPassword) {
+	 public static boolean addFriend(String userID, String token, String friend) {
+		 verifyNK(userID, token);
+		 boolean[] success = {true};
+		 var friendID = updateIndex(x->x).optString(friend);
+		 if(friendID.isEmpty() )throw new NKVerifyException("User not found, make sure they have a Hydar username");
+		 if(friendID.equals(userID))throw new NKVerifyException("User cannot be yourself");
+		 update(friendID, x->{
+			 var following = x.optJSONArray("following", new JSONArray());
+			 var friends = x.optJSONArray("friends", new JSONArray());
+			 var followers = x.optJSONArray("followers", new JSONArray());
+			 int followIndex = IntStream.range(0, following.length())
+			    .filter(i -> following.getString(i).equals(userID))
+			    .findFirst().orElse(-1);
+			 if(followIndex >= 0) {
+				 friends.put(userID);
+				 following.remove(followIndex);
+			 }else if(!Util.jStreamS(friends).anyMatch(userID::equals)){
+				 if(!Util.jStreamS(followers).anyMatch(userID::equals))
+					 followers.put(userID);
+				 else success[0]=false;
+			 }else success[0]=false;
+			 return x.put("following",following).put("friends",friends).put("followers",followers);
+		 });
+		 update(userID, x->{
+			 var following = x.optJSONArray("following", new JSONArray());
+			 var friends = x.optJSONArray("friends", new JSONArray());
+			 var followers = x.optJSONArray("followers", new JSONArray());
+			 int followIndex = IntStream.range(0, followers.length())
+			    .filter(i -> followers.getString(i).equals(friendID))
+			    .findFirst().orElse(-1);
+			 if(followIndex >= 0) {
+				 friends.put(friendID);
+				 followers.remove(followIndex);
+			 }else if(!Util.jStreamS(friends).anyMatch(friendID::equals)){
+				 if(!Util.jStreamS(following).anyMatch(friendID::equals))
+					 following.put(friendID);
+				 else success[0]=false;
+			 }else success[0]=false;
+			 return x.put("following",following).put("friends",friends).put("followers",followers);
+		 });
 		 //TODO: how get from username to an ID if not on hydar?
 		 //-->when getInventory called, create thing, then change profile methods to use other methods of verifying hydar
 		 //-->no, just require hydar login to add friend
-		 return true;
+		 return success[0];
 	 }
 	 //remove ava and clan sync(not needed now)
 	 public static boolean changeClan(String userID, String token, int newClan) {
