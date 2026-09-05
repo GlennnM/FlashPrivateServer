@@ -293,20 +293,21 @@ public class Profile {
 			 return update.apply(x);
 		 });
 	 }
-	 public static boolean isHydarToken(String userID, String token) {
-		 return token!=null && token.length()>30 && token.equals(get(userID).get("hydarToken"));
+	 public static boolean isHydarToken(JSONObject profile, String token) {
+		 return token!=null && token.length()>30 && token.equals(profile.get("hydarToken"));
 	 }
 	 public static void verifyNK(String userID, String token){
 			String hash = Util.hash(token);
 			boolean[] success = {false};
 			Long.parseLong(userID);
+			
 			update(userID, x->{
 				if(x.get("nkToken") == JSONObject.NULL || !hash.equals(x.getString("nkToken"))){
 					if(!token.startsWith("hyd") && isNKToken(userID, token)){ 
 						x.put("nkToken", Util.hash(token))
 							.put("userID", userID);
 						success[0] = true;
-					}else if(isHydarToken(userID, token)) {
+					}else if(isHydarToken(x, token)) {
 						success[0] = true;
 					}
 				}else
