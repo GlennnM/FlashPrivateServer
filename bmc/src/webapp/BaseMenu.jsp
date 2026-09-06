@@ -303,7 +303,7 @@ input:-webkit-autofill:focus {
 /
  <a href="Settings.jsp" <%if(tab==3){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; settings</a>
 /
-  <a href="Menu.jsp" <%if(tab==4){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; about</a>
+  <a href="About.jsp" <%if(tab==4){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; about</a>
 </div>
 <script>
 function $(x){
