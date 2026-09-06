@@ -214,7 +214,7 @@ static{
 				}) != null;
 		}
 		public boolean sendCrates(int userID, JSONArray friendIDs){
-			return Util.jStreamI(friendIDs).mapToObj(x->sendCrate(userID, x)).reduce((x,y)->x&&y).orElse(true);
+			return Util.jStreamI(friendIDs).filter(x->x!=1).mapToObj(x->sendCrate(userID, x)).reduce((x,y)->x&&y).orElse(true);
 		}
 		private JSONObject tryResetCrates(JSONObject myCrates){
 			long lastReset = myCrates.optLong("lastReset");
