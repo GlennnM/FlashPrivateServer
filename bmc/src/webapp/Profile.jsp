@@ -3,6 +3,77 @@
 <%@page import="xyz.hydar.bmc.Util"%>
 <%int tab = 1; boolean bigHydar = false;%>
 <%@include file = "BaseMenu.jsp"%>
+<style>
+.selector{
+	position:absolute;
+	top:30%;
+	left:40%;
+	width:470px; 
+	height:300px;
+    background : gray;
+    color:white;
+	margin-left:-180px; 
+	text-align: center;
+	 font-style: italic;
+	font-family:calibri, arial;
+	 font-size:20px;
+	margin-top:-60px;
+    z-index: 30;
+	display:grid;
+	grid-template-columns: repeat(9,50px);
+	overflow-y:scroll
+}
+#clanSelector{
+	left:55%;
+	padding-left:20px;
+	overflow-y:hidden;
+	width:270px; 
+	grid-template-columns: repeat(5,50px);
+}
+.selItem{
+width:40px;
+height:40px;
+margin:5px;
+float: left;
+  display: inline-block;
+  background-size:cover;
+}
+.selItemFade{
+text-align:center;
+opacity:0.5;
+color:white;
+font-size:32px;
+font-weight:bold;
+vertical-align:center;
+pointer-events: none;
+}
+#myClan:hover{
+font-size:22px;
+}
+#myAvatar:hover{
+width:84px;
+height:84px
+}
+.selItem:hover{
+width:50px;
+height:50px;
+margin:0px;
+}
+.locked {
+	left:0%;
+    text-align:center;
+    top: 30px;
+}
+</style>
+<div id="avatarSelector" class="selector" hidden=1>
+<a style="grid-column: 1 / -1;">Select avatar...<br></a>
+
+</div>
+<div id="clanSelector" class="selector" hidden=1>
+<a style="grid-column: 1 / -1;">Select clan...<br></a>
+
+</div>
+
 <%!
 static final String color(int lvl){
 	return 
@@ -32,7 +103,7 @@ static final String color(int lvl){
 static final String image(String clan){
 	var c = URLEncoder.encode(clan.replace(" ","-").toLowerCase(), UTF_8);
 	return "<img width=20px height=20px alt='%s' src='https://cdn.nkstatic.com/clans/shields/%s/thumb/%s.png' />"
-			.formatted(c, c, c.replace("jackals","jackal").replace("scorp","the-scorp"));
+			.formatted(c, c, c.replace("jackals","jackal").replace("scorp","the-scorp").replace("thund","Thund").replace("xiii","XIII"));
 }
 %><script>function color(clan_or_game) {
     switch (clan_or_game) {
@@ -84,6 +155,7 @@ if(searchUser!=null){
 	targetUserID = userID;
 	targetUsername = username;
 }
+boolean isMe = targetUserID.equals(userID);
 int ap = profile.optInt("ap");
 int level = Profile.getLevel(ap);
 String clan = Profile.clans.get(profile.optInt("clan"));
@@ -91,16 +163,68 @@ String avatar = profile.optString("avatar");
 if(avatar==null)avatar = "nk-monkey.png";
 %>
 <p class="hydarLogo" id="leftCol" style="color:rgb(255,255,255);font-family:calibri, arial; font-size:20px;margin:15px">
-<img style='float:left;margin-right:10px;border-radius: 50%;object-fit: cover;' src = "https://avatars.nkstatic.com/large/<%=avatar%>" />
+<a href='#' onclick='selectAvatar()'>
+<img id="myAvatar" style='float:left;margin-right:10px;border-radius: 50%;object-fit: cover;' src = "https://avatars.nkstatic.com/large/<%=avatar%>" />
+</a>
 <b><a style="color:<%=color(level)%>">[<%=level%>]</a> 
 <a><%=targetUsername%></a>
 <br> 
 <%=miniHydar%>&nbsp;<%=ap%></b><br>
+<a onclick='selectClan()' id="myClan" href="#">
 <b style = "color:<%=color(clan) %>"><%=image(clan)%>&nbsp;<%=clan%></b>
+</a>
 <br><br>
 Games:<br>
 
 </p>
+<script type="text/javascript">
+const avatars = <%= new JSONArray(Profile.avatarURLs) %>;
+const clans = <%=new JSONArray(Profile.uniqueClans) %>
+let loaded = {"avatar":false,"clan":false};
+function selectThing(thing){
+	let sel = $(thing==="avatar" ? "avatarSelector" : "clanSelector");
+	sel.hidden=null;
+	$("overlay").hidden=null;
+	if(!loaded[thing]){
+		for(let ava of (thing=="avatar" ? avatars : clans)){
+			//let img = document.createElement("img");
+			//img.setAttribute("src",);
+			let link = document.createElement("a");
+			link.href="#";
+			link.classList.add("selItem");
+			let clan1 = encodeURIComponent(ava.replace(" ","-").toLowerCase());
+			link.style.backgroundImage = 
+				thing=="avatar"?
+				`url('https://avatars.nkstatic.com/small/${ava}')`:
+				`url('https://cdn.nkstatic.com/clans/shields/${clan1}/thumb/${clan1.replace("jackals","jackal").replace("scorp","the-scorp").replace("thund","Thund").replace("xiii","XIII")}.png')`
+			;
+				
+			
+			sel.appendChild(link);
+			let req = thing!="avatar" ? -1 : ava.includes("-") ? parseInt(ava.split("-")[0]) : -1;
+			if(req > <%=level%>){
+				link.classList.add("selItemFade");
+				let div = document.createElement("div");
+				div.classList.add("locked");
+				div.innerText=req;
+				link.appendChild(div);
+			}else
+				link.onclick = ()=>redirParam(thing=="avatar" ? "newAvatar" : "newClan",ava);
+		}
+	}
+	loaded[thing]=true;
+}
+function selectAvatar(){
+	if(<%=isMe%>)selectThing("avatar");
+}
+function selectClan(){
+	if(<%=isMe%>)selectThing("clan");
+}
+if(!<%=isMe%>){
+	$("myAvatar").style.pointerEvents="none";
+	$("myClan").style.pointerEvents="none";
+}
+</script>
 <script>
 let achProgress = <%=
 	new JSONObject(Profile.games.stream().collect(
@@ -201,20 +325,27 @@ loadAch();
 <b style = "color:rgb(255,255,255); font-family:calibri, arial; font-size:20px;">Not logged in...</b>
 <%}%>
 <%
-if(request.getMethod().equals("POST")){
-	String op = request.getParameter("op");
-	if(op!=null)
 		try{
-		switch(op){
-			case "friend":
-				toJS.accept(request.getParameter("friend"),1);
-				boolean success = Profile.addFriend(userID, token, request.getParameter("friend"));
-				if(success){
-					%> window.location="";<%
-				}else{
-					throw new NKVerifyException("Already following or friends");
-				}
-				break;
+			if(request.getMethod().equals("POST")){
+				String op = request.getParameter("op");
+				if(op!=null)
+					switch(op){
+					case "friend":
+						toJS.accept(request.getParameter("friend"),1);
+						boolean success = Profile.addFriend(userID, token, request.getParameter("friend"));
+						if(success){
+							%> window.location="";<%
+						}else{
+							throw new NKVerifyException("Already following or friends");
+						}
+						break;
+					}
+			}else if(request.getParameter("newAvatar")!=null){
+				Profile.changeAvatar(userID, token, request.getParameter("newAvatar"));
+				%> <script>redirParam("newAvatar" ,null);</script><%
+			}else if(request.getParameter("newClan")!=null){
+				Profile.changeClan(userID, token, Profile.clans.indexOf(request.getParameter("newClan")));
+				%> <script>redirParam("newClan" ,null);</script><%
 			}
 		}catch(Exception e){
 			e.printStackTrace();
@@ -222,7 +353,6 @@ if(request.getMethod().equals("POST")){
 					e.getMessage().replaceAll("[^\\w -,]", "").toLowerCase() :
 					e.getClass());
 		}
-}
 
 %>
 	<script>

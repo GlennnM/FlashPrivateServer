@@ -33,10 +33,14 @@ public class Profile {
 	public static volatile ObjectStore store;
 	public static final Pattern usernames = Pattern.compile("[\\w\\-_][\\w\\-_ ]{0,18}[\\w\\-_]");
 	public static final Pattern avatars = Pattern.compile("[\\w\\-.]{1,20}");
+	public static final List<String> avatarURLs = List.of(
+			"btd5_bomb.png","btd5_boomerang.png","btd5_dart.png","btd5_glue.png","btd5_ice.png","btd5_mortar.png","btd5_tack.png","nk_monkey.png","1-BSM_Face.png","1-zombiehead.png","2-assaultrifle.png","2-cartoonzombie.png","2-sniperprone.png","3-knightelite.png","3-shovelman.png","3-ZombieMonkey.png","4-drillerbunny.png","4-pistolangel.png","4-trekmonkey.png","5-btdheli.png","5-buccaneer.png","5-happygun.png","6-kiwixray.png","6-runnerzombie.png","6-SAS_Tentacle.png","7-8bitmonkey.png","7-dartling.png","7-wizard.png","8-monkeyryu.png","8-SASMonkey.png","8-sumo.png","9-femalerogue.png","9-huntordie.png","10-dartlingfullauto.png","10-DestructoTruck.png","10-hotmonkey.png","11-angeleyes.png","11-bionicboomer.png","12-panicknight.png","12-shottiesas.png","12-zombie4.png","13-orcbaneknight.png","13-sasmonkey.png","14-femalemage.png","14-ztpbillybob.png","15-angrysquirrel.png","15-BTD_Dart.png","15-countersnipe.png","16-devastator.png","16-kiwislice.png","17-50cal.png","17-boombot.png","18-knightcastle.png","18-screamer.png","19-hereling.png","19-sassoldier.png","20-BTD_Survival.png","20-classicsniper.png","20-malefighter.png","21-comboverzombie.png","21-llod-bouncer.png","22-masterair.png","22-meganthefox.png","23-btdapache.png","23-oni.png","24-classicbuccaneer.png","24-shotgunman.png","25-braveheart.png","25-masterfire.png","26-rocketangel.png","26-scaredghost.png","27-monkeyace.png","28-preacher.png","29-plasmamonkey.png","30-gunspotlight.png","30-robomonkey.png","30-terminatormonkey.png","31-bloater.png","32-sabotageninja.png","33-moonshiner.png","34-miamininja.png","35-battleblocks.png","35-comicbookace.png","36-flyingboombot.png","37-fireyrig.png","38-classicsupermonkey.png","39-potionpanic.png","39-runandgun.png","40-burningcity.png","40-zomg.png","41-cthulu.png","41-hunt-or-die-again.png","42-dennis.png","42-postapoc.png","42-redorc.png","43-dr-hulk.png","43-sas-detail.png","44-orc.png","44-superabove.png","45-batmonkey.png","45-tank-angel.png","46-midnight.png","47-laserdash.png","50-wicker.png"
+	);
 	public static final int[] levelCutoffs = {0,50,100,150,200,250,325,400,500,600,750,900,1100,1300,1500,1700,1900,2100,2300,2500,2800,3100,
 			3400,3700,4000,4400,4800,5200,5600,6000,6500,7000,7500,8500,9700,11000,12700,14500,16500,18500,20500,22500,24500,26500,
 			28500,30500,32500,34500,36500,38500,40500,42500,44500,46500,48500,50500,53000,55500,58000};
 	public static final List<String> clans = List.of("Black Cobras","Blue Wolves", "Dark Matter","Falcons","Iron Phoenix","Night Jackals","Red Storm","Scorpions","Shining Blade","The Watchers","Thunderbolts","White Tigers","XIII","Scorpions","Scorpions","Scorpions");
+	public static final List<String> uniqueClans = List.of("Black Cobras","Blue Wolves", "Dark Matter","Falcons","Iron Phoenix","Night Jackals","Red Storm","Scorpions","Shining Blade","The Watchers","Thunderbolts","White Tigers","XIII","Scorpions");
 
 	static final JSONObject nk_ach = new JSONObject();
 	public static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress: Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
@@ -240,7 +244,7 @@ public class Profile {
 		 return false;
 	 }
 	 public static void changeEmail(String userID, String token, String newEmail) {
-		 verifyNK(userID, token);
+		verifyNK(userID, token);
 		update(userID, x->{
 			 if(!x.has("hydarUserID") || x.get("hydarUserID") == JSONObject.NULL || x.getString("hydarUserID").isEmpty())
 				 throw new NKVerifyException("Hydar login required for this");
@@ -249,6 +253,7 @@ public class Profile {
 	 }
 	 public static String changePassword(String userID, String password, String token, String newPassword) {
 		 if(newPassword.length()<8)throw new NKVerifyException("Password must have at least 8 characters");
+		 Util.sleep(500);
 		 verifyNK(userID, token);
 		 //on client: if token same -> failed
 		 return update(userID, x->{
@@ -267,6 +272,7 @@ public class Profile {
 		 var uid = updateIndex(x->x).optString(username);
 		 if(uid.isEmpty())throw new NKVerifyException("User not found");
 		 if(username == null || !isValid(newUsername))throw new NKVerifyException("Invalid username");
+		 Util.sleep(500);
 		 //if(!token.startsWith("hyd"))throw new NKVerifyException("Hydar login required for this");
 		 verifyNK(uid, token);
 		 var newUser = update(uid, x->{

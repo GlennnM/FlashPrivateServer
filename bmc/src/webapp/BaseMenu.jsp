@@ -115,7 +115,6 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 //--> change username(3,4,5)
 //--> change password(3,4,5)
 //--> change clan/avatar, add friends... (5.1 or smth probably)
-//TODO: settings ui stuff
 //TODO: smtp for reset
 //TODO: show save failed status?
 //TODO: v2->1 for bmc and ach
@@ -170,7 +169,7 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 			    width      : 100%;
 			    height     : 100%;
 			    background : #000;
-			    opacity    : 0.0;
+			    opacity    : 0.5;
 			    filter     : alpha(opacity=60);
 			    z-index    : 5
 			}
@@ -189,12 +188,16 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 				margin-top:-60px;
 			    z-index    : 10
 			}
+[hidden] {
+    display: none !important;
+}
 </style>
 			
 <script>
 function hidePopups(){
-	//document.getElementById("overlay").hidden=1;
-	[...document.getElementsByClassName("popup")].forEach(x=>x.hidden=1);
+	$("overlay").hidden=true;
+	[...document.getElementsByClassName("selector")].forEach(x=>x.hidden=true);
+	[...document.getElementsByClassName("popup")].forEach(x=>x.hidden=true);
 }
 function redirParam(x,v) {
     var searchParams = new URLSearchParams(window.location.search);
@@ -285,7 +288,7 @@ input:-webkit-autofill:focus {
 }
 </style>
 <body>
-<div id="overlay" hidden=1 onclick= 'hidePopups'></div>
+<div id="overlay" hidden=1 onclick= 'hidePopups()'></div>
 
 <div id="popup" class="popup" hidden=1>
 	
@@ -324,6 +327,6 @@ function $(x){
 This option is only recommended if NK's save servers do not work.<br><br>
 If you log in with NK (via main Archive menu), saves will go to both servers, and you can add a <%=miniHydar%> login to that linked account from here.
 <%} %>
-<%} %>
 </p>
+<%} %>
 </div>
