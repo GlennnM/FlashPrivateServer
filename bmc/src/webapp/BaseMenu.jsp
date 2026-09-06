@@ -31,7 +31,7 @@ static final int tab=0;
 BiConsumer<String,Integer> toJS = (x, v)->{
 	if(v<0)v=0;
 	%><script>
-	window["jsp<%=v%>"] = decodeURIComponent("<%=URLEncoder.encode(x, UTF_8)%>");
+	window["jsp<%=v%>"] = decodeURIComponent("<%=URLEncoder.encode(x, UTF_8)%>".replace(/\+/g, " ");
 	</script>
 	<%
 };
@@ -75,6 +75,7 @@ boolean loggedIn = userID != null;
 if(loggedIn){
 	try{
 		Profile.verifyNK(userID, token);
+		if(!Profile.isValid(username))username="invalid";
 	}catch(Exception e){
 		e.printStackTrace();
 		popup.accept(e instanceof NKVerifyException? "Invalid token found!! Try logging in again." : e.getClass());
@@ -96,7 +97,7 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 // state 3: nk, hydar linked, logged in NK -> mention hydar linking w/o prompt
 // state 4: nk, hydar linked, logged in hydar -> show nk not logged in, hydar status, "a linked acc exist"
 // state 5: hydar-only account logged in -> same as 4 but wi
-//TODO: for friends support, need to create username->uid linkage in Profile.update, reconcile with registration
+//for friends support, need to create username->uid linkage in Profile.update, reconcile with registration
 //client side cookie spec on how it will know how logged in?
 //-->needs to be persistent
 //-->if token starts in "hyd", function in hydar-only mode
@@ -114,8 +115,7 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 //--> change username(3,4,5)
 //--> change password(3,4,5)
 //--> change clan/avatar, add friends... (5.1 or smth probably)
-//TODO: for friends support, intercept BMC friends api req
-//TODO: settings ui stuff, add friend form, friend backend too
+//TODO: settings ui stuff
 //TODO: smtp for reset
 //TODO: show save failed status?
 //placeholder stuff from index.jsp
@@ -135,6 +135,8 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 			vertical-align: middle;
 			height:20px;
 			width:20px;
+			border-radius: 50%;
+  			object-fit: cover;
 			}
 			.header{
 				color:gray; 

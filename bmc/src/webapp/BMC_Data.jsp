@@ -569,7 +569,7 @@ static{
 		}
 		public JSONObject getFriend(int userID, int cityID){
 			return Util.jStream(
-					getFriends(new JSONArray().put(userID)
+					getFriends(userID, new JSONArray().put(userID)
 							)
 						.getJSONArray("friends").getJSONObject(0)
 						.getJSONArray("cities")
@@ -579,7 +579,7 @@ static{
 					.orElseThrow()
 				;
 		}
-		public JSONObject getFriends(JSONArray friendIDs){
+		public JSONObject getFriends(int userID, JSONArray friendIDs){
 			var friends =  new JSONArray();
 			var friendData = new JSONObject(2)
 				.put("friends", friends)
@@ -592,6 +592,10 @@ static{
 						.put("cities", cities)
 					);
 				for(int index: List.of(0,1)){
+					if(id==1){
+						var me = getCityThing(userID, index, "info");
+						cities.put(Util.getBotCity(index, me.getInt("level"), me.getInt("honour")));
+					}
 					var info = getCityThing(id, index, "info");
 					if(info == null)
 						continue;

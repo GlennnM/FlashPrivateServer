@@ -6,7 +6,7 @@
 <%!
 static final String color(int lvl){
 	return 
-			lvl<10?"cyan":
+			lvl<10?"skyblue":
 			lvl<20?"green":
 			lvl<30?"yellow":
 			lvl<40?"orange":
@@ -47,15 +47,18 @@ static final String image(String clan){
             return "goldenrod";
         case "The Watchers":case "BTD4":
             return "white";
-        case "MonkeyCity":case "Battle Panic":
+        case "MonkeyCity":
+        	return "lime";
+        case "Battle Panic":
             return "lightgreen";
         case "XIII":case "SAS TD":
             return "green";
         case "White Tigers":case "Battles":
             return "cyan";
-        case "Red Storm":case "Scorpions":case "SAS3":
+        case "SAS3":
+        	return "salmon";
+        case "Red Storm":case "Scorpions":case "SAS4":
             return "red";
-        case "SAS4":return "darkred";
         default:return "red";
     }
 }</script><%
@@ -65,6 +68,7 @@ String target = request.getParameter("target");
 String searchUser = request.getParameter("targetUsername");
 String targetUserID, targetUsername;
 if(searchUser!=null){
+	searchUser = Profile.isValid(searchUser) ? searchUser: "invalid";
 	targetUserID = Profile.updateIndex(x->x).optString(searchUser, userID);
 	targetUsername = userID.equals(targetUserID) ? username : searchUser;
 	profile = Profile.get(targetUserID);
@@ -83,7 +87,7 @@ String avatar = profile.optString("avatar");
 if(avatar==null)avatar = "nk-monkey.png";
 %>
 <p class="hydarLogo" id="leftCol" style="color:rgb(255,255,255);font-family:calibri, arial; font-size:20px;margin:15px">
-<img style='float:left;margin-right:10px' src = "https://avatars.nkstatic.com/large/<%=avatar%>" />
+<img style='float:left;margin-right:10px;border-radius: 50%;object-fit: cover;' src = "https://avatars.nkstatic.com/large/<%=avatar%>" />
 <b><a style="color:<%=color(level)%>">[<%=level%>]</a> 
 <a><%=targetUsername%></a>
 <br> 
@@ -100,8 +104,9 @@ let achProgress = <%=
 		)
 	)
 %>;
+const gamesInOrder = ["BTD4","BTD5","Battles","BSM2","MonkeyCity","SAS3","SAS TD","SAS4","Battle Blocks Defense","Battle Panic","Fortress: Destroyer","Tower Keepers"];
 async function loadAch(){
-	for(let game of Object.keys(achProgress).sort()/*.map(x=>Object.values(achProgress[x]).sum())*/){
+	for(let game of gamesInOrder/*Object.keys(achProgress).sort()*//*.map(x=>Object.values(achProgress[x]).sum())*/){
 		//(async ()=>{
 			try{
 				let progress = achProgress[game];
