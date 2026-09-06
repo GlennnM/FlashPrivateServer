@@ -595,6 +595,7 @@ static{
 					if(id==1){
 						var me = getCityThing(userID, index, "info");
 						cities.put(Util.getBotCity(index, me.getInt("level"), me.getInt("honour")));
+						continue;
 					}
 					var info = getCityThing(id, index, "info");
 					if(info == null)

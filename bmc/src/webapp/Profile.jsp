@@ -68,14 +68,16 @@ String target = request.getParameter("target");
 String searchUser = request.getParameter("targetUsername");
 String targetUserID, targetUsername;
 if(searchUser!=null){
-	searchUser = Profile.isValid(searchUser) ? searchUser: "invalid";
+	toJS.accept(searchUser,1);
 	targetUserID = Profile.updateIndex(x->x).optString(searchUser, userID);
 	targetUsername = userID.equals(targetUserID) ? username : searchUser;
 	profile = Profile.get(targetUserID);
 }else if(target!=null && !target.isBlank()){
 	targetUserID = request.getParameter("target");
 	profile = Profile.get(targetUserID);
-	targetUsername = profile.optString("hydarUsername", profile.optString("username"));
+	searchUser = profile.optString("hydarUsername", profile.optString("username"));
+	targetUsername = Profile.isValid(searchUser) ? searchUser: "invalid";
+	toJS.accept(targetUsername,1);
 }else{
 	targetUserID = userID;
 	targetUsername = username;
@@ -217,14 +219,15 @@ if(request.getMethod().equals("POST")){
 			popup.accept(e instanceof NKVerifyException ? 
 					e.getMessage().replaceAll("[^\\w -,]", "").toLowerCase() :
 					e.getClass());
-			%>
-				<script>
-				if(window["jsp1"])
-					$("friend").value=jsp1;
-				</script>	
-			<%		
 		}
 }
+
+%>
+	<script>
+	if(window["jsp1"])
+		$("friend").value=jsp1;
+	</script>	
+<%		
 %>
 </body>
 </html>

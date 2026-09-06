@@ -31,7 +31,7 @@ static final int tab=0;
 BiConsumer<String,Integer> toJS = (x, v)->{
 	if(v<0)v=0;
 	%><script>
-	window["jsp<%=v%>"] = decodeURIComponent("<%=URLEncoder.encode(x, UTF_8)%>".replace(/\+/g, " ");
+	window["jsp<%=v%>"] = decodeURIComponent("<%=URLEncoder.encode(x, UTF_8)%>").replace(/\+/g, " ");
 	</script>
 	<%
 };
