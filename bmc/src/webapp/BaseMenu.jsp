@@ -118,6 +118,10 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 //TODO: settings ui stuff
 //TODO: smtp for reset
 //TODO: show save failed status?
+//TODO: v2->1 for bmc and ach
+//TODO: merge friends
+//TODO: error when send crate to sam
+//TODO: no double refresh
 //placeholder stuff from index.jsp
 %>
 <!DOCTYPE html>
@@ -294,7 +298,7 @@ input:-webkit-autofill:focus {
 /
 <a href="Menu.jsp" <%if(tab==2){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; leaderboard</a>
 /
- <a href="Menu.jsp" <%if(tab==3){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; settings</a>
+ <a href="Settings.jsp" <%if(tab==3){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; settings</a>
 /
   <a href="Menu.jsp" <%if(tab==4){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; about</a>
 </div>

@@ -85,7 +85,7 @@ if(request.getMethod().equals("POST")){
 			let login = <%=login%>;
 			window.nkarchive.sendUserData(login);
 			login.userID = login.id;
-			window.location = "?"+new URLSearchParams(login).toString();
+			window.location.search = new URLSearchParams(login).toString();
 			</script>
 			<%
 			//window.nkarchive.sendUserData(flashvars);
@@ -100,10 +100,10 @@ if(request.getMethod().equals("POST")){
 			let login = <%=reg%>;
 			window.nkarchive.sendUserData(login);
 			login.userID = login.id;
-			window.location = "?"+new URLSearchParams(login).toString();
+			window.location.search = new URLSearchParams(login).toString();
 			</script>
 			<%
-			break; 
+			break;  
 		case "link":
 			toJS.accept(request.getParameter("loginU"), 1);
 			toJS.accept(request.getParameter("email"), 2);
@@ -111,26 +111,11 @@ if(request.getMethod().equals("POST")){
 
 			%>
 			<script>
-			let usp = window.location.search;
-			usp.op="";
-			window.location="?"+usp;
+			let usp = new URLSearchParams(window.location.search);
+			usp.set("op","");
+			window.location.search = usp.toString();
 			</script>
 			<%
-			break;
-		case "changeUsername":
-			Profile.changeUsername(username, token, request.getParameter("loginU"));
-			break;
-		case "changePassword":
-			var newToken = Profile.changePassword(userID, request.getParameter("loginP"), token, request.getParameter("newP"));
-			break;
-		case "changeClan":
-			Profile.changeClan(userID, token, Integer.parseInt(request.getParameter("clan")));
-			break;
-		case "changeAvatar":
-			Profile.changeAvatar(userID, token, request.getParameter("avatar"));
-			break;
-		case "addFriend":
-		//	Profile.changeAvatar(userID, token, request.getParameter("addFriend"));
 			break;
 		}
 	}catch(Exception e){

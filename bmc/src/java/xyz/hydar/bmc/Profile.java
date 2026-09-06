@@ -98,7 +98,6 @@ public class Profile {
 	 public static JSONObject blank(String userID){
 		 return new JSONObject()
 			.put("hydarUsername",JSONObject.NULL)
-			.put("nkUsername",JSONObject.NULL)
 			.put("userID",JSONObject.NULL)
 			.put("hydarUserID",JSONObject.NULL)
 			.put("nkToken",JSONObject.NULL)
@@ -240,27 +239,55 @@ public class Profile {
 		 }
 		 return false;
 	 }
+	 public static void changeEmail(String userID, String token, String newEmail) {
+		 verifyNK(userID, token);
+		update(userID, x->{
+			 if(!x.has("hydarUserID") || x.get("hydarUserID") == JSONObject.NULL || x.getString("hydarUserID").isEmpty())
+				 throw new NKVerifyException("Hydar login required for this");
+			return x.put("email", newEmail);
+		 });
+	 }
 	 public static String changePassword(String userID, String password, String token, String newPassword) {
-		 if(password.length()<8)throw new NKVerifyException("Password must have at least 8 characters");
+		 if(newPassword.length()<8)throw new NKVerifyException("Password must have at least 8 characters");
 		 verifyNK(userID, token);
 		 //on client: if token same -> failed
 		 return update(userID, x->{
+			 if(!x.has("hydarUserID") || x.get("hydarUserID") == JSONObject.NULL || x.getString("hydarUserID").isEmpty())
+				 throw new NKVerifyException("Hydar login required for this");
 			 var hydarPW = x.optString("password");
-			 var newPW = Util.hash(x.getString("hydarUsername")+password);
-			 if(hydarPW==null || !hydarPW.equals(newPW))
-				 return x;
+			 var veriPW = Util.hash(x.getString("hydarUsername")+password);
+			 if(hydarPW==null || !hydarPW.equals(veriPW))
+				 throw new NKVerifyException("Password verification failed");
+			 var newPW = Util.hash(x.getString("hydarUsername")+newPassword);
 			 return x.put("password", newPW)
 					 .put("hydarToken", newToken());
 		 }).getString("hydarToken");
 	 }
-	 public static boolean changeUsername(String username, String token, String newUsername) {
+	 public synchronized static JSONObject changeUsername(String username, String password, String token, String newUsername) {
 		 var uid = updateIndex(x->x).optString(username);
-		 if(username == null || !isValid(newUsername) || !token.startsWith("hyd"))throw new NKVerifyException();
+		 if(uid.isEmpty())throw new NKVerifyException("User not found");
+		 if(username == null || !isValid(newUsername))throw new NKVerifyException("Invalid username");
+		 //if(!token.startsWith("hyd"))throw new NKVerifyException("Hydar login required for this");
 		 verifyNK(uid, token);
-		 update(uid, x->{
-			 return x.put("hydarUsername", newUsername);
+		 var newUser = update(uid, x->{
+			 var hydarPW = x.optString("password");
+			 if(!x.has("hydarUserID") || x.get("hydarUserID") == JSONObject.NULL || x.getString("hydarUserID").isEmpty())
+				 throw new NKVerifyException("Hydar login required for this");
+			 var veriPW = Util.hash(x.getString("hydarUsername")+password);
+			 if(hydarPW.isBlank() || !hydarPW.equals(veriPW))
+				 throw new NKVerifyException("Password verification failed");
+			 var newPW = Util.hash(newUsername+password);
+			 return x.put("hydarUsername", newUsername)
+					 .put("password",newPW)
+					 .put("hydarToken", newToken());
 		 });
-		 return false;
+		updateIndex(x->{
+			x.remove(username);
+			x.put(newUsername, uid);
+			return x;
+		});
+		 return new JSONObject(2).put("username",newUser.getString("hydarUsername"))
+				 .put("token",newUser.getString("hydarUsername"));
 	 }
 	 public static JSONObject login(String username, String password) {
 		 var uid = updateIndex(x->x).optString(username);
@@ -283,7 +310,7 @@ public class Profile {
 		 return "hyd"+HexFormat.of().formatHex(token)+"r";
 	 }
 	 public static boolean isValid(String username) {
-		 return usernames.matcher(username).matches() && username.length() < 20;
+		 return username!=null && usernames.matcher(username).matches() && username.length() < 20;
 	 }
 	 public static JSONObject updateIndex(UnaryOperator<JSONObject> update) {
 		 //separate index for NK, otherwise someone could take your ign?

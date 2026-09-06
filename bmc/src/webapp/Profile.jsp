@@ -20,11 +20,12 @@ static final String color(int lvl){
 		case "Night Jackals","Blue Wolves","Fortress: Destroyer"->"blue";
 		case "Thunderbolts","Falcons"->"goldenrod";
 		case "The Watchers", "BTD4"-> "white";
-		case "MonkeyCity","Battle Panic"->"lightgreen";
+		case "MonkeyCity"->"lime";
+		case "Battle Panic"->"lightgreen";
 		case "XIII","SAS TD"->"green";
 		case "White Tigers","Battles"->"cyan";
-		case "Red Storm","Scorpions","SAS3"->"red";
-		case "SAS4"->"darkred";
+		case "Red Storm","Scorpions","SAS4"->"red";
+		case "SAS3"->"salmon";
 		default->"red";
 	};
 }
@@ -68,7 +69,7 @@ String target = request.getParameter("target");
 String searchUser = request.getParameter("targetUsername");
 String targetUserID, targetUsername;
 if(searchUser!=null){
-	toJS.accept(searchUser,1);
+	if(!searchUser.equals(username))toJS.accept(searchUser,1);
 	targetUserID = Profile.updateIndex(x->x).optString(searchUser, userID);
 	targetUsername = userID.equals(targetUserID) ? username : searchUser;
 	profile = Profile.get(targetUserID);
@@ -77,7 +78,8 @@ if(searchUser!=null){
 	profile = Profile.get(targetUserID);
 	searchUser = profile.optString("hydarUsername", profile.optString("username"));
 	targetUsername = Profile.isValid(searchUser) ? searchUser: "invalid";
-	toJS.accept(targetUsername,1);
+	if(!userID.equals(targetUserID) && profile!=null)
+		toJS.accept(targetUsername,1);
 }else{
 	targetUserID = userID;
 	targetUsername = username;
