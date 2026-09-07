@@ -41,7 +41,7 @@ public class Profile {
 			3400,3700,4000,4400,4800,5200,5600,6000,6500,7000,7500,8500,9700,11000,12700,14500,16500,18500,20500,22500,24500,26500,
 			28500,30500,32500,34500,36500,38500,40500,42500,44500,46500,48500,50500,53000,55500,58000};
 	public static final List<String> clans = List.of("Black Cobras","Blue Wolves", "Dark Matter","Falcons","Iron Phoenix","Night Jackals","Red Storm","Scorpions","Shining Blade","The Watchers","Thunderbolts","White Tigers","XIII","Scorpions","Scorpions","Scorpions");
-	public static final List<String> uniqueClans = List.of("Black Cobras","Blue Wolves", "Dark Matter","Falcons","Iron Phoenix","Night Jackals","Red Storm","Scorpions","Shining Blade","The Watchers","Thunderbolts","White Tigers","XIII","Scorpions");
+	public static final List<String> uniqueClans = List.of("Black Cobras","Blue Wolves", "Dark Matter","Falcons","Iron Phoenix","Night Jackals","Red Storm","Scorpions","Shining Blade","The Watchers","Thunderbolts","White Tigers","XIII");
 
 	static final JSONObject nk_ach = new JSONObject();
 	public static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress: Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
