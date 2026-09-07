@@ -118,8 +118,6 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 //TODO: smtp for reset
 //TODO: show save failed status?
 //TODO: v2->1 for bmc and ach
-//TODO: merge friends
-//TODO: error when send crate to sam
 //TODO: no double refresh
 //placeholder stuff from index.jsp
 %>

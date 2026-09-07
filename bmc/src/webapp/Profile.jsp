@@ -10,7 +10,7 @@
 	left:40%;
 	width:470px; 
 	height:300px;
-    background : gray;
+    background : rgb(51, 57, 63);
     color:white;
 	margin-left:-180px; 
 	text-align: center;
