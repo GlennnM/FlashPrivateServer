@@ -11,6 +11,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
@@ -350,7 +351,10 @@ public class Profile {
 			if(!success[0])
 				throw new NKVerifyException("Invalid token");
 		}
-
+	 	public static JSONObject getAllAchievements(Path dataPath) {
+	 		getAchievements("BTD4",dataPath);
+	 		return nk_ach;
+	 	}
 		public static JSONArray getAchievements(String game, Path dataPath){
 			if(nk_ach.isEmpty()){
 				synchronized(nk_ach){
@@ -374,12 +378,12 @@ public class Profile {
 				return new JSONObject(0);
 			return ret;
 		}
-		public static JSONArray getMyAchievements(String game, String userID, Path dataPath){
+		/**allAchData needed so data can be reused*/
+		public static JSONArray getMyAchievements(String game, String userID, JSONObject allAchData){
 			if(!Profile.games.contains(game))
 				return null;
-			JSONArray j = new JSONArray(getAchievements(game, dataPath).toString());
+			JSONArray j = allAchData.getJSONArray(game);
 			JSONObject myAch = store.get("amf", userID, game, "ach");
-			
 			for(var x: Util.jIter(j)){
 				int perc = myAch==null ? 0 : myAch.optInt(""+x.getInt("id"));
 				x.put("perc",(double) perc)
@@ -388,7 +392,7 @@ public class Profile {
 			}//IO.println(j);
 			return j;
 		}
-		public static JSONArray setAchievement(String userID, String token, String game, double ach_id, double perc, Path dataPath){
+		public static List<Object> setAchievement(String userID, String token, String game, double ach_id, double perc, Path dataPath){
 			if(!Profile.games.contains(game))
 				return null;
 			verifyNK(userID, token);
@@ -397,7 +401,8 @@ public class Profile {
 			var ach = Util.jStream(j).filter(x->x.getInt("id") == achID).findFirst().orElse(null);
 			if(ach == null)
 				return null;
-			JSONArray ret = new JSONArray().put(achID);
+			List<Object> ret = new ArrayList<>();
+			ret.add(achID);
 			LongAdder ap = new LongAdder();
 			store.update(List.of("amf", userID, game, "ach"),x->{
 				if(x==null){
@@ -405,10 +410,10 @@ public class Profile {
 				}
 				int oldPerc = (int) x.optDouble(""+achID,0d);
 				int newPerc = Math.max(oldPerc, (int) perc);
-				ret.put((double)newPerc);
+				ret.add((double)newPerc);
 				if(newPerc > 0)
 					x.put(""+achID, newPerc);
-				ret.put((oldPerc < 100 && newPerc >= 100) ? "u" : "n");
+				ret.add((oldPerc < 100 && newPerc >= 100) ? "u" : "n");
 				if(oldPerc < 100 && newPerc >= 100){
 					ap.add(ach.getInt("points"));
 				}

@@ -18,8 +18,7 @@ public class AMFService {
 	public String name;
 	private List<AMFType> inputTypes;
 	private static Map<String, AMFService> services = new HashMap<>();
-	private Function<List<?>, ?> svc = null;
-
+	protected Function<List<?>, ?> svc = null;
 	public static class NKVerifyException extends RuntimeException{
 		public NKVerifyException() {
 			super();
@@ -29,6 +28,7 @@ public class AMFService {
 		}
 		private static final long serialVersionUID = -6378961186468259857L;
 	}
+	
 	public AMFService inputs(List<?> list) {
 		inputTypes = list.stream().map(AMFType::fromPattern).toList();
 		return this;
@@ -65,19 +65,23 @@ public class AMFService {
 			return null;
 		return svc.apply(input);
 	}
-
 	public static void accept(InputStream input, OutputStream output) throws IOException {
+		accept(input, output, AMFService.class);
+	}
+	public static void accept(InputStream input, OutputStream output, Object context) throws IOException {
 		AMFMessage out = new AMFMessage();
 		var serializer = new JsonAMFSerializer(new DataOutputStream(output));
 		var h = AMFBodies.from(input);
 		System.out.println(h);
 		for (var body : h) {
-			out.addBody(accept(body));
+			out.addBody(accept(body, context));
 		}
 		serializer.serialize(out);
 	}
-
 	public static AMFBody accept(AMFBody input) {
+		return accept(input, AMFService.class);
+	}
+	public static AMFBody accept(AMFBody input, Object context) {
 		String name = input.getTarget();
 		AMFService svc = getService(name);
 		String response = input.getResponse();
@@ -89,7 +93,11 @@ public class AMFService {
 		Object ret = null;
 		if (svc != null && svc.validateList(list)) {
 			try {
-				return new AMFBody(response + "/onResult", "null", svc.apply(list), AMFType.inferCode(ret));
+				
+				return new AMFBody(response + "/onResult", "null", 
+					(context == AMFService.class || !(svc instanceof AMFServiceWithContext svcc))
+					? svc.apply(list) : svcc.apply(list, context)
+				, AMFType.inferCode(ret));
 			} catch (NKVerifyException e) {
 				return new AMFBody(response + "/onResult", "null", "Invalid token", AMFType.inferCode(ret));
 			}catch (Exception e) {

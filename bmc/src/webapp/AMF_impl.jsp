@@ -131,12 +131,10 @@ static class AMFImpl{
 	%>
 	<%-- PROFILE --%>
 	<%!
-	public JSONObject getKoins(String userID, String token){
+	public Map<?,?> getKoins(String userID, String token){
 		verifyNK(userID, token);//so invalid token warning can happen early
 		JSONObject profile = Profile.get(userID);
-		return new JSONObject(2)
-				.put("koins",(double)profile.getInt("nkoins"))
-				.put("points",(double)profile.getInt("ap"));
+		return Map.of("koins",(double)profile.getInt("nkoins"),"points",(double)profile.getInt("ap"));
 	}
 	
 	public List<Object> buyNeoItems(String userID, String token, String game, List<?> items, Context ctx){
@@ -228,17 +226,17 @@ static class AMFImpl{
 				.forEach((k,v)->res.add(new JSONObject(2).put("id",k).put("quantity",v)));
 		return res;
 	}
-	public JSONObject buyNeoItems_v2(String userID, String token, String game, List<?> items, Context ctx){
+	public Map<?,?> buyNeoItems_v2(String userID, String token, String game, List<?> items, Context ctx){
 		var res = buyNeoItems(userID, token, game, items, ctx);
 		for(var o: res)
 			if(o instanceof List<?> newItems){
 				for(var item: newItems)
 					if(item instanceof JSONObject j)
 						j.put("uuid","").put("tag","");
-				return new JSONObject(2).put("success",true).put("items",res);
+				return Map.of("success",true,"items",res);
 			}
 
-		return new JSONObject(1).put("success",false);
+		return Map.of("success",false);
 	}
 	public boolean consumeNeoPrem_v2(String userID, String token, String game, String uuid){
 		if(! Profile.games.contains(game) || !currID.containsKey(game))
@@ -248,33 +246,32 @@ static class AMFImpl{
 		updateSave(userID, game, x->x.put("neoInventory", new JSONObject()));
 		return true;
 	}
-	public JSONObject getNeoInventory_v2(String userID, String token, String game){
+	public Map<?,?> getNeoInventory_v2(String userID, String token, String game){
 		var inv = getNeoInventory(userID, token, game);
 		for(var item: inv)
 			if(item instanceof JSONObject j)
 				j.put("uuid","").put("tag","");
-		return new JSONObject().put("success",true).put("items",inv);
+		return Map.of("success",true,"items",inv);
 	}
-	public JSONObject getBalance(String userID, String token, String game){
+	public Map<?,?> getBalance(String userID, String token, String game){
 		if(! Profile.games.contains(game) || !currID.containsKey(game))
-			return new JSONObject();
+			return Map.of();
 		verifyNK(userID, token);
-		return new JSONObject()
-				.put("currid", currID.get(game))
-				.put("currency",
+		return Map.of("currid", currID.get(game),
+				"currency",
 					Profile.get(userID).getJSONObject("currencies").optInt(game)
 				);
 	}
-	public JSONObject getClan(String userID){
+	public Map<?,?> getClan(String userID){
 		int clan = Profile.get(userID).optInt("clan", 11);
-		return new JSONObject(2).put("clan",Profile.clans.get(clan)).put("id",clan);
+		return Map.of("clan",Profile.clans.get(clan),"id",clan);
 	}
-	public JSONObject getClanV2(String userID){
+	public Map<?,?> getClanV2(String userID){
 		int clan = Profile.get(userID).optInt("clan", 11);
-		return new JSONObject(2).put("name",Profile.clans.get(clan)).put("id",clan);
+		return Map.of("name",Profile.clans.get(clan),"id",clan);
 	}
-	public JSONObject getAvatar(String userID){
-		return new JSONObject(1).put("avatar",
+	public Map<?,?> getAvatar(String userID){
+		return Map.of("avatar",
 				Profile.get(userID).optString("avatar", "nk-monkey.png")
 			);
 	}
@@ -290,12 +287,12 @@ static class AMFImpl{
 		Profile.update(userID,x->x.put("avatar",avatar));
 		return null;
 	}
-	public JSONObject getCurrency(String userID, String token, String game, double amount, String source, String message){
+	public Map<?,?> getCurrency(String userID, String token, String game, double amount, String source, String message){
 		if(! Profile.games.contains(game))
-			return new JSONObject(1).put("bal",0);
+			return Map.of("bal",0);
 		verifyNK(userID, token);
 		
-		return new JSONObject(1).put("bal",
+		return Map.of("bal",
 			Profile.update(userID, x->{
 				var cur = x.getJSONObject("currencies");
 				cur.put(game, cur.optInt(game) + (int)amount);
@@ -308,15 +305,18 @@ static class AMFImpl{
 		else if(token.length()<30)throw new AMFService.NKVerifyException();
 	}
 
-	public static JSONArray setAchievement(String userID, String token, String game, double ach_id, double perc, Context ctx){
+	public static List<?> setAchievement(String userID, String token, String game, double ach_id, double perc, Context ctx){
 		if(!Profile.games.contains(game))return null;
 		Path achDataPath = Path.of(ctx.getRealPath("/amf_data/ach"));
 		return Profile.setAchievement(userID, token, game, ach_id, perc, achDataPath);
 	}
-	public static JSONArray getMyAchievements(String game, String userID,Context ctx){
+	public static JSONArray getAchievements(String game, Context ctx){
 		if(!Profile.games.contains(game))return null;
 		Path achDataPath = Path.of(ctx.getRealPath("/amf_data/ach"));
-		return Profile.getMyAchievements(game, userID, achDataPath);
+		return Profile.getAchievements(game, achDataPath);
+	}
+	public static JSONArray getMyAchievements(String game, String userID, JSONObject allAchData){
+		return Profile.getMyAchievements(game, userID, allAchData);
 	}
 
 	%>

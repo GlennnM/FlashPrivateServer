@@ -1,3 +1,5 @@
+<%@page import="xyz.hydar.bmc.AMFServiceWithContext"%>
+<%@page import="java.util.concurrent.ConcurrentLinkedQueue"%>
 <%@page import="xyz.hydar.bmc.Profile"%>
 <%@page import="java.io.InputStream"%>
 <%@page import="java.io.ByteArrayOutputStream"%>
@@ -188,13 +190,18 @@ static{
 			return DATA.getNeoInventory(userID, token, game);
 		}
 	}.inputs("gameName","userID","token").register();
-	new AMFService("game.get_my_achievements"){
+	new AMFServiceWithContext("game.get_my_achievements"){
 		@Override
-		public Object apply(List<?> args) throws SQLException{
+		public Object apply(List<?> args, Object context) throws SQLException{
 			String userID=(String)args.get(0);
 			String token=(String)args.get(1);
 			String game=(String)args.get(2);
-			return DATA.getMyAchievements(game, userID, ctx);
+			JSONObject achData = (JSONObject) getFromPool("achData", context, ()->{
+				//IO.println("New ach data...");
+				return new JSONObject(Profile.getAllAchievements(Path.of(ctx.getRealPath("/amf_data/ach"))).toString());
+			}
+			);
+			return DATA.getMyAchievements(game, userID, achData);
 		}
 	}.inputs("userID","token","gameName").register();
 	new AMFService("user.set_achievement"){
@@ -394,7 +401,9 @@ static{
    		//process POST data as sent by game etc
    		response.setContentType("application/x-amf");
    		response.resetBuffer();
-   		AMFService.accept(request.getInputStream(),response.getOutputStream());
+   		AMFService.accept(request.getInputStream(),response.getOutputStream(), request);
+   		((AMFServiceWithContext)AMFService.getService("game.get_my_achievements"))
+   			.finishUsingPool("achData", request);
    		return; 
    	}else{
 	   	//run test cases on GET
