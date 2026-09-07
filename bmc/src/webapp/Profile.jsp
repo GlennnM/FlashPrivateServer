@@ -254,7 +254,7 @@ async function loadAch(){
 				}
 				
 				if(myA==0){
-					$("leftCol").innerHTML += `<i style="color:gray;font-size:15px">${game}: (no data)</i><br>`;
+					$("leftCol").innerHTML += `<i style="color:gray;font-size:15px">${game}: (no achievements)</i><br>`;
 				}else{
 					$("leftCol").innerHTML += `<a style="color:${color(game)};font-size:15px"> ${game}:</a> <a style="color:${myA == totalA?"cyan":"white"};font-size:15px">
 						${myA}/${totalA}, ${myAP}/${totalAP} <%=miniHydar2%></a> <br>`;

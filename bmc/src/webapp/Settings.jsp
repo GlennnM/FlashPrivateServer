@@ -7,10 +7,10 @@
 <p style = "color:rgb(255,255,255); font-family:calibri, arial; font-size:20px; z-index:1; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 220px);">
 
 <b>
-Settings -&nbsp;<%=username%></b><br><br>
 <%if(!loggedIn){ %>
 <br>Not logged in...
 <%}else if(hasHydarID){ %>
+Settings -&nbsp;<%=username%></b><br><br>
 <form method="post" action=""  >
 <p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 200px);">
 

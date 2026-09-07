@@ -117,7 +117,6 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 //--> change clan/avatar, add friends... (5.1 or smth probably)
 //TODO: smtp for reset
 //TODO: show save failed status?
-//TODO: v2->1 for bmc and ach
 //TODO: no double refresh
 //placeholder stuff from index.jsp
 %>

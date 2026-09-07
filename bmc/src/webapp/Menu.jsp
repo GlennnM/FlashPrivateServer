@@ -83,7 +83,14 @@ if(request.getMethod().equals("POST")){
 			%>
 			<script>
 			let login = <%=login%>;
-			window.nkarchive.sendUserData(login);
+			window.nkarchive?.sendUserData(login);
+			if(!window.nkarchive)
+			{
+				document.getElementById("popup").hidden = null;
+				//document.getElementById("overlay").hidden = null;
+				document.getElementById("popup").innerText += ("Warning: window.nkarchive not found");
+				setTimeout(hidePopups, 10000);
+			}
 			login.userID = login.id;
 			window.location.search = new URLSearchParams(login).toString();
 			</script>
@@ -98,7 +105,14 @@ if(request.getMethod().equals("POST")){
 			%>
 			<script>
 			let login = <%=reg%>;
-			window.nkarchive.sendUserData(login);
+			window.nkarchive?.sendUserData(login);
+			if(!window.nkarchive)
+			{
+				document.getElementById("popup").hidden = null;
+				//document.getElementById("overlay").hidden = null;
+				document.getElementById("popup").innerText += ("Warning: window.nkarchive not found");
+				setTimeout(hidePopups, 10000);
+			}
 			login.userID = login.id;
 			window.location.search = new URLSearchParams(login).toString();
 			</script>
