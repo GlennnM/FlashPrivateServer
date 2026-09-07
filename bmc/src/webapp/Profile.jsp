@@ -167,7 +167,12 @@ if(avatar==null)avatar = "nk-monkey.png";
 <img id="myAvatar" style='float:left;margin-right:10px;border-radius: 50%;object-fit: cover;' src = "https://avatars.nkstatic.com/large/<%=avatar%>" />
 </a>
 <b><a style="color:<%=color(level)%>">[<%=level%>]</a> 
-<a><%=targetUsername%></a>
+<a id="myUsername" style="white-space: nowrap;display: inline-block; width: 140px;"><%=targetUsername%></a>
+<script>
+	let el = $("myUsername"), size = 20;
+    while (el.scrollWidth > 140 && --size > 10)
+        el.style.fontSize = size + "px";
+</script>
 <br> 
 <%=miniHydar%>&nbsp;<%=ap%></b><br>
 <a onclick='selectClan()' id="myClan" href="#">
@@ -254,7 +259,7 @@ async function loadAch(){
 				}
 				
 				if(myA==0){
-					$("leftCol").innerHTML += `<i style="color:gray;font-size:15px">${game}: (no achievements)</i><br>`;
+					$("leftCol").innerHTML += `<i style="color:gray;font-size:15px">${game}: (no achievements)*</i><br>`;
 				}else{
 					$("leftCol").innerHTML += `<a style="color:${color(game)};font-size:15px"> ${game}:</a> <a style="color:${myA == totalA?"cyan":"white"};font-size:15px">
 						${myA}/${totalA}, ${myAP}/${totalAP} <%=miniHydar2%></a> <br>`;
@@ -361,5 +366,10 @@ loadAch();
 	</script>	
 <%		
 %>
+<p id="notices" onclick = "$('notices').innerText='';" style = "color:rgb(255,255,255); font-family:calibri, arial;font-size:12px; position:fixed; position:absolute; text-align:left; left:50%; display:block; bottom:0px;">
+* "No achievements" may display if you have a game hasn't been synced to <%=aHydar(15) %> yet.
+To sync a game to <%=aHydar(15) %>, just play it while logged in to NK! <br><br>
+Fortress: Destroyer and Tower Keepers are not currently saveable, but <%=aHydar(15) %> will import their achievements if you open BMC.
+</p>
 </body>
 </html>

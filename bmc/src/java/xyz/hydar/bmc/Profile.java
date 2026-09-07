@@ -317,7 +317,7 @@ public class Profile {
 		 return "hyd"+HexFormat.of().formatHex(token)+"r";
 	 }
 	 public static boolean isValid(String username) {
-		 return username!=null && usernames.matcher(username).matches() && username.length() < 20;
+		 return username!=null && usernames.matcher(username).matches() && username.length() < 32;
 	 }
 	 public static JSONObject updateIndex(UnaryOperator<JSONObject> update) {
 		 //separate index for NK, otherwise someone could take your ign?

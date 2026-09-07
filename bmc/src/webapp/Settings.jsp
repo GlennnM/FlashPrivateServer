@@ -43,12 +43,14 @@ Change password:
 <input type="submit" name="submit" value = "Go" class= "button3" style="top:4px"><br>
 <input type="hidden" name="op" value = "changePassword">
 </form>
-</div></div>
 <%}else{
 out.print("Requires Hydar login...");
 
 }%>
-
+<p style = "color:rgb(255,255,255); font-family:calibri, arial;font-size:12px; position:fixed; position:absolute; text-align:left; left:50%; display:block; bottom:0px;">
+Note: NK Archive settings can be found on the title bar (click the three lines in top-left corner of title -> "Settings")
+</p>
+</div></div>
 </body>
 <%
 if(request.getMethod().equals("POST")){
