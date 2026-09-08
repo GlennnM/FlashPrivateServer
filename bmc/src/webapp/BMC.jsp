@@ -43,6 +43,7 @@ LAST_SKU_UPDATE.accumulateAndGet(System.currentTimeMillis(), (current, given)->{
 	try{
 		if(given - current > 24*3600*1000){
 			createSKU(7,"",request);
+			createSKU(14,"",request);
 			return given;
 		}
 	}catch(IOException | NoSuchAlgorithmException ioe){
