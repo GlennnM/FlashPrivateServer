@@ -367,7 +367,7 @@ loadAch();
 <%		
 %>
 <p id="notices" onclick = "$('notices').innerText='';" style = "color:rgb(255,255,255); font-family:calibri, arial;font-size:12px; position:fixed; position:absolute; text-align:left; left:50%; display:block; bottom:0px;">
-* "No achievements" may display if you have a game hasn't been synced to <%=aHydar(15) %> yet.
+* "No achievements" may display if a game hasn't been synced to <%=aHydar(15) %> yet.
 To sync a game to <%=aHydar(15) %>, just play it while logged in to NK! <br><br>
 Fortress: Destroyer and Tower Keepers are not currently saveable, but <%=aHydar(15) %> will import their achievements if you open BMC.
 </p>

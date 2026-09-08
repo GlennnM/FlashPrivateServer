@@ -11,7 +11,7 @@
 <%@page import="xyz.hydar.ee.HydarEE.Context"%>
 <%@page import="java.util.HexFormat,java.util.List,org.openamf.io.*,org.openamf.*"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+    pageEncoding="UTF-8" session="false"%>
 <%@ include file="AMF_impl.jsp" %>
 <%-- 
 WIP AMF gateway. make sure to include AMF_utils.jsp and openamf & json-java JARs. 
