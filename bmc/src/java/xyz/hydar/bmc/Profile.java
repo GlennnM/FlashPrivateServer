@@ -373,17 +373,18 @@ public class Profile {
 		public static JSONObject getAchProgress(String game, String userID) {
 			if(!Profile.games.contains(game))
 				return null;
-			var ret = store.get("amf", userID, game, "ach");
+			var ret = store.get("amf", userID, "ach");
 			if(ret==null)
 				return new JSONObject(0);
-			return ret;
+			return ret.optJSONObject(game, new JSONObject(0));
 		}
 		/**allAchData needed so data can be reused*/
 		public static JSONArray getMyAchievements(String game, String userID, JSONObject allAchData){
 			if(!Profile.games.contains(game))
 				return null;
 			JSONArray j = allAchData.getJSONArray(game);
-			JSONObject myAch = store.get("amf", userID, game, "ach");
+			JSONObject myAch = store.get("amf", userID, "ach");
+			if(myAch!=null)myAch=myAch.optJSONObject(game);
 			for(var x: Util.jIter(j)){
 				int perc = myAch==null ? 0 : myAch.optInt(""+x.getInt("id"));
 				x.put("perc",(double) perc)
@@ -404,10 +405,11 @@ public class Profile {
 			List<Object> ret = new ArrayList<>();
 			ret.add(achID);
 			LongAdder ap = new LongAdder();
-			store.update(List.of("amf", userID, game, "ach"),x->{
-				if(x==null){
-					x = new JSONObject();
+			store.update(List.of("amf", userID, "ach"),x_->{
+				if(x_==null){
+					x_ = new JSONObject();
 				}
+				var x = x_.optJSONObject(game, new JSONObject());	
 				int oldPerc = (int) x.optDouble(""+achID,0d);
 				int newPerc = Math.max(oldPerc, (int) perc);
 				ret.add((double)newPerc);
@@ -417,7 +419,7 @@ public class Profile {
 				if(oldPerc < 100 && newPerc >= 100){
 					ap.add(ach.getInt("points"));
 				}
-				return x;
+				return x_.put(game, x);
 			});
 			if(ap.sum()>0)
 				addAP(userID, (int)ap.sum());
