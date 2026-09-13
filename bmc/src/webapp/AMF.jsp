@@ -243,25 +243,6 @@ static{
 			return JSONObject.NULL;
 		}
 	}.inputs("gameName","userID","task","param").register();
-	/**V2 AMF STUFF(mostly the same)*/
-	new AMFService("v2.game.get_data"){
-		@Override
-		public Object apply(List<?> args) throws Exception{
-			//reuse v1(todo: simplify for all the v2s with same input/output)
-			return AMFService.getService("game.get_data").apply(args);
-		}
-	}
-	.inputs("userID","gameName")
-	.register();
-	new AMFService("v2.game.save_data"){
-		@Override
-		public Object apply(List<?> args) throws Exception{
-			//reuse v1(todo: simplify for all the v2s with same input/output)
-			return AMFService.getService("game.save_data").apply(args);
-		}
-	}
-	.inputs("userID","gameName","token","OBJECT")
-	.register();
 	new AMFService("game.check_reward"){
 		@Override
 		public Object apply(List<?> args) throws Exception{
@@ -299,6 +280,7 @@ static{
 	}
 	.inputs("userID","token",469d, 119d, "username")
 	.register();
+	/**V2 AMF STUFF(mostly the same)*/
 	for(String s: List.of("prem.getBalance","prem.getCurrency",
 			"user.get_koins", "user.get_avatar", "user.set_achievement",
 			"game.get_data", "game.save_data", "game.get_my_achievements", "game.check_reward","game.get_store", "game.save_score")){
@@ -420,12 +402,12 @@ static{
 		   //	out.println("response: ");
 		   	//out.println(AMFBodies.from(baos.toByteArray()));
 	   	} 
-		for(String filename:List.of("/4238_.txt")){
+		for(String filename:List.of("/newacc.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
-   				out.println("File: "+AMFBodies.from(file));
+   				out.println("newacc: "+AMFBodies.from(file));
 		   	}
 		} 
-		for(String filename:List.of("/616_.txt","/616a.txt","/616a_.txt","/616b.txt","/616b_.txt","/617_.txt","/618_.txt","/617.txt","/618.txt","/19621_.txt","/resyncq.txt","/resyncr.txt","/servertimeandscores.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
+		for(String filename:List.of("/initresync.txt","/newacc2r.txt","/newacc2.txt","/616a_.txt","/616b.txt","/616b_.txt","/617_.txt","/618_.txt","/617.txt","/618.txt","/19621_.txt","/resyncq.txt","/resyncr.txt","/servertimeandscores.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("File: "+AMFBodies.from(file));
 		   	}

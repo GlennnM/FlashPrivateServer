@@ -1,3 +1,4 @@
+<%@page import="org.json.JSONTokener"%>
 <%@page import="xyz.hydar.bmc.Profile"%>
 <%@page import="xyz.hydar.bmc.AMFBodies"%>
 <%@page import="org.openamf.AMFBody"%>
@@ -54,7 +55,7 @@ LAST_SKU_UPDATE.accumulateAndGet(System.currentTimeMillis(), (current, given)->{
 if(request.getMethod().equals("POST")){   
 	int userID = Integer.parseInt(request.getParameter("userID"));
 	String operation =request.getParameter("operation");
-	var json = new JSONObject(new String(request.getInputStream().readAllBytes(),StandardCharsets.UTF_8));
+	var json = new JSONObject(new JSONTokener(request.getReader()));
 	String token = Objects.toString(json.opt("token"));
 	long sid = json.optLong("sid");
 	String nkApiId = Objects.toString(json.opt("nkApiId"));
@@ -78,7 +79,6 @@ if(request.getMethod().equals("POST")){
 	case "handshake":  
 		sessionID = session.getId();
 		sid = System.currentTimeMillis();
-		//TODO: new idea - just store a hash of the token, give each token hash a different save
 		if(!("false".equals(request.getServletContext().getInitParameter("DO_NK_AUTH")))){
 			Profile.verifyNK(""+userID, token);
 		} else {
@@ -242,7 +242,7 @@ if(request.getMethod().equals("POST")){
 			//unused
 			break;
 	}
-	out.print(reply);
+	reply.write(out);
 	return;
 }else{
 	%><html><body>
