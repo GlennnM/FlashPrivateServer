@@ -39,7 +39,6 @@ for a list of their commands and return types see 'future_stuff.txt'
 --%>
 <%
 //TODO: consec logins/dailies
-//TODO: better b64 storage
 %>
 <%!
 static{

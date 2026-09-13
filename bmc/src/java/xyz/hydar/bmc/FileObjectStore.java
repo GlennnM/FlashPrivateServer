@@ -43,9 +43,10 @@ public class FileObjectStore implements ObjectStore {
 	private final NavigableSet<String> modif = new ConcurrentSkipListSet<>();
 	private final LongAdder cacheSize = new LongAdder();
 	private volatile boolean delayedFlush = false;
-
+	
 	public static volatile List<Thread> hooks = null;
 	public static volatile List<ScheduledExecutorService> flushers = null;
+	private final Compressors comp;
 	private FileObjectStore(Path root, int maxCacheSize) throws IOException {
 		this.maxCacheSize = maxCacheSize;
 		this.cache = new ConcurrentHashMap<>(maxCacheSize);
@@ -54,6 +55,8 @@ public class FileObjectStore implements ObjectStore {
 		if (!Files.isDirectory(root))
 			throw new IllegalArgumentException("Not a dir: " + root);
 		this.root = root;
+		comp = new Compressors(root.resolve("dict"));
+		//compressor = getCompressor(root.resolve("dict"));
 	}
 
 	public static FileObjectStore of(Path root) throws IOException {
@@ -130,7 +133,7 @@ public class FileObjectStore implements ObjectStore {
 				// System.err.println("Cache MISS "+key);
 				cacheSize.increment();
 				try {
-					v = Files.exists(p) ? new JSONObject(Files.readString(p)) : NOT_PRESENT;
+					v = Files.exists(p) ? comp.read(p) : NOT_PRESENT;
 				} catch (IOException ioe) {
 					throw new RuntimeException(ioe);
 				}
@@ -193,7 +196,6 @@ public class FileObjectStore implements ObjectStore {
 			throw new RuntimeException(e);// not a warning, since data could be lost
 		}
 	}
-
 	private void writeThrough(String key) throws IOException {
 		var val = cache.get(key);
 		var path = Path.of(key);
@@ -201,7 +203,7 @@ public class FileObjectStore implements ObjectStore {
 			Files.deleteIfExists(path);
 		} else {
 			Files.createDirectories(path.getParent());
-			Files.writeString(path, val.toString());
+			comp.write(val, path);
 		}
 	}
 
