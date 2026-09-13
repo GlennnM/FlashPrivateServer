@@ -16,7 +16,6 @@
 <%@page import="java.nio.file.attribute.FileTime"%>
 <%!
 static volatile FileObjectStore store;
-static volatile List<String> keys;
 static final String aHydar(int size){
 	return "<img src = https://hydar.xyz/images/notifhydar.png style='width:%dpx;height:%dpx;' alt='Hydar'>".formatted(size,size);
 	
@@ -63,7 +62,6 @@ if(store==null)
 		String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
 		store = FileObjectStore.of(Path.of(storeLocation));
 		Profile.store = store;
-		keys = store.list();
 	}catch(IOException ioe){
 		throw new RuntimeException(ioe);
 	}

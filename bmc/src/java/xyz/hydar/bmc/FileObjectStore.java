@@ -228,6 +228,7 @@ public class FileObjectStore implements ObjectStore {
 	public List<String> list() {
 		try {
 			return Files.walk(root, 2).filter(Files::isRegularFile)// .peek(System.out::println)
+					.filter(x->!x.getParent().equals(root))
 					.map(x -> new String(Base64.getDecoder().decode(x.getFileName().toString().trim()), UTF_8)).sorted()
 					.toList();
 		} catch (IOException e) {
