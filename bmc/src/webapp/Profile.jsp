@@ -48,6 +48,18 @@ font-weight:bold;
 vertical-align:center;
 pointer-events: none;
 }
+.toplink{
+color:skyblue;
+text-decoration:underline;
+position:absolute;
+top:-20px;
+font-size:17px;
+cursor: pointer;
+display:inline
+}
+.toplink:hover{
+	font-size:19px
+}
 #myClan:hover{
 font-size:22px;
 }
@@ -137,7 +149,6 @@ static final String image(String clan){
 }</script><%
 %>
 <%
-String target = request.getParameter("target");
 String searchUser = request.getParameter("viewing");
 String targetUserID, targetUsername;
 if(searchUser!=null){
@@ -145,191 +156,200 @@ if(searchUser!=null){
 	targetUserID = Profile.updateIndex(x->x).optString(searchUser, userID);
 	targetUsername = Objects.equals(userID,targetUserID) ? username : searchUser;
 	profile = Profile.get(targetUserID);
-}else if(target!=null && !target.isBlank()){
-	targetUserID = request.getParameter("target");
-	profile = Profile.get(targetUserID);
-	searchUser = profile.optString("hydarUsername", profile.optString("username"));
-	targetUsername = Profile.isValid(searchUser) ? searchUser: "invalid";
-	if(!Objects.equals(userID, targetUserID) && profile!=null)
-		toJS.accept(targetUsername,1);
 }else{
 	targetUserID = userID;
 	targetUsername = username;
 }
-if(loggedIn || targetUsername != null){
-boolean isMe = Objects.equals(userID,targetUserID);
-int ap = profile.optInt("ap");
-int level = Profile.getLevel(ap);
-String clan = Profile.clans.get(profile.optInt("clan"));
-String avatar = profile.optString("avatar");
-if(avatar==null)avatar = "nk-monkey.png";
-%>
-<p class="hydarLogo" id="leftCol" style="color:rgb(255,255,255);font-family:calibri, arial; font-size:20px;margin:15px">
-<a href='#' onclick='selectAvatar()'>
-<img id="myAvatar" style='float:left;margin-right:10px;border-radius: 50%;object-fit: cover;' src = "https://avatars.nkstatic.com/large/<%=avatar%>" />
-</a>
-<b><a style="color:<%=color(level)%>">[<%=level%>]</a> 
-<a id="myUsername" style="white-space: nowrap;display: inline-block; width: 140px;"><%=targetUsername%></a>
-<script>
-	let el = $("myUsername"), size = 20;
-    while (el.scrollWidth > 140 && --size > 10)
-        el.style.fontSize = size + "px";
-</script>
-<br> 
-<%=miniHydar%>&nbsp;<%=ap%></b><br>
-<a onclick='selectClan()' id="myClan" href="#">
-<b style = "color:<%=color(clan) %>"><%=image(clan)%>&nbsp;<%=clan%></b>
-</a>
-<br><br>
-Games:<br>
-
-</p>
-<script type="text/javascript">
-const avatars = <%= new JSONArray(Profile.avatarURLs) %>;
-const clans = <%=new JSONArray(Profile.uniqueClans) %>
-let loaded = {"avatar":false,"clan":false};
-function selectThing(thing){
-	let sel = $(thing==="avatar" ? "avatarSelector" : "clanSelector");
-	sel.hidden=null;
-	$("overlay").hidden=null;
-	if(!loaded[thing]){
-		for(let ava of (thing=="avatar" ? avatars : clans)){
-			//let img = document.createElement("img");
-			//img.setAttribute("src",);
-			let link = document.createElement("a");
-			link.href="#";
-			link.classList.add("selItem");
-			let clan1 = encodeURIComponent(ava.replace(" ","-").toLowerCase());
-			link.style.backgroundImage = 
-				thing=="avatar"?
-				`url('https://avatars.nkstatic.com/small/${ava}')`:
-				`url('https://cdn.nkstatic.com/clans/shields/${clan1}/thumb/${clan1.replace("jackals","jackal").replace("scorp","the-scorp").replace("thund","Thund").replace("xiii","XIII")}.png')`
-			;
-				
-			
-			sel.appendChild(link);
-			let req = thing!="avatar" ? -1 : ava.includes("-") ? parseInt(ava.split("-")[0]) : -1;
-			if(req > <%=level%>){
-				link.classList.add("selItemFade");
-				let div = document.createElement("div");
-				div.classList.add("locked");
-				div.innerText=req;
-				link.appendChild(div);
-			}else
-				link.onclick = ()=>redirParam(thing=="avatar" ? "newAvatar" : "newClan",ava);
-		}
-	}
-	loaded[thing]=true;
-}
-function selectAvatar(){
-	if(<%=isMe%>)selectThing("avatar");
-}
-function selectClan(){
-	if(<%=isMe%>)selectThing("clan");
-}
-if(!<%=isMe%>){
-	$("myAvatar").style.pointerEvents="none";
-	$("myClan").style.pointerEvents="none";
-}
-</script>
-<script>
-let achProgress = <%=
-	new JSONObject(Profile.games.stream().collect(
-			Collectors.toMap(x->x, x->Profile.getAchProgress(x, targetUserID)/*, (x,y)->x, ()->new LinkedHashMap<>()*/)
-		)
-	)
-%>;
-const gamesInOrder = ["BTD4","BTD5","Battles","BSM2","MonkeyCity","SAS3","SAS TD","SAS4","Battle Blocks Defense","Battle Panic","Fortress: Destroyer","Tower Keepers"];
-async function loadAch(){
-	for(let game of gamesInOrder/*Object.keys(achProgress).sort()*//*.map(x=>Object.values(achProgress[x]).sum())*/){
-		//(async ()=>{
-			try{
-				let progress = achProgress[game];
-				let r = await fetch(`amf_data/ach/${encodeURIComponent(game.replace(":",""))}.json`);
-				let achs = JSON.parse(await r.text());
-				let totalAP=0, totalA=0, myAP=0, myA = 0;
-				console.log(achs);
-				for(let ach of achs){
-					//out.print(ach);
-					if(ach.id == 457)continue;
-					totalA+=1;
-					totalAP+=ach.points; 
-					if(progress[ach.id]>=100){
-						myA+=1;
-						myAP+=ach.points;
-					}
-				}
-				
-				if(myA==0){
-					$("leftCol").innerHTML += `<i style="color:gray;font-size:15px">${game}: (no achievements)*</i><br>`;
-				}else{
-					$("leftCol").innerHTML += `<a style="color:${color(game)};font-size:15px"> ${game}:</a> <a style="color:${myA == totalA?"cyan":"white"};font-size:15px">
-						${myA}/${totalA}, ${myAP}/${totalAP} <%=miniHydar2%></a> <br>`;
-				}
-			}catch(e){
-				$("leftCol").innerHTML += `<i style="color:gray;font-size:15px">${game}: (error)</i><br>`;
-			}
-		//})();
-	}
-}
-loadAch();
-</script>
-
-
-
-<div style = "color:rgb(255,255,255); font-family:calibri, arial; font-size:18px; z-index:1; position:absolute; text-align:left; left:50%; display:block; top:40px;">
-	<form method="post" action=""  >
-	<%
-	if(!targetUserID.equals(userID)){
-		%>
-			<a style='color:skyblue;text-decoration:underline;position:absolute;top:-20px' href="#" onclick = 'redirParam("viewing",null,"target",null)'>
-			&lt;&lt;Back to your profile...
-			</a>
-		<%
-	}
-	%>
-	Add friend:
-	<br>
-	<input id="friend" type="text" name="friend" size = "20px" style="" placeholder = "Username" autofocus>
-	 
-	<input type="submit" name="submit" value = "Go" class= "button3" style="top:0px"><br>
-	<input type="hidden" name="op" value = "friend">
-	</form>
+if(!Profile.isValid(targetUsername))targetUsername="invalid";
+if((loggedIn || targetUsername != null) && profile!=null){
 	
-	<form method="post" action=""  >
-	View profile:
-	<br>
-	<input id="targetUsername" type="text" name="viewing" size = "20px" style="" placeholder = "Username" autofocus>
-	<input type="hidden" name="target" value = "">
-	<input type="submit" name="submit" value = "Go" class= "button3" style="top:0px"><br>
-	</form>
+	boolean isMe = Objects.equals(userID,targetUserID);
+	int ap = profile.optInt("ap");
+	int level = Profile.getLevel(ap);
+	String clan = Profile.clans.get(profile.optInt("clan"));
+	String avatar = profile.optString("avatar");
+	if(avatar==null)avatar = "nk-monkey.png";
+	%>
+	<p class="hydarLogo" id="leftCol" style="color:rgb(255,255,255);font-family:calibri, arial; font-size:20px;margin:15px">
+	<a href='#' onclick='selectAvatar()'>
+	<img id="myAvatar" style='float:left;margin-right:10px;border-radius: 50%;object-fit: cover;' src = "https://avatars.nkstatic.com/large/<%=avatar%>" />
+	</a>
+	<b><a style="color:<%=color(level)%>">[<%=level%>]</a> 
+	<a id="myUsername" style="white-space: nowrap;display: inline-block; width: 140px;"><%=targetUsername%></a>
+	<script>
+		let el = $("myUsername"), size = 20;
+	    while (el.scrollWidth > 140 && --size > 10)
+	        el.style.fontSize = size + "px";
+	</script>
 	<br> 
-	<%var empty = new JSONArray(); 
-	Consumer<JSONArray> printFriends = friends->{
-		for(String s: Util.jIterS(friends)){
-			var fp = Profile.get(s);
-			var fa = fp.optString("avatar","nk_monkey.png");
-			var fn = fp.optString("hydarUsername");
-			if(fn.isEmpty()) fn = fp.optString("username");
-			%><a title='<%=fn%>' href='#' onclick='redirParam("viewing","<%=fn%>")'>
-			<img src = 'https://avatars.nkstatic.com/small/<%=fa%>' class='inline20'/>
-			</a> <%
-		}
-	};
+	<%=miniHydar%>&nbsp;<%=ap%></b><br>
+	<a onclick='selectClan()' id="myClan" href="#">
+	<b style = "color:<%=color(clan) %>"><%=image(clan)%>&nbsp;<%=clan%></b>
+	</a>
+	<br><br>
+	Games:<br>
 	
-	%>
-	Friends:
-	<%printFriends.accept(profile.optJSONArray("friends", empty));%>
-	<br>
-	Following:
-	<%printFriends.accept(profile.optJSONArray("following", empty));%>
-	<br>
-	Followers:
-	<%printFriends.accept(profile.optJSONArray("followers", empty));%>
-	<br>
-</div>
+	</p>
+	<script type="text/javascript">
+	const avatars = <%= new JSONArray(Profile.avatarURLs) %>;
+	const clans = <%=new JSONArray(Profile.uniqueClans) %>
+	let loaded = {"avatar":false,"clan":false};
+	function selectThing(thing){
+		let sel = $(thing==="avatar" ? "avatarSelector" : "clanSelector");
+		sel.hidden=null;
+		$("overlay").hidden=null;
+		if(!loaded[thing]){
+			for(let ava of (thing=="avatar" ? avatars : clans)){
+				//let img = document.createElement("img");
+				//img.setAttribute("src",);
+				let link = document.createElement("a");
+				link.href="#";
+				link.classList.add("selItem");
+				let clan1 = encodeURIComponent(ava.replace(" ","-").toLowerCase());
+				link.style.backgroundImage = 
+					thing=="avatar"?
+					`url('https://avatars.nkstatic.com/small/${ava}')`:
+					`url('https://cdn.nkstatic.com/clans/shields/${clan1}/thumb/${clan1.replace("jackals","jackal").replace("scorp","the-scorp").replace("thund","Thund").replace("xiii","XIII")}.png')`
+				;
+					
+				
+				sel.appendChild(link);
+				let req = thing!="avatar" ? -1 : ava.includes("-") ? parseInt(ava.split("-")[0]) : -1;
+				if(req > <%=level%>){
+					link.classList.add("selItemFade");
+					let div = document.createElement("div");
+					div.classList.add("locked");
+					div.innerText=req;
+					link.appendChild(div);
+				}else
+					link.onclick = ()=>redirParam(thing=="avatar" ? "newAvatar" : "newClan",ava);
+			}
+		}
+		loaded[thing]=true;
+	}
+	function selectAvatar(){
+		if(<%=isMe%>)selectThing("avatar");
+	}
+	function selectClan(){
+		if(<%=isMe%>)selectThing("clan");
+	}
+	if(!<%=isMe%>){
+		$("myAvatar").style.pointerEvents="none";
+		$("myClan").style.pointerEvents="none";
+	}
+	</script>
+	<script>
+	let achProgress = <%=
+		new JSONObject(Profile.games.stream().collect(
+				Collectors.toMap(x->x, x->Profile.getAchProgress(x, targetUserID)/*, (x,y)->x, ()->new LinkedHashMap<>()*/)
+			)
+		)
+	%>;
+	const gamesInOrder = ["BTD4","BTD5","Battles","BSM2","MonkeyCity","SAS3","SAS TD","SAS4","Battle Blocks Defense","Battle Panic","Fortress: Destroyer","Tower Keepers"];
+	async function loadAch(){
+		for(let game of gamesInOrder/*Object.keys(achProgress).sort()*//*.map(x=>Object.values(achProgress[x]).sum())*/){
+			//(async ()=>{
+				try{
+					let progress = achProgress[game];
+					let r = await fetch(`amf_data/ach/${encodeURIComponent(game.replace(":",""))}.json`);
+					let achs = JSON.parse(await r.text());
+					let totalAP=0, totalA=0, myAP=0, myA = 0;
+					//console.log(achs);
+					for(let ach of achs){
+						//out.print(ach);
+						if(ach.id == 457)continue;
+						totalA+=1;
+						totalAP+=ach.points; 
+						if(progress[ach.id]>=100){
+							myA+=1;
+							myAP+=ach.points;
+						}
+					}
+					
+					if(myA==0){
+						$("leftCol").innerHTML += `<i style="color:gray;font-size:15px">${game}: (no achievements)*</i><br>`;
+					}else{
+						$("leftCol").innerHTML += `<a style="color:${color(game)};font-size:15px"> ${game}:</a> <a style="color:${myA == totalA?"cyan":"white"};font-size:15px">
+							${myA}/${totalA}, ${myAP}/${totalAP} <%=miniHydar2%></a> <br>`;
+					}
+				}catch(e){
+					$("leftCol").innerHTML += `<i style="color:gray;font-size:15px">${game}: (error)</i><br>`;
+				}
+			//})();
+		}
+	}
+	loadAch();
+	function copyURL(){
+		
+		let url = new URL(window.location.href);
+        url.search="";
+        url.searchParams.set("viewing","<%=targetUsername%>");
+        try{
+        	navigator.clipboard.writeText(url.href);
+        }catch(e){
+			popup("Clipboard didn't work");
+        }
+	}
+	</script>
+	
+	
+	
+	<div style = "color:rgb(255,255,255); font-family:calibri, arial; font-size:18px; z-index:1; position:absolute; text-align:left; left:50%; display:block; top:40px;">
+		<form method="post" action=""  >
+		<%
+		if(!targetUserID.equals(userID)){
+			%>
+				<div class='toplink' onclick = 'redirParam("viewing",null)'>
+				&lt;&lt;Back to your profile...
+				</div>
+			<%
+		}
+		
+		%>
+		<div class='toplink' style='right:-40px' onclick = 'copyURL()'>
+		(Copy URL)
+		</div>
+		Add friend:
+		<br>
+		<input id="friend" type="text" name="friend" size = "20px" style="" placeholder = "Username">
+		 
+		<input type="submit" name="submit" value = "Go" class= "button3" style="top:0px"><br>
+		<input type="hidden" name="op" value = "friend">
+		</form>
+		
+		<form method="post" action=""  >
+		View profile:
+		<br>
+		<input id="targetUsername" type="text" name="viewing" size = "20px" style="" placeholder = "Username">
+		<input type="submit" name="submit" value = "Go" class= "button3" style="top:0px"><br>
+		</form>
+		<br> 
+		<%var empty = new JSONArray(); 
+		Consumer<JSONArray> printFriends = friends->{
+			for(String s: Util.jIterS(friends)){
+				var fp = Profile.get(s);
+				var fa = fp.optString("avatar","nk_monkey.png");
+				var fn = fp.optString("hydarUsername");
+				if(fn.isEmpty()) fn = fp.optString("username");
+				%><a title='<%=fn%>' href='#' onclick='redirParam("viewing","<%=fn%>")'>
+				<img src = 'https://avatars.nkstatic.com/small/<%=fa%>' class='inline20'/>
+				</a> <%
+			}
+		};
+		
+		%>
+		Friends:
+		<%printFriends.accept(profile.optJSONArray("friends", empty));%>
+		<br>
+		Following:
+		<%printFriends.accept(profile.optJSONArray("following", empty));%>
+		<br>
+		Followers:
+		<%printFriends.accept(profile.optJSONArray("followers", empty));%>
+		<br>
+	</div>
 <%}else{ %>
-<b style = "color:rgb(255,255,255); font-family:calibri, arial; font-size:20px;">Not logged in...</b>
+	<b style = "color:rgb(255,255,255); font-family:calibri, arial; font-size:20px;">Not logged in...</b>
 <%}%>
 <%
 		try{

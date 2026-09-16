@@ -71,7 +71,7 @@ if(logout!=null){
 	session.removeAttribute("username");
 	session.removeAttribute("userID");
 	session.removeAttribute("token");
-	response.sendRedirect(isNKA ? "https://ninjakiwi.com/flash/logout" : response.encodeURL("?"));
+	response.sendRedirect(isNKA ? "https://ninjakiwi.com/flash/logout" : response.encodeURL(request.getRequestURI()));
 	return;
 }
 String qUsername = request.getParameter("username");
@@ -83,7 +83,7 @@ if(qUserID!=null){
 		session.setAttribute("username", qUsername);
 		session.setAttribute("userID", qUserID);
 		session.setAttribute("token", qToken);
-		response.sendRedirect(response.encodeURL("?"));
+		response.sendRedirect(response.encodeURL(request.getRequestURI()));
 		return;
 	}catch(Exception e){
 		e.printStackTrace();
@@ -97,12 +97,12 @@ boolean loggedIn = userID != null;
 if(loggedIn){
 	try{
 		Profile.verifyNK(userID, token);
-		if(!Profile.isValid(username))username="invalid";
 	}catch(Exception e){
 		e.printStackTrace();
 		popup.accept(e instanceof NKVerifyException? "Invalid token found!! Try logging in again." : e.getClass());
 	}
 }
+if(!Profile.isValid(username))username="invalid";
 var profile = loggedIn ? Profile.get(userID) : null;
 boolean isHydarLogin = loggedIn && token.startsWith("hyd");
 boolean hasHydarID = loggedIn && profile.get("hydarUserID") != JSONObject.NULL;
@@ -228,6 +228,7 @@ function redirParam(x,v,x2=null,v2=null) {
 </head>
 <style> 
 	body{
+		-webkit-app-region: no-drag;
 		background-image:url('https://hydar.xyz/images/hydarface.png');
 		background-repeat:no-repeat;
 		background-attachment:fixed;

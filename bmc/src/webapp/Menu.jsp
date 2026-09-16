@@ -40,7 +40,7 @@ Saving to&nbsp;<%=loggedIn ? (isHydarLogin ? miniHydar + " only" : "both") : "no
 <br>
 Register new <%=miniHydar%> account*:
 <br>
-<input  id="loginU2" type="text" name="loginU" size = "20px" style="" placeholder = "Username" autofocus><br>
+<input  id="loginU2" type="text" name="loginU" size = "20px" style="" placeholder = "Username"><br>
  
 <input  id="email" type="text" name="email" size = "20px" style="top:4px;" placeholder = "Email (recovery only)"><br>
 
@@ -85,7 +85,7 @@ if(request.getMethod().equals("POST")){
 			<script>
 			let login = <%=login%>;
 			window.nkarchive?.sendUserData(login);
-			if(!window.nkarchive)
+			if(!window.nkarchive && <%=isNKA%>)
 			{
 				document.getElementById("popup").hidden = null;
 				//document.getElementById("overlay").hidden = null;
@@ -107,7 +107,7 @@ if(request.getMethod().equals("POST")){
 			<script>
 			let login = <%=reg%>;
 			window.nkarchive?.sendUserData(login);
-			if(!window.nkarchive)
+			if(!window.nkarchive && <%=isNKA%>)
 			{
 				document.getElementById("popup").hidden = null;
 				//document.getElementById("overlay").hidden = null;
