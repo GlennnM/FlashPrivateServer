@@ -65,10 +65,34 @@ if(store==null)
 	}catch(IOException ioe){
 		throw new RuntimeException(ioe);
 	}
-
-String username = request.getParameter("username");
-String userID = request.getParameter("userID");
-String token = request.getParameter("token");
+boolean isNKA = "flashArchive".equals(request.getHeader("user-agent"));
+String logout = request.getParameter("logout");
+if(logout!=null){
+	session.removeAttribute("username");
+	session.removeAttribute("userID");
+	session.removeAttribute("token");
+	response.sendRedirect(isNKA ? "https://ninjakiwi.com/flash/logout" : response.encodeURL("?"));
+	return;
+}
+String qUsername = request.getParameter("username");
+String qUserID = request.getParameter("userID");
+String qToken = request.getParameter("token");
+if(qUserID!=null){
+	try{
+		Profile.verifyNK(qUserID, qToken);
+		session.setAttribute("username", qUsername);
+		session.setAttribute("userID", qUserID);
+		session.setAttribute("token", qToken);
+		response.sendRedirect(response.encodeURL("?"));
+		return;
+	}catch(Exception e){
+		e.printStackTrace();
+		popup.accept(e instanceof NKVerifyException? "Invalid token found!! Try logging in again." : e.getClass());
+	}
+}
+String username = (String)session.getAttribute("username");
+String userID = (String)session.getAttribute("userID");
+String token = (String)session.getAttribute("token");
 boolean loggedIn = userID != null;
 if(loggedIn){
 	try{
@@ -194,9 +218,10 @@ function hidePopups(){
 	[...document.getElementsByClassName("selector")].forEach(x=>x.hidden=true);
 	[...document.getElementsByClassName("popup")].forEach(x=>x.hidden=true);
 }
-function redirParam(x,v) {
+function redirParam(x,v,x2=null,v2=null) {
     var searchParams = new URLSearchParams(window.location.search);
     v ? searchParams.set(x,v) : searchParams.delete(x);
+    v2 ? searchParams.set(x2,v2) : searchParams.delete(x2);
     window.location.search = searchParams.toString();
 }
 </script>
@@ -313,7 +338,7 @@ function $(x){
 <br>
 <p style = "position:absolute;left:20px;top:250px;right:200px;width:250px">
 <%if(loggedIn){ %> 
-<a href="https://ninjakiwi.com/flash/logout" style="font-size:24px;color:blue;text-decoration: underline;">Log out...</a><br>
+<a href="?logout=1" style="font-size:24px;color:blue;text-decoration: underline;">Log out...</a><br>
 	 Games synced:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") != null).collect(Collectors.joining(", "))%><br><%
 	%> Not synced/never played:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") == null).collect(Collectors.joining(", "))%><br>
 

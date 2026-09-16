@@ -13,6 +13,7 @@ Flash Private Server</b><br><br>
 <br>
 Saving to&nbsp;<%=loggedIn ? (isHydarLogin ? miniHydar + " only" : "both") : "none" %>.
 <br>
+
 <%
 
 %>

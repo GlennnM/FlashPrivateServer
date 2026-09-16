@@ -1,3 +1,4 @@
+<%@page import="java.util.Objects"%>
 <%@page import="org.json.JSONArray"%>
 <%@page import="java.util.LinkedHashMap"%>
 <%@page import="xyz.hydar.bmc.Util"%>
@@ -135,27 +136,28 @@ static final String image(String clan){
     }
 }</script><%
 %>
-<%if(loggedIn){
+<%
 String target = request.getParameter("target");
-String searchUser = request.getParameter("targetUsername");
+String searchUser = request.getParameter("viewing");
 String targetUserID, targetUsername;
 if(searchUser!=null){
 	if(!searchUser.equals(username))toJS.accept(searchUser,1);
 	targetUserID = Profile.updateIndex(x->x).optString(searchUser, userID);
-	targetUsername = userID.equals(targetUserID) ? username : searchUser;
+	targetUsername = Objects.equals(userID,targetUserID) ? username : searchUser;
 	profile = Profile.get(targetUserID);
 }else if(target!=null && !target.isBlank()){
 	targetUserID = request.getParameter("target");
 	profile = Profile.get(targetUserID);
 	searchUser = profile.optString("hydarUsername", profile.optString("username"));
 	targetUsername = Profile.isValid(searchUser) ? searchUser: "invalid";
-	if(!userID.equals(targetUserID) && profile!=null)
+	if(!Objects.equals(userID, targetUserID) && profile!=null)
 		toJS.accept(targetUsername,1);
 }else{
 	targetUserID = userID;
 	targetUsername = username;
 }
-boolean isMe = targetUserID.equals(userID);
+if(loggedIn || targetUsername != null){
+boolean isMe = Objects.equals(userID,targetUserID);
 int ap = profile.optInt("ap");
 int level = Profile.getLevel(ap);
 String clan = Profile.clans.get(profile.optInt("clan"));
@@ -280,7 +282,7 @@ loadAch();
 	<%
 	if(!targetUserID.equals(userID)){
 		%>
-			<a style='color:skyblue;text-decoration:underline;position:absolute;top:-20px' href="#" onclick = 'redirParam("target",null)'>
+			<a style='color:skyblue;text-decoration:underline;position:absolute;top:-20px' href="#" onclick = 'redirParam("viewing",null,"target",null)'>
 			&lt;&lt;Back to your profile...
 			</a>
 		<%
@@ -297,7 +299,7 @@ loadAch();
 	<form method="post" action=""  >
 	View profile:
 	<br>
-	<input id="targetUsername" type="text" name="targetUsername" size = "20px" style="" placeholder = "Username" autofocus>
+	<input id="targetUsername" type="text" name="viewing" size = "20px" style="" placeholder = "Username" autofocus>
 	<input type="hidden" name="target" value = "">
 	<input type="submit" name="submit" value = "Go" class= "button3" style="top:0px"><br>
 	</form>
@@ -309,7 +311,7 @@ loadAch();
 			var fa = fp.optString("avatar","nk_monkey.png");
 			var fn = fp.optString("hydarUsername");
 			if(fn.isEmpty()) fn = fp.optString("username");
-			%><a title='<%=fn%>' href='#' onclick='redirParam("target","<%=s%>")'>
+			%><a title='<%=fn%>' href='#' onclick='redirParam("viewing","<%=fn%>")'>
 			<img src = 'https://avatars.nkstatic.com/small/<%=fa%>' class='inline20'/>
 			</a> <%
 		}
