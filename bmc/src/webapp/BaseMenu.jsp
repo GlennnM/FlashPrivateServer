@@ -273,7 +273,7 @@ function redirParam(x,v,x2=null,v2=null) {
 }
 
 .button3 {
-	dsiplay: inline-block;
+	display: inline-block;
 	background-color: rgb(41, 47, 53);
 	color: white;
 	border: none;
