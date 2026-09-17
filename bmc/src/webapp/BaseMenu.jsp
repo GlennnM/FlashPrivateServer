@@ -316,15 +316,15 @@ input:-webkit-autofill:focus {
 </div>
 <div class = "textbox"><div class = "textboxmove">
 <div class = "header" id="header">
-<a href="Menu.jsp" <%if(tab==0){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; status</a> 
+<a href="/Menu.jsp" <%if(tab==0){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; status</a> 
 /
-<a href="Profile.jsp" <%if(tab==1){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; profile</a> 
+<a href="/Profile.jsp" <%if(tab==1){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; profile</a> 
 /
-<a href="Menu.jsp" <%if(tab==2){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; <s>leaderboard</s></a>
+<a href="/Menu.jsp" <%if(tab==2){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; <s>leaderboard</s></a>
 /
- <a href="Settings.jsp" <%if(tab==3){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; settings</a>
+ <a href="/Settings.jsp" <%if(tab==3){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; settings</a>
 /
-  <a href="About.jsp" <%if(tab==4){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; about</a>
+  <a href="/About.jsp" <%if(tab==4){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; about</a>
 </div>
 <script>
 function $(x){

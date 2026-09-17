@@ -251,7 +251,7 @@ if((loggedIn || targetUsername != null) && profile!=null){
 			//(async ()=>{
 				try{
 					let progress = achProgress[game];
-					let r = await fetch(`amf_data/ach/${encodeURIComponent(game.replace(":",""))}.json`);
+					let r = await fetch(`/amf_data/ach/${encodeURIComponent(game.replace(":",""))}.json`);
 					let achs = JSON.parse(await r.text());
 					let totalAP=0, totalA=0, myAP=0, myA = 0;
 					//console.log(achs);
@@ -282,8 +282,7 @@ if((loggedIn || targetUsername != null) && profile!=null){
 	function copyURL(){
 		
 		let url = new URL(window.location.href);
-        url.search="";
-        url.searchParams.set("viewing","<%=targetUsername%>");
+        url.path = "/profile/<%=targetUsername%>";
         try{
         	navigator.clipboard.writeText(url.href);
         }catch(e){
