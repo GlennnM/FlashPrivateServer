@@ -421,11 +421,33 @@ public class Profile {
 				}
 				return x_.put(game, x);
 			});
+			if("u".equals(ret.get(2)))
+				addGlobalAchievement(game, achID);
 			if(ap.sum()>0)
 				addAP(userID, (int)ap.sum());
 			return ret;
 		}
 		private static void addAP(String userID, int ap){
 			Profile.update(userID, x->x.put("ap",x.getInt("ap")+ap));
+		}
+		public static void addGlobalPlayer(String game) {
+			if(!games.contains(game))throw new NKVerifyException("unknown game");
+			store.update(List.of("amf","globalAchievements"),x->{
+				if(x==null)x=new JSONObject();
+				var ach = x.optJSONObject(game,new JSONObject());
+				ach.put("players",ach.optInt("players")+1);
+				x.put(game, ach);
+				return x;
+			});
+		}
+		private static void addGlobalAchievement(String game, int achID) {
+			if(!games.contains(game))throw new NKVerifyException("unknown game");
+			store.update(List.of("amf","globalAchievements"),x->{
+				if(x==null)x=new JSONObject();
+				var ach = x.optJSONObject(game,new JSONObject());
+				ach.put(""+achID,ach.optInt(""+achID)+1);
+				x.put(game, ach);
+				return x;
+			});
 		}
 }
