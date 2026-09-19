@@ -15,7 +15,6 @@
     color:white;
 	margin-left:-180px; 
 	text-align: center;
-	 font-style: italic;
 	font-family:calibri, arial;
 	 font-size:20px;
 	margin-top:-60px;
@@ -26,10 +25,59 @@
 }
 #clanSelector{
 	left:55%;
+	 font-style: italic;
 	padding-left:20px;
 	overflow-y:hidden;
 	width:270px; 
 	grid-template-columns: repeat(5,50px);
+}
+#avatarSelector{
+ font-style: italic;
+}
+#achSelector{
+	grid-template-columns: repeat(2,220px);
+}
+.achSelectorBox{
+	font-size:10px;
+	 border: 2px solid black;
+  border-radius: 4px;
+	text-align:left;
+	font-style:italic;
+}
+.achSelectorBox img{
+  border-radius: 4px;object-fit: cover;
+	float:left;
+	margin-right:5px;
+}
+.achSelectorBox b{
+	font-size:14px;
+	font-style:normal;
+}
+.apAmount{
+	background:red;
+	margin-top: -2px;
+	height:15px;
+	top:2px;
+	float:right;
+	right:0px;
+	border-radius:4px;
+	margin-left:5px;
+	line-height: normal;
+	padding-bottom:2px;
+	position:relative;
+	display:block;
+	text-align:right;
+	font-weight:bold;
+	font-style:normal;
+	vertical-align: top;
+	z-index:5;
+	border:0px;
+	font-size:15px;
+}
+.apAmount img{
+float:left;
+margin-top:1px;
+margin-right:0px;
 }
 .selItem{
 width:40px;
@@ -87,6 +135,10 @@ margin:0px;
 
 </div>
 
+<div id="achSelector" class="selector" hidden=1>
+<%-- <a style="grid-column: 1 / -1;">Select clan...<br></a>--%>
+
+</div>
 <%!
 static final String color(int lvl){
 	return 
@@ -227,6 +279,34 @@ if((loggedIn || targetUsername != null) && profile!=null){
 		}
 		loaded[thing]=true;
 	}
+	async function selectAch(game){
+		let sel = $("achSelector");
+		sel.hidden=null;
+		$("overlay").hidden=null;
+		[...sel.children].forEach(x=>sel.removeChild(x));
+		let progress = achProgress[game];
+		let r = await fetch(`/amf_data/ach/${encodeURIComponent(game.replace(":",""))}.json`);
+		let achs = JSON.parse(await r.text());
+		for(let ach of achs){
+			if(progress[ach.id]>=100){
+				let div = document.createElement("div");
+
+				let ap = document.createElement("div");
+				ap.className="apAmount";
+				ap.innerHTML="<%=miniHydar2%>"+ach.points;
+				div.appendChild(ap);
+				
+				div.className="achSelectorBox";
+				let img = document.createElement("img");
+				div.appendChild(img);
+
+				img.src = ach.thumb;
+
+				div.innerHTML+=`<b>${ach.ach_name}</b><br>${ach.description}`;
+				sel.appendChild(div);
+			}
+		}
+	}
 	function selectAvatar(){
 		if(<%=isMe%>)selectThing("avatar");
 	}
@@ -269,7 +349,8 @@ if((loggedIn || targetUsername != null) && profile!=null){
 					if(myA==0){
 						$("leftCol").innerHTML += `<i style="color:gray;font-size:15px">${game}: (no achievements)*</i><br>`;
 					}else{
-						$("leftCol").innerHTML += `<a style="color:${color(game)};font-size:15px"> ${game}:</a> <a style="color:${myA == totalA?"cyan":"white"};font-size:15px">
+						$("leftCol").innerHTML += `<a href="#" onclick="selectAch('${game}');" style="color:${color(game)};font-size:15px"> ${game}:</a> 
+							<a href="#" onclick="selectAch('${game}');" style="color:${myA == totalA?"cyan":"white"};font-size:15px">
 							${myA}/${totalA}, ${myAP}/${totalAP} <%=miniHydar2%></a> <br>`;
 					}
 				}catch(e){
