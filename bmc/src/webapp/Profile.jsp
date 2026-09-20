@@ -10,7 +10,8 @@
 	top:30%;
 	left:40%;
 	width:470px; 
-	height:300px;
+	max-height:300px;
+	/*height:300px;*/
     background : rgb(51, 57, 63);
     color:white;
 	margin-left:-180px; 
@@ -21,7 +22,9 @@
     z-index: 30;
 	display:grid;
 	grid-template-columns: repeat(9,50px);
-	overflow-y:scroll
+	overflow-y:auto;
+	align-items: start;
+	align-content: flex-start
 }
 #clanSelector{
 	left:55%;
@@ -43,6 +46,7 @@
   border-radius: 4px;
 	text-align:left;
 	font-style:italic;
+	height:70px;
 }
 .achSelectorBox img{
   border-radius: 4px;object-fit: cover;

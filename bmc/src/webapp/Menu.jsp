@@ -22,7 +22,7 @@ Saving to&nbsp;<%=loggedIn ? (isHydarLogin ? miniHydar + " only" : "both") : "no
 <form method="post" action=""  >
 <p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 70px);">
 
-<%=miniHydar%> login<br>	
+<%=miniHydar%> login (NOT NK LOGIN)<br>	
 <input id="loginU" type="text" name="loginU" size = "20px" style="" placeholder = "Username" autofocus><br>
  
 

@@ -316,7 +316,7 @@ input:-webkit-autofill:focus {
 </div>
 <div class = "textbox"><div class = "textboxmove">
 <div class = "header" id="header">
-<a href="/Menu.jsp" <%if(tab==0){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; status</a> 
+<a href="/Menu.jsp" <%if(tab==0){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; <%= loggedIn ? "status" : "login" %></a> 
 /
 <a href="/Profile.jsp" <%if(tab==1){ %>style='color:white'<%} %>><%=miniHydar %>&nbsp; profile</a> 
 /
@@ -340,8 +340,8 @@ function $(x){
 <p style = "position:absolute;left:20px;top:250px;right:200px;width:250px">
 <%if(loggedIn){ %> 
 <a href="?logout=1" style="font-size:24px;color:blue;text-decoration: underline;">Log out...</a><br>
-	 Games synced:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") != null).collect(Collectors.joining(", "))%><br><%
-	%> Not synced/never played:&nbsp;<%= Profile.games.stream().filter(x->store.get("amf", userID, x, "ach") == null).collect(Collectors.joining(", "))%><br>
+	 Games synced:&nbsp;<%= Profile.games.stream().filter(x->Profile.getAchProgress(x, userID).length()>0).collect(Collectors.joining(", "))%><br><%
+	%> Not synced/never played/no data:&nbsp;<%= Profile.games.stream().filter(x->Profile.getAchProgress(x, userID).length()==0).collect(Collectors.joining(", "))%><br>
 
 <%}else{%>
 *A new <%=miniHydar%> account will not be able to use saves from NK servers!!!

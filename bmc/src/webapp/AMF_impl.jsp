@@ -329,7 +329,6 @@ static class AMFImpl{
 						.put("neoInventory", new JSONObject())
 						.put("inventory", JSONObject.NULL)
 						.put("lastSaved", System.currentTimeMillis());
-				Profile.addGlobalPlayer(game);
 			}
 			var res = update.apply(x);
 			return res == FileObjectStore.UNCHANGED ? x : res;
