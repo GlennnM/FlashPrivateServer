@@ -363,7 +363,8 @@ if((loggedIn || targetUsername != null) && profile!=null){
 	function copyURL(){
 		
 		let url = new URL(window.location.href);
-        url.path = "/profile/<%=targetUsername%>";
+        url.search = "";
+        url.pathname = "/profile/<%=targetUsername%>";
         try{
         	navigator.clipboard.writeText(url.href);
         }catch(e){
