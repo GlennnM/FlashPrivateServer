@@ -77,12 +77,15 @@ if(logout!=null){
 String qUsername = request.getParameter("username");
 String qUserID = request.getParameter("userID");
 String qToken = request.getParameter("token");
+String qSaveMode = request.getParameter("saveMode");
 if(qUserID!=null){
 	try{
 		Profile.verifyNK(qUserID, qToken);
 		session.setAttribute("username", qUsername);
 		session.setAttribute("userID", qUserID);
 		session.setAttribute("token", qToken);
+		if(qSaveMode!=null)
+			session.setAttribute("saveMode", qSaveMode);
 		response.sendRedirect(response.encodeURL(request.getRequestURI()));
 		return;
 	}catch(Exception e){
@@ -93,6 +96,9 @@ if(qUserID!=null){
 String username = (String)session.getAttribute("username");
 String userID = (String)session.getAttribute("userID");
 String token = (String)session.getAttribute("token");
+String saveMode = (String)session.getAttribute("saveMode");
+boolean noHydar = "NK_ONLY".equals(saveMode) || "NONE".equals(saveMode);
+boolean noNK = "HYDAR_ONLY".equals(saveMode) || "NONE".equals(saveMode);
 boolean loggedIn = userID != null;
 if(loggedIn){
 	try{
@@ -138,7 +144,6 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 //--> change password(3,4,5)
 //--> change clan/avatar, add friends... (5.1 or smth probably)
 //TODO: smtp for reset
-//TODO: show save failed status?
 //TODO: no double refresh
 //placeholder stuff from index.jsp
 %>

@@ -11,7 +11,20 @@ Flash Private Server</b><br><br>
 <br>	
 <%=miniHydar%>:&nbsp;<%= loggedIn ? (hasHydarID ? hydarUsername : "Linked with NK, no username yet") : "Not logged in" %>
 <br>
-Saving to&nbsp;<%=loggedIn ? (isHydarLogin ? miniHydar + " only" : "both") : "none" %>.
+<%-- Saving to&nbsp;<%=loggedIn ? ((isHydarLogin || noNK) ? 
+		(noHydar ? "none": (miniHydar + " only"))  :
+		noHydar ? 
+		(noNK ? "NK only" : "none")
+	: "both") : "none" .--%>
+Saving to&nbsp;<%=(loggedIn ? (isHydarLogin ? miniHydar + " only" : "both") : "none") + (noHydar || noNK ? "*" : "") %>.
+	
+<%if(noHydar){ %>
+<br>*A communication failure occurred, disabling <%=noNK ? "all": miniHydar%> saves. 
+Restart the Archive to try resyncing from this source.
+<%}else if(noNK){ %>
+<br>*A communication failure occurred, disabling NK saves. 
+Restart the Archive to try resyncing from this source.
+<%}%>
 <br>
 
 <%
@@ -52,7 +65,7 @@ Register new <%=miniHydar%> account*:
 </form>
 <%}else if(!hasHydarID){ %>
 <form method="post" action=""  >
-<p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; top:calc(50% - 50px);">
+<p style = "color:rgb(255,255,255); font-family:calibri, arial; z-index:1; position:fixed; position:absolute; text-align:left; left:50%; display:block; bottom:0px;">
 
 <br>
 Add <%=miniHydar%> credentials to your NK account:
