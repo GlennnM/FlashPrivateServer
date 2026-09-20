@@ -11,13 +11,19 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
@@ -45,8 +51,11 @@ public class Profile {
 
 	static final JSONObject nk_ach = new JSONObject();
 	public static final Set<String> games = Set.of("Battle Blocks Defense","Battle Panic","Battles","BSM2","BTD4","BTD5","Fortress: Destroyer","MonkeyCity","SAS TD","SAS3","SAS4","Tower Keepers");
-	
+	public static final Map<String, AtomicLong> loginFails = new ConcurrentHashMap<>();
+	public static final AtomicLong lastResetLogins = new AtomicLong(System.currentTimeMillis());
 	static final SecureRandom rng=new SecureRandom();
+	static final ZoneId UTC = ZoneId.of("Z");
+	static final AtomicLong ZERO = new AtomicLong();
 	public static void setStore(ObjectStore store) {
 		Profile.store = store;
 	}
@@ -96,6 +105,19 @@ public class Profile {
 			}
 			return true;
 		}
+	 private static long addLoginFail(String userID) {
+		 lastResetLogins.accumulateAndGet(System.currentTimeMillis(), (prev, now)->{
+			 int m1 = LocalDate.ofInstant(Instant.ofEpochMilli(prev), UTC).getMonthValue();
+			 int m2 = LocalDate.ofInstant(Instant.ofEpochMilli(now), UTC).getMonthValue();
+			 if(m1 != m2)
+				 loginFails.clear();
+			 return now;
+		 });
+		 return loginFails.computeIfAbsent(userID, x->new AtomicLong()).incrementAndGet();
+	}
+	 private static long getLoginFails(String userID) {
+		return loginFails.getOrDefault(userID, ZERO).get();
+	 }
 	 public static int getLevel(int ap) {
 		 int lvl = Arrays.binarySearch(levelCutoffs, ap);
 		 return lvl<0 ? -(lvl + 2) : lvl;
@@ -297,13 +319,18 @@ public class Profile {
 				 .put("token",newUser.getString("hydarUsername"));
 	 }
 	 public static JSONObject login(String username, String password) {
-		 var uid = updateIndex(x->x).optString(username);
 		 if(username == null)throw new NKVerifyException("User or password incorrect");
+		 var uid = updateIndex(x->x).optString(username);
+		 long fails = getLoginFails(uid);
+		 if(fails > 100)
+			 throw new NKVerifyException("Too many logins, try NK login instead, wait a month, or contact support at hydar dot xyz");
 		 var profile = get(uid);
 		 var hydarPW = profile.optString("password");
-		 Util.sleep(500);
-		 if(hydarPW == null || !hydarPW.equals(Util.hash(username+password)))
+		 Util.sleep(fails < 5 ? 500 : fails < 20 ? 5000 : 15000);
+		 if(hydarPW == null || !hydarPW.equals(Util.hash(username+password))) {
+			 addLoginFail(uid);
 			 throw new NKVerifyException("User or password incorrect");
+		 }
 		 return new JSONObject()
 				 .put("id", profile.get("hydarUserID"))
 				 .put("token", profile.get("hydarToken"))
@@ -409,6 +436,8 @@ public class Profile {
 				if(x_==null){
 					x_ = new JSONObject();
 				}
+				if(!x_.has(game))
+					Profile.addGlobalPlayer(game);
 				var x = x_.optJSONObject(game, new JSONObject());	
 				int oldPerc = (int) x.optDouble(""+achID,0d);
 				int newPerc = Math.max(oldPerc, (int) perc);
