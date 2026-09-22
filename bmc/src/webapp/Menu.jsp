@@ -16,15 +16,17 @@ Flash Private Server</b><br><br>
 		noHydar ? 
 		(noNK ? "NK only" : "none")
 	: "both") : "none" .--%>
-Saving to&nbsp;<%=(loggedIn ? (isHydarLogin ? miniHydar + " only" : "both") : "none") + (noHydar || noNK ? "*" : "") %>.
+Saving to&nbsp;<%=(loggedIn ? ((isHydarLogin ? miniHydar + " only" : "both")+ (noHydar || noNK ? "*" : "")) : "none")  %>.
 	
-<%if(noHydar){ %>
-<br>*A communication failure occurred, disabling <%=noNK ? "all": miniHydar%> saves. 
-Restart the Archive to try resyncing from this source.
-<%}else if(noNK){ %>
-<br>*A communication failure occurred, disabling NK saves. 
-Restart the Archive to try resyncing from this source.
-<%}%>
+<%if(loggedIn){
+	if(noHydar){ %>
+	<br>*A communication failure occurred, disabling <%=noNK ? "all": miniHydar%> saves. 
+	Restart the Archive to try resyncing from this source.
+	<%}else if(noNK){ %>
+	<br>*A communication failure occurred, disabling NK saves. 
+	Restart the Archive to try resyncing from this source.
+	<%}
+}%>
 <br>
 
 <%

@@ -185,7 +185,6 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 			}
 			a:hover{
 				font-size:20px;
-                font-size-adjust: 0.46;
 			}
 			#overlay{
 			    position   : absolute;
