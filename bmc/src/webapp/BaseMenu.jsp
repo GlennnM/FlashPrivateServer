@@ -173,18 +173,19 @@ boolean hasNKID = loggedIn && profile.get("userID") != JSONObject.NULL;
 				position:relative;
 				font-weight:bold;
 				font-style:italic;
+                white-space: nowrap;
 				text-decoration: none;
 				left:0px;top:-3px;
 				display:grid;
 				grid-template-columns: 1fr 10px 1fr 10px 1.5fr 10px 1.2fr 10px 1fr;
-				
 			}
 			a{
 				text-decoration: none;
 				color:inherit
 			}
 			a:hover{
-				font-size:20px
+				font-size:20px;
+                font-size-adjust: 0.46;
 			}
 			#overlay{
 			    position   : absolute;
