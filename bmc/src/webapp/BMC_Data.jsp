@@ -593,13 +593,14 @@ static{
 					);
 				for(int index: List.of(0,1)){
 					var info = getCityThing(id, index, "info");
-					if(info == null)
-						continue;
 					if(id==1){
 						var me = getCityThing(userID, index, "info");
-						cities.put(Util.getBotCity(index, me.getInt("level"), me.getInt("honour")));
+						if(me!=null)
+							cities.put(Util.getBotCity(index, me.getInt("level"), me.getInt("honour")));
 						continue;
 					}
+					if(info == null)
+						continue;
 					cities.put(new JSONObject(6)
 							.put("cityIndex", index)
 							.put("level", info.getInt("level"))
