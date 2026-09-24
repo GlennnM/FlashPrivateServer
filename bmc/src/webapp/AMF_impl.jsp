@@ -1,3 +1,4 @@
+<%@page import="java.util.concurrent.ThreadLocalRandom"%>
 <%@page import="java.util.Objects"%>
 <%@page import="xyz.hydar.bmc.AMFService"%>
 <%@page import="xyz.hydar.bmc.Profile"%>
@@ -182,6 +183,12 @@ static class AMFImpl{
 	}
 
 
+	public List<Object> getInventoryV2(String userID, String token, String game, String username,  Context context){
+		var v1 = getInventory(userID, token, game, username, context);
+		var rng = ThreadLocalRandom.current();
+		v1.forEach(x->((JSONObject)x).put("uuid",""+rng.nextLong()).put("tag",""+rng.nextLong()));
+		return v1;
+	}
 	public List<Object> getInventory(String userID, String token, String game, String username,  Context context){
 		verifyNK(userID, token);//so invalid token warning can happen early
 		if(! Profile.games.contains(game) || !currID.containsKey(game))

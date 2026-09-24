@@ -308,8 +308,9 @@ static{
 			String game=(String)args.get(0);
 			String userID=(String)args.get(1);
 			String token=(String)args.get(2);
-			String username=(String)args.get(2);
-			return new JSONObject().put("success",true).put("items",DATA.getInventory(userID, token, game, username, ctx));
+			String username=(String)args.get(3);
+			return new JSONObject().put("success",true)
+					.put("items",DATA.getInventoryV2(userID, token, game, username, ctx));
 		}
 	}
 	.inputs("game","userID","token","username")
@@ -407,7 +408,7 @@ static{
    				out.println("newacc: "+AMFBodies.from(file));
 		   	}
 		} 
-		for(String filename:List.of("/initresync.txt","/newacc2r.txt","/newacc2.txt","/616a_.txt","/616b.txt","/616b_.txt","/617_.txt","/618_.txt","/617.txt","/618.txt","/19621_.txt","/resyncq.txt","/resyncr.txt","/servertimeandscores.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
+		for(String filename:List.of("/getinv1.txt","/setinv.txt","/newacc2r.txt","/newacc2.txt","/616a_.txt","/616b.txt","/616b_.txt","/617_.txt","/618_.txt","/617.txt","/618.txt","/19621_.txt","/resyncq.txt","/resyncr.txt","/servertimeandscores.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("File: "+AMFBodies.from(file));
 		   	}
