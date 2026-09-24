@@ -207,11 +207,18 @@ static final String image(String clan){
 <%
 String searchUser = request.getParameter("viewing");
 String targetUserID, targetUsername;
-if(searchUser!=null){
+if(searchUser!=null && !searchUser.isEmpty()){
 	if(!searchUser.equals(username))toJS.accept(searchUser,1);
-	targetUserID = Profile.updateIndex(x->x).optString(searchUser, userID);
-	targetUsername = Objects.equals(userID,targetUserID) ? username : searchUser;
-	profile = Profile.get(targetUserID);
+	var tmpUserID = Profile.updateIndex(x->x).optString(searchUser, userID);
+	if(tmpUserID == null){
+		popup.accept("User not found; make sure they have hydar username");
+		targetUserID = userID; 
+		targetUsername = username;
+	}else{
+		targetUserID = tmpUserID; 
+		targetUsername = Objects.equals(userID,targetUserID) ? username : searchUser;
+		profile = Profile.get(targetUserID);
+	}
 }else{
 	targetUserID = userID;
 	targetUsername = username;
