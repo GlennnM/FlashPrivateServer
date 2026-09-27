@@ -213,7 +213,7 @@ public class FileObjectStore implements ObjectStore {
 					.map(x -> {
 						try {
 							return x.getParent().getFileName().toString() + "->"
-									+ new String(Base64.getDecoder().decode(x.getFileName().toString().trim()), UTF_8)
+									+ new String(Base64.getUrlDecoder().decode(x.getFileName().toString().trim()), UTF_8)
 									+ " -> " + Files.readString(x);
 						} catch (IOException e) {
 							return "";
@@ -237,7 +237,7 @@ public class FileObjectStore implements ObjectStore {
 	}
 
 	public Path map(String url) {
-		String newURL = Base64.getEncoder().encodeToString(url.getBytes(UTF_8));
+		String newURL = Base64.getUrlEncoder().encodeToString(url.getBytes(UTF_8));
 		CRC32 crc = new CRC32();
 		crc.update(url.getBytes(UTF_8));
 		int bucket = (int) (crc.getValue()) & 0x7ff;
