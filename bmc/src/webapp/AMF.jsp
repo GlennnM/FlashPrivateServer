@@ -350,6 +350,20 @@ static{
 	}
 	.inputs("userID","token","game",7.0)
 	.register();
+
+	new AMFService("v2.user.consume_item"){
+		@Override
+		public Object apply(List<?> args) throws Exception{
+			String userID=(String)args.get(0);
+			String token=(String)args.get(1);
+			String game=(String)args.get(2);
+			String uuid=(String)args.get(3);
+			return DATA.consumePrem_v2(userID, token, game, uuid);
+		}
+	}
+	.inputs("userID","token","game","uuid")
+	.register();
+	
 	new AMFService("v2.prem.consumeNeoPremItem"){
 		@Override
 		public Object apply(List<?> args) throws Exception{
@@ -393,24 +407,9 @@ static{
 	   	//(use save request/save response in fiddler to get some test data)
 	   	
 	   out.println("request: ");
-	   	for(String filename: List.of("/getcurrency2.txt")){
-		   	var baos=new ByteArrayOutputStream();
-		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
-		   		byte[] data=file.readAllBytes();
-		   		out.println("File: "+AMFBodies.from(data));
-		   		//AMFService.accept(new ByteArrayInputStream(data),baos);
-		   	}
-		   //	out.println("response: ");
-		   	//out.println(AMFBodies.from(baos.toByteArray()));
-	   	} 
-		for(String filename:List.of("/newacc.txt")){
+		for(String filename:List.of("/inv.txt","/invr.txt","/consume.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("newacc: "+AMFBodies.from(file));
-		   	}
-		} 
-		for(String filename:List.of("/getinv1.txt","/setinv.txt","/newacc2r.txt","/newacc2.txt","/616a_.txt","/616b.txt","/616b_.txt","/617_.txt","/618_.txt","/617.txt","/618.txt","/19621_.txt","/resyncq.txt","/resyncr.txt","/servertimeandscores.txt","/btd5-myresponse.txt","/btd5-request.txt","/btd5-response.txt")){
-		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
-   				out.println("File: "+AMFBodies.from(file));
 		   	}
 		} 
    	}

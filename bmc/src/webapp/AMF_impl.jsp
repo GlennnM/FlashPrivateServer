@@ -185,8 +185,15 @@ static class AMFImpl{
 
 	public List<Object> getInventoryV2(String userID, String token, String game, String username,  Context context){
 		var v1 = getInventory(userID, token, game, username, context);
+		if(v1.isEmpty() || !(v1.get(0) instanceof JSONObject))
+			return v1;
 		var rng = ThreadLocalRandom.current();
-		v1.forEach(x->((JSONObject)x).put("uuid",""+rng.nextLong()).put("tag",""+rng.nextLong()));
+		v1.forEach(x->{
+			var v = (JSONObject)x;
+			var q = v.getInt("id")+"_"+v.getInt("quantity");
+			v.put("uuid",q)
+				.put("tag",q);
+		});
 		return v1;
 	}
 	public List<Object> getInventory(String userID, String token, String game, String username,  Context context){
@@ -242,6 +249,23 @@ static class AMFImpl{
 			}
 
 		return Map.of("success",false);
+	}
+	public boolean consumePrem_v2(String userID, String token, String game, String uuid){
+		if(! Profile.games.contains(game))
+			return false;
+		verifyNK(userID, token);
+		String[] uuid_ = uuid.split("_",2);
+		int id = Integer.parseInt(uuid_[0]);
+		updateSave(userID, game, x->{
+			var inv = x.optJSONObject("inventory", new JSONObject());
+			int newQuantity = inv.optInt(""+id)-1;
+			if(newQuantity >= 1)
+				inv.put(""+id,newQuantity);
+			else
+				inv.remove(""+id);
+			return x;
+		});
+		return true;
 	}
 	public boolean consumeNeoPrem_v2(String userID, String token, String game, String uuid){
 		if(! Profile.games.contains(game) || !currID.containsKey(game))
