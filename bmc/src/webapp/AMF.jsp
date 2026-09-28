@@ -147,6 +147,16 @@ static{
 			return new JSONArray();
 		}
 	}.inputs("gameName","userID","token","username").register();
+/*
+	new AMFService("v2.user.buy_items"){
+		@Override
+		public Object apply(List<?> args) throws SQLException{
+			String userID=(String)args.get(3);
+			String token=(String)args.get(1);
+			List<?> items = (List<?>)args.get(2);
+			return DATA.buyItems(userID, token, items, ctx);//.put("currency",4608d).put("currid",1d);
+		}
+	}.inputs("uname","token",List.of(List.of("id","quantity")), "userid").register();*/
 	new AMFService("prem.buyItems"){
 		@Override
 		public Object apply(List<?> args) throws SQLException{

@@ -190,7 +190,7 @@ static class AMFImpl{
 		var rng = ThreadLocalRandom.current();
 		v1.forEach(x->{
 			var v = (JSONObject)x;
-			var q = v.getInt("id")+"_"+v.getInt("quantity");
+			var q = v.getInt("id")+"_0";
 			v.put("uuid",q)
 				.put("tag",q);
 		});
@@ -238,6 +238,26 @@ static class AMFImpl{
 				.forEach((k,v)->res.add(new JSONObject(2).put("id",k).put("quantity",v)));
 		return res;
 	}
+	/*
+	public Map<?,?> buyItems(String userID, String token, List<?> items, Context context){
+		List<Object> ret = new ArrayList<>();
+		for(var item: items){
+			if(item instanceof List<?> newItem){
+				int id = (int)(double)newItem.get(0);
+				int quantity = (int)(double)newItem.get(1);
+				for(var game : Profile.games){
+					Map<Integer,JSONObject> store = getStoreMap(game, context);
+					if(store.containsKey(id))
+						ret.add(new JSONObject(store.get(id).toString())
+							.put("quantity",quantity)
+							.put("uuid",id+"_0")
+							.put("tag",id)
+							);
+				}
+			}
+		}
+		return Map.of("success",false,"items",ret);
+	}*/
 	public Map<?,?> buyNeoItems_v2(String userID, String token, String game, List<?> items, Context ctx){
 		var res = buyNeoItems(userID, token, game, items, ctx);
 		for(var o: res)
