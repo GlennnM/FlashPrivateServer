@@ -254,6 +254,8 @@ static class AMFImpl{
 		if(! Profile.games.contains(game))
 			return false;
 		verifyNK(userID, token);
+		if(uuid.length() > 10)
+			return true;//we don't know what item it is (NK uuid)
 		String[] uuid_ = uuid.split("_",2);
 		int id = Integer.parseInt(uuid_[0]);
 		updateSave(userID, game, x->{

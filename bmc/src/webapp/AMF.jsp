@@ -407,7 +407,7 @@ static{
 	   	//(use save request/save response in fiddler to get some test data)
 	   	
 	   out.println("request: ");
-		for(String filename:List.of("/inv.txt","/invr.txt","/consume.txt")){
+		for(String filename:List.of("/inv.txt","/invr.txt","/buy_v2.txt","/buy_v2_r.txt","/consume.txt")){
 		   	try(InputStream file=request.getServletContext().getResourceAsStream(filename)){
    				out.println("newacc: "+AMFBodies.from(file));
 		   	}
