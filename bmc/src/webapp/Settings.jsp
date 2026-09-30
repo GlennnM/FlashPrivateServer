@@ -61,15 +61,19 @@ if(request.getMethod().equals("POST")){
 		case "changeUsername":
 			toJS.accept(request.getParameter("loginP"), 1);
 			JSONObject data = Profile.changeUsername(hydarUsername, request.getParameter("loginP"), token, request.getParameter("loginU"));
-			
+			session.setAttribute("username", data.get("username"));
+			session.setAttribute("token", data.get("token"));
+			data.put("id",userID);
+
 			%>
 			<script>
 			let data = <%=data%>;
 			let usp = new URLSearchParams(window.location.search);
 			usp.set("op","");
-			if(token.startsWith("hyd")){
+			if(<%=isHydarLogin%>){
 				usp.set("username",data.username);
 				usp.set("token",data.token);
+				window.nkarchive?.sendUserData(data);
 			}
 			window.location.search = usp.toString();
 			</script>
@@ -77,12 +81,18 @@ if(request.getMethod().equals("POST")){
 			break;
 		case "changePassword":
 			var newToken = Profile.changePassword(userID, request.getParameter("loginP"), token, request.getParameter("loginP2"));
+			session.setAttribute("token", newToken);
+			data = new JSONObject(3)
+				.put("token", newToken).put("username", username)
+				.put("id",userID);
 			%>
 			<script>
 			let usp = new URLSearchParams(window.location.search);
 			usp.set("op","");
-			if(token.startsWith("hyd"))
+			if(<%=isHydarLogin%>){
 				usp.set("token","<%=newToken%>");
+				window.nkarchive?.sendUserData(<%=data%>);
+			}
 			window.location.search = usp.toString();
 			</script>
 			<%
