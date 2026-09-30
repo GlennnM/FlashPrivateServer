@@ -1,6 +1,6 @@
 
-$VERSION = "4.3"
-$SIZE = 123791374
+$VERSION = "5.0"
+$SIZE = 84263932
 $win_steam =${env:ProgramFiles(x86)}+"\Steam\steamapps\common\Ninja Kiwi Archive\resources"
 $win_standalone1=${env:LocalAppData}+"\Programs\Ninja Kiwi Archive\resources"
 $win_standalone2=${env:ProgramFiles}+"\Ninja Kiwi\Ninja Kiwi Archive\resources"
@@ -116,7 +116,7 @@ function DownloadThenExtract([string]$cache,[string]$zippath,[string]$downloadpa
 "Flash Private Server Installer by glenn m"
 	"The following mods will be installed:"
 	"Flash Private Server"
-    "(BTD5, Battles, BMC, SAS3, SAS4, Countersnipe)"
+    "(BTD5, Battles, BMC, SAS3, SAS4, Countersnipe, Accounts/Profiles)"
     "Enable hidden+extra archive games"
 	"Approx data size: $MB_FLOAT MB"
 	"==============================="
@@ -202,6 +202,7 @@ if ($IsWindows -or $ENV:OS) {
 "Successful installations: "+$global:count_
 if($global:count_ -gt 0){
     "You can now play multiplayer on the NK Archive! If some installations failed, scroll up to see which ones succeeded."
+	"Keep in mind NK Archive does NOT use the same accounts as other NK Steam/Mobile games!!!"
 }else{
     "Make sure you have the Ninja Kiwi Archive installed."
 	"If you do, this might be due to a non-default Steam folder or other drive used for storage. Try installing manually: https://github.com/GlennnM/FlashPrivateServer#second-method---all-platforms-manual-installation"

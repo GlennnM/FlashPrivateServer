@@ -10,7 +10,7 @@ fi
 
 echo "Detected version: $ver"
 
-if [ "$ver" != "4.3" ]; then
+if [ "$ver" != "5.0" ]; then
     echo "Version does not match latest. Update at https://github.com/GlennnM/FlashPrivateServer" >&2
     exit 1
 fi
@@ -45,3 +45,4 @@ if [ "$found_install" -eq 0 ]; then
 fi
 
 echo "Installed $count_extracted files"
+echo "Some new UI elements use the Calibri font, for best results consider installing this using protontricks!"
