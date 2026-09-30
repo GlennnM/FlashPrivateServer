@@ -453,7 +453,7 @@ if((loggedIn || targetUsername != null) && profile!=null){
 						toJS.accept(request.getParameter("friend"),1);
 						boolean success = Profile.addFriend(userID, token, request.getParameter("friend"));
 						if(success){
-							%> window.location="";<%
+							%> <script>window.location="";</script><%
 						}else{
 							throw new NKVerifyException("Already following or friends");
 						}

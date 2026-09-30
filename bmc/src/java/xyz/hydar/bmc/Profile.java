@@ -316,7 +316,7 @@ public class Profile {
 			return x;
 		});
 		 return new JSONObject(2).put("username",newUser.getString("hydarUsername"))
-				 .put("token",newUser.getString("hydarUsername"));
+				 .put("token",newUser.getString("hydarToken"));
 	 }
 	 public static JSONObject login(String username, String password) {
 		 if(username == null)throw new NKVerifyException("User or password incorrect");
