@@ -72,7 +72,7 @@ public class AMFService {
 		AMFMessage out = new AMFMessage();
 		var serializer = new JsonAMFSerializer(new DataOutputStream(output));
 		var h = AMFBodies.from(input);
-		System.out.println(h);
+		//System.out.println(h);
 		for (var body : h) {
 			out.addBody(accept(body, context));
 		}
