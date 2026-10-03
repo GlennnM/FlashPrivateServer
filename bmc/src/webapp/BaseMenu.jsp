@@ -225,7 +225,11 @@ function hidePopups(){
 }
 function redirParam(x,v,x2=null,v2=null) {
     var searchParams = new URLSearchParams(window.location.search);
-    v ? searchParams.set(x,v) : searchParams.delete(x);
+    if(x=="viewing" && !x2 && window.location.pathname.startsWith("/profile/")){
+    	window.location.pathname = "/profile" + (v?("/"+v):"");
+    	return;
+    } else v ? searchParams.set(x,v) : searchParams.delete(x);
+    	
     v2 ? searchParams.set(x2,v2) : searchParams.delete(x2);
     window.location.search = searchParams.toString();
 }
