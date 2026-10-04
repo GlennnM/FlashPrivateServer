@@ -181,7 +181,7 @@ public class Profile {
 		 if(!password.equals(password2))throw new NKVerifyException("Passwords do not match");
 		 Util.sleep(1500);
 		 var uid = updateIndex(x->{
-			if(x.has(username))
+			if(x.has(username) || x.has(username.toLowerCase()))
 				throw new NKVerifyException("Username taken");
 			long maxUID = x.toMap().values().stream()
 					.mapToLong(id->Long.parseLong((String)id)).max().orElse((int)1E8);
