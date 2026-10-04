@@ -11,7 +11,7 @@ import org.openamf.AMFBody;
 
 enum AMFType {
 	UNKNOWN(AMFBody.DATA_TYPE_UNKNOWN), NUMBER(AMFBody.DATA_TYPE_NUMBER), BOOLEAN(AMFBody.DATA_TYPE_BOOLEAN),
-	STRING(AMFBody.DATA_TYPE_STRING), OBJECT(AMFBody.DATA_TYPE_OBJECT), NULL(AMFBody.DATA_TYPE_NULL),
+	STRING(AMFBody.DATA_TYPE_STRING),LONG_STRING((byte)0xc), OBJECT(AMFBody.DATA_TYPE_OBJECT), NULL(AMFBody.DATA_TYPE_NULL),
 	ARRAY(AMFBody.DATA_TYPE_ARRAY), DATE(AMFBody.DATA_TYPE_DATE);
 
 	byte code;
@@ -34,8 +34,8 @@ enum AMFType {
 			return NUMBER;
 		else if (o instanceof Boolean)
 			return BOOLEAN;
-		else if (o instanceof String)
-			return STRING;
+		else if (o instanceof String s)
+			return s.length()<65536 ? STRING : LONG_STRING;
 		else if ((o instanceof List<?>) || (o instanceof JSONArray))
 			return ARRAY;
 		else if ((o instanceof Date))
@@ -47,7 +47,7 @@ enum AMFType {
 	}
 
 	public boolean allows(AMFType t) {
-		return (this == t) || (t == null) || (t == NULL);
+		return (t==LONG_STRING && this==STRING) || (this == t) || (t == null) || (t == NULL);
 	}
 
 	public static byte inferCode(Object o) {
