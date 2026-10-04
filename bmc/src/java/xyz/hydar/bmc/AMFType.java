@@ -34,8 +34,8 @@ enum AMFType {
 			return NUMBER;
 		else if (o instanceof Boolean)
 			return BOOLEAN;
-		else if (o instanceof String s)
-			return s.length()<65536 ? STRING : LONG_STRING;
+		else if (o instanceof String)
+			return STRING;
 		else if ((o instanceof List<?>) || (o instanceof JSONArray))
 			return ARRAY;
 		else if ((o instanceof Date))
@@ -45,7 +45,6 @@ enum AMFType {
 			return OBJECT;
 		return UNKNOWN;
 	}
-
 	public boolean allows(AMFType t) {
 		return (t==LONG_STRING && this==STRING) || (this == t) || (t == null) || (t == NULL);
 	}

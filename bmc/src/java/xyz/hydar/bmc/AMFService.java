@@ -90,24 +90,23 @@ public class AMFService {
 			list = List.of(input.getValue());
 		} else
 			list = (List<?>) input.getValue();
-		Object ret = null;
 		if (svc != null && svc.validateList(list)) {
 			try {
-				
+				//AMFSerializer.serialize doesn't care about the type
 				return new AMFBody(response + "/onResult", "null", 
 					(context == AMFService.class || !(svc instanceof AMFServiceWithContext svcc))
 					? svc.apply(list) : svcc.apply(list, context)
-				, AMFType.inferCode(ret));
+				, (byte)0);
 			} catch (NKVerifyException e) {
-				return new AMFBody(response + "/onResult", "null", "Invalid token", AMFType.inferCode(ret));
+				return new AMFBody(response + "/onResult", "null", "Invalid token", (byte)0);
 			}catch (Exception e) {
 				e.printStackTrace();
-				return new AMFBody(response + "/onStatus", "null", "error occurred: "+e.getClass().toString(), AMFType.inferCode(ret));
+				return new AMFBody(response + "/onStatus", "null", "error occurred: "+e.getClass().toString(), (byte)0);
 			}
 		}
 		//System.out.println(":(");
 		//System.out.println(input.getValue());
-		return new AMFBody(response + "/onStatus", "null", "Bad arguments", AMFType.inferCode(ret));
+		return new AMFBody(response + "/onStatus", "null", "Bad arguments", (byte)0);
 	}
 	
 	public static AMFService getService(String target){
