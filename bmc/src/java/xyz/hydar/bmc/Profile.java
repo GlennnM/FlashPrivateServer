@@ -150,11 +150,12 @@ public class Profile {
 		 if(!password.equals(password2))throw new NKVerifyException("Passwords do not match");
 		 var success = new AtomicBoolean();
 		 updateIndex(x->{
-				if(x.has(username))
+				if(x.has(username) || x.has(username.toLowerCase()))
 					throw new NKVerifyException("Username taken");
 				if(x.toMap().values().stream().anyMatch(nkUserID::equals))
 					throw new NKVerifyException("Already linked");
 				x.put(username, nkUserID);
+				x.put(username.toLowerCase(), nkUserID);
 				success.setOpaque(true);
 				return x;
 		});
@@ -186,6 +187,7 @@ public class Profile {
 					.mapToLong(id->Long.parseLong((String)id)).max().orElse((int)1E8);
 			maxUID = Math.max((int)1E8, maxUID);
 			x.put(username, ""+(maxUID+1));
+			x.put(username.toLowerCase(), ""+(maxUID+1));
 			
 			success.setOpaque(true);
 			return x;
@@ -206,7 +208,7 @@ public class Profile {
 	 public static boolean addFriend(String userID, String token, String friend) {
 		 verifyNK(userID, token);
 		 boolean[] success = {true};
-		 var friendID = updateIndex(x->x).optString(friend);
+		 var friendID = updateIndex(x->x).optString(friend.toLowerCase());
 		 if(friendID.isEmpty() )throw new NKVerifyException("User not found, make sure they have a Hydar username");
 		 if(friendID.equals(userID))throw new NKVerifyException("User cannot be yourself");
 		 update(friendID, x->{
@@ -295,6 +297,8 @@ public class Profile {
 		 var uid = updateIndex(x->x).optString(username);
 		 if(uid.isEmpty())throw new NKVerifyException("User not found");
 		 if(username == null || !isValid(newUsername))throw new NKVerifyException("Invalid username");
+		 if(updateIndex(x->x).has(newUsername) || updateIndex(x->x).has(newUsername.toLowerCase()))
+			 throw new NKVerifyException("Already taken");
 		 Util.sleep(500);
 		 //if(!token.startsWith("hyd"))throw new NKVerifyException("Hydar login required for this");
 		 verifyNK(uid, token);
@@ -312,7 +316,9 @@ public class Profile {
 		 });
 		updateIndex(x->{
 			x.remove(username);
+			x.remove(username.toLowerCase());
 			x.put(newUsername, uid);
+			x.put(newUsername.toLowerCase(), uid);
 			return x;
 		});
 		 return new JSONObject(2).put("username",newUser.getString("hydarUsername"))

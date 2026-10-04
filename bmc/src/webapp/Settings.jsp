@@ -59,7 +59,7 @@ if(request.getMethod().equals("POST")){
 	switch(op){
 	
 		case "changeUsername":
-			toJS.accept(request.getParameter("loginP"), 1);
+			toJS.accept(request.getParameter("loginU"), 1);
 			JSONObject data = Profile.changeUsername(hydarUsername, request.getParameter("loginP"), token, request.getParameter("loginU"));
 			session.setAttribute("username", data.get("username"));
 			session.setAttribute("token", data.get("token"));
