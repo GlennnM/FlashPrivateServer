@@ -46,7 +46,8 @@ public class FileObjectStore implements ObjectStore {
 	
 	public static volatile List<Thread> hooks = null;
 	public static volatile List<ScheduledExecutorService> flushers = null;
-	private final Compressors comp;
+	private final Compressors.Pool comp;
+	private final int COMPRESSOR_PARALLELISM = 8;
 	private FileObjectStore(Path root, int maxCacheSize) throws IOException {
 		this.maxCacheSize = maxCacheSize;
 		this.cache = new ConcurrentHashMap<>(maxCacheSize);
@@ -55,7 +56,7 @@ public class FileObjectStore implements ObjectStore {
 		if (!Files.isDirectory(root))
 			throw new IllegalArgumentException("Not a dir: " + root);
 		this.root = root;
-		comp = new Compressors(root.resolve("dict"));
+		comp = new Compressors.Pool(COMPRESSOR_PARALLELISM, root.resolve("dict"));
 		//compressor = getCompressor(root.resolve("dict"));
 	}
 

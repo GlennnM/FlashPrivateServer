@@ -13,6 +13,9 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.UnaryOperator;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
@@ -27,6 +30,49 @@ public class Compressors {
 	public static final int MODE = 0;//0 = prefer zstd jni 1 = prefer zstd java 2 = prefer gzip
 	public static final int MAX_BUFFER=10_024_000;
 	public static final boolean USE_DICT=true;
+	public static class Pool{
+		private final int capacity;
+		//this is dumb and should be a queue
+		private final ConcurrentMap<Integer, Compressors> instances;
+		private final Path dict;
+		public Pool(int capacity, Path dict) {
+			this.capacity=capacity;
+			this.dict=dict;
+			instances = new ConcurrentHashMap<Integer, Compressors>(capacity);
+		}
+		public void write(JSONObject j, Path p) throws IOException {
+			var es = new IOException[1];
+			instances.compute(ThreadLocalRandom.current().nextInt(capacity),
+					(k,v)->{
+					if(v==null)	v=new Compressors(dict);
+					try {
+						v.write(j,p);
+					} catch (IOException e) {
+						es[0]=e;
+					}
+					return v;
+				}
+			);
+			if(es[0]!=null)throw es[0];
+		}
+		public JSONObject read(Path p) throws IOException {
+			var ret = new JSONObject[1];
+			var es = new IOException[1];
+			instances.compute(ThreadLocalRandom.current().nextInt(capacity),
+					(k,v)->{
+					if(v==null)	v=new Compressors(dict);
+					try {
+						ret[0]=v.read(p);
+					} catch (IOException e) {
+						es[0]=e;
+					}
+					return v;
+				}
+			);
+			if(es[0]!=null)throw es[0];
+			return ret[0];
+		}
+	}
 	public Compressors(Path dict) {
 		UnaryOperator<ByteBuffer> tmpCompressor = null;
 		// decompress needs to check magic byte
@@ -34,7 +80,7 @@ public class Compressors {
 			Class<?> zd = Class.forName("com.github.luben.zstd.ZstdDictCompress");
 			Class<?> zdd = Class.forName("com.github.luben.zstd.ZstdDictDecompress");
 			Object zdc, zddd;
-			if (Files.exists(dict)) {
+			if (dict!=null && Files.exists(dict)) {
 				byte[] d = Files.readAllBytes(dict);
 				zdc = zd.getDeclaredConstructor(byte[].class, int.class).newInstance(d, 3);
 				zddd = zdd.getDeclaredConstructor(byte[].class).newInstance(d);
