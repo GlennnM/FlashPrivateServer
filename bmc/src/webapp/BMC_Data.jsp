@@ -914,6 +914,7 @@ static{
 			long alreadyAttackedAt = Util.jStream(eAttacks)
 					.filter(x -> x.getJSONObject("target").getInt("userID") == eID)
 					.filter(x -> x.getJSONObject("sender").getInt("userID") == userID)
+					.filter(x -> x.getInt("status") < AttackStatus.RESOLVED)
 					.mapToLong(x -> x.getLong("timeLaunched")).max().orElse(0);
 			if (nAttacks > 4)
 				return "maxAttacks";
