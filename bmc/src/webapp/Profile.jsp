@@ -338,8 +338,15 @@ if((loggedIn || targetUsername != null) && profile!=null){
 	%>;
 	const gamesInOrder = ["BTD4","BTD5","Battles","BSM2","MonkeyCity","SAS3","SAS TD","SAS4","Battle Blocks Defense","Battle Panic","Fortress: Destroyer","Tower Keepers"];
 	async function loadAch(){
+		let divs = {};
+		for(let game of gamesInOrder){
+			let div = document.createElement("a");
+			div.innerHTML=`<i style="color:gray;font-size:15px">${game}: loading...</i><br>`;
+			$("leftCol").appendChild(div);
+			divs[game]=div;
+		}
 		for(let game of gamesInOrder/*Object.keys(achProgress).sort()*//*.map(x=>Object.values(achProgress[x]).sum())*/){
-			//(async ()=>{
+			(async ()=>{
 				try{
 					let progress = achProgress[game];
 					let r = await fetch(`/amf_data/ach/${encodeURIComponent(game.replace(":",""))}.json`);
@@ -358,16 +365,16 @@ if((loggedIn || targetUsername != null) && profile!=null){
 					}
 					
 					if(myA==0){
-						$("leftCol").innerHTML += `<i style="color:gray;font-size:15px">${game}: (no achievements)*</i><br>`;
+						divs[game].innerHTML = `<i style="color:gray;font-size:15px">${game}: (no achievements)*</i><br>`;
 					}else{
-						$("leftCol").innerHTML += `<a href="#" onclick="selectAch('${game}');" style="color:${color(game)};font-size:15px"> ${game.replace(": Destroyer","")}:</a> 
+						divs[game].innerHTML = `<a href="#" onclick="selectAch('${game}');" style="color:${color(game)};font-size:15px"> ${game.replace(": Destroyer","")}:</a> 
 							<a href="#" onclick="selectAch('${game}');" style="color:${myA == totalA?"cyan":"white"};font-size:15px">
 							${myA}/${totalA}, ${myAP}/${totalAP} <%=miniHydar2%></a> <br>`;
 					}
 				}catch(e){
-					$("leftCol").innerHTML += `<i style="color:gray;font-size:15px">${game}: (error)</i><br>`;
+					divs[game].innerHTML = `<i style="color:gray;font-size:15px">${game}: (error)</i><br>`;
 				}
-			//})();
+			})();
 		}
 	}
 	loadAch();
