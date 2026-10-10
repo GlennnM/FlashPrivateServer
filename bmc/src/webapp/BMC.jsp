@@ -1,6 +1,7 @@
 <%@page import="org.json.JSONTokener"%>
 <%@page import="xyz.hydar.bmc.Profile"%>
 <%@page import="xyz.hydar.bmc.AMFBodies"%>
+<%@page import="xyz.hydar.ee.HydarEE"%>
 <%@page import="org.openamf.AMFBody"%>
 <%@page import="org.openamf.AMFMessage"%>
 <%@page import="xyz.hydar.bmc.ByteAMF"%>
@@ -65,7 +66,8 @@ if(request.getMethod().equals("POST")){
 	JSONObject reply = new JSONObject();
 	response.resetBuffer();
 	response.setContentType("application/json");
-	if(!operation.equals("handshake"))
+	
+	if(!operation.equals("handshake")){
 		if(sessionID==null || !Objects.equals(sessionID,SESSIONS.get(userID))){
 			reply.put("sessionID",-1).put("success",false).put("status", "unauthorised")
 			.put("error", "bmc_unauthorised")
@@ -75,6 +77,7 @@ if(request.getMethod().equals("POST")){
 			return;
 			//throw new RuntimeException("No handshake");//TODO: error about same sessions
 		}
+	}
 	switch(operation){
 	case "handshake":  
 		sessionID = session.getId();
@@ -107,6 +110,23 @@ if(request.getMethod().equals("POST")){
 			break;
 		case "cities":
 			String cityID = request.getParameter("cityID");
+			if(!"5.0".equals(request.getHeader("X-FPS-Version"))){
+				if("list".equals(cityID)){
+					reply = new JSONObject().put("success",true)
+							.put("cityList",List.of(
+									Map.of("index",0,"name","v5.0+ required!!!!","level",-1),
+									Map.of("index",1,"name","https://flash.hydar.xyz","level",-1)
+								)
+							);
+					break;
+				}	
+				reply = new JSONObject().put("success",false).put("error","bmc_version")
+						.put("status", "maintenance")
+						.put("bmc_code", "try_again")
+						.put("reason", "Version 5.0 or higher is required due to a bug!!! https://github.com/GlennnM/FlashPrivateServer");
+				out.print(reply);
+				return;
+			}
 			if("list".equals(cityID)){
 				reply = DATA.getCityList(userID);
 				break;
