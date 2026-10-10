@@ -917,7 +917,8 @@ static{
 					.mapToLong(x -> x.getLong("timeLaunched")).max().orElse(0);
 			if (nAttacks > 4)
 				return "maxAttacks";
-			if(now - alreadyAttackedAt < 24l * 3600 * 1000)
+			//if(now - alreadyAttackedAt < 24l * 3600 * 1000)
+			if(alreadyAttackedAt > 0)//1 attack max as on NK; revenge bypasses
 				return "already";
 			return "yes";
 		}
