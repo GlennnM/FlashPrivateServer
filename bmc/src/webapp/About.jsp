@@ -7,7 +7,7 @@
 
 <b>Flash Private Server</b><br>
 By glenn m<br>
-<b>Latest version: 5.0.1</b><br>
+<b>Latest version: 5.1</b><br>
 <a style="text-decoration:underline" href="https://youtube.com/@GlennMBTD">youtube</a><br>
 <a style="text-decoration:underline" href="https://discord.gg/VVGuvq7kAv">discord</a><br>
 <a style="text-decoration:underline" href="https://github.com/GlennnM/FlashPrivateServer">github</a><br><br>
