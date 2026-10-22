@@ -56,15 +56,17 @@ Consumer<Object> popup = (msg)->{
 //
 // start with login.jsp probably
 // URL params: nk username if present, 
-if(store==null)
-	try{
-	
-		String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
-		store = FileObjectStore.of(Path.of(storeLocation));
-		Profile.store = store;
-	}catch(IOException ioe){
-		throw new RuntimeException(ioe);
+if(store==null){
+	synchronized(Profile.class){
+		try{
+			String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
+			store = FileObjectStore.of(Path.of(storeLocation));
+			Profile.store = store;
+		}catch(IOException ioe){
+			throw new RuntimeException(ioe);
+		}
 	}
+}
 boolean isNKA = "flashArchive".equals(request.getHeader("user-agent"));
 String logout = request.getParameter("logout");
 if(logout!=null){

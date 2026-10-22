@@ -13,15 +13,18 @@ static volatile List<String> keys;
 static final JSONObject SAM = new JSONObject(2).put("user_id",1).put("username","sam ninjakiwi");
 %>
 <%
-if(store==null)
-	try{
-		String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
-		store = FileObjectStore.of(Path.of(storeLocation));
-		Profile.store = store;
-		keys = store.list();
-	}catch(IOException ioe){
-		throw new RuntimeException(ioe);
+if(store==null){
+	synchronized(Profile.class){
+		try{
+			String storeLocation = request.getServletContext().getInitParameter("STORE_LOCATION");
+			store = FileObjectStore.of(Path.of(storeLocation));
+			Profile.store = store;
+			keys = store.list();
+		}catch(IOException ioe){
+			throw new RuntimeException(ioe);
+		}
 	}
+}
 String user = request.getParameter("user");
 var profile = Profile.get(user);
 response.setContentType("application/json");
