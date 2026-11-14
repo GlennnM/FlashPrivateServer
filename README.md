@@ -14,7 +14,7 @@ On April 29, 2022, Ninja Kiwi shut down their multiplayer servers for the follow
 This project fully recreates these servers, built from scratch with Java TCP sockets.<br>
 Currently I am hosting all of these - BMC, BTD Battles, BTD5 challenges, BTD5 co-op, SAS3, Countersnipe, and SAS4. The guide to play on these servers is also available as a video:
 
-https://www.youtube.com/watch?v=J3q-Vb5A4jI
+https://www.youtube.com/watch?v=IxGWLZN3y7w
 
 When playing on these servers, many quality of life features and bug fixes are added to the client, but otherwise they will play exactly as you would expect the game to play on Ninja Kiwi's servers, and any data or achievements from these games will register in your actual NK profile as well as in your FPS profile.
 
