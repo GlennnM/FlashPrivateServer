@@ -1,6 +1,6 @@
 
-$VERSION = "5.2"
-$SIZE = 85081948
+$VERSION = "5.2.1"
+$SIZE = 84687143
 $win_steam =${env:ProgramFiles(x86)}+"\Steam\steamapps\common\Ninja Kiwi Archive\resources"
 $win_standalone1=${env:LocalAppData}+"\Programs\Ninja Kiwi Archive\resources"
 $win_standalone2=${env:ProgramFiles}+"\Ninja Kiwi\Ninja Kiwi Archive\resources"
